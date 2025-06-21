@@ -2983,21 +2983,33 @@
     }
   }
 
-  // Convert absolute pixel coordinates to relative percentages
-  function toRelativeCoords(x, y) {
-    const rect = mapImage.getBoundingClientRect();
+  // Calculate the map image's offset within the container
+  function getMapImageOffset() {
+    const containerRect = mapContainer.getBoundingClientRect();
+    const imageRect = mapImage.getBoundingClientRect();
     return {
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100
+      left: imageRect.left - containerRect.left,
+      top: imageRect.top - containerRect.top,
+      width: imageRect.width,
+      height: imageRect.height
     };
   }
 
-  // Convert relative percentages to absolute pixel coordinates
-  function toAbsoluteCoords(relX, relY) {
-    const rect = mapImage.getBoundingClientRect();
+  // Convert absolute pixel coordinates to relative percentages (relative to map image)
+  function toRelativeCoords(x, y) {
+    const { left, top, width, height } = getMapImageOffset();
     return {
-      x: (relX * rect.width) / 100,
-      y: (relY * rect.height) / 100
+      x: ((x - left) / width) * 100,
+      y: ((y - top) / height) * 100
+    };
+  }
+
+  // Convert relative percentages to absolute pixel coordinates (relative to map image)
+  function toAbsoluteCoords(relX, relY) {
+    const { left, top, width, height } = getMapImageOffset();
+    return {
+      x: left + (relX * width) / 100,
+      y: top + (relY * height) / 100
     };
   }
 
@@ -3007,12 +3019,10 @@
     labels.forEach(label => {
       const absPos = toAbsoluteCoords(label.relRefX, label.relRefY);
       const absLabelPos = toAbsoluteCoords(label.relLabelX, label.relLabelY);
-      
       label.refPointEl.style.left = absPos.x + 'px';
       label.refPointEl.style.top = absPos.y + 'px';
       label.labelBoxEl.style.left = absLabelPos.x + 'px';
       label.labelBoxEl.style.top = absLabelPos.y + 'px';
-      
       label.refX = absPos.x;
       label.refY = absPos.y;
       label.labelX = absLabelPos.x;
@@ -4439,6 +4449,9 @@
       point.style.visibility = 'visible';
     });
   }
+
+  // Add image load handler to update overlays after image loads
+  mapImage.addEventListener('load', updateAllPositions);
 
 </script>
 </body>
