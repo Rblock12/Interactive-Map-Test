@@ -36,6 +36,7 @@
     }
 
     .top-buttons {
+      visibility: hidden;
       display: flex;
       gap: 15px;
     }
@@ -794,6 +795,10 @@
     }
 
     #mainMenu {
+      display: none;
+    }
+
+    #mapContainer {
       display: none;
     }
 
@@ -2912,8 +2917,10 @@
               console.log('Image loaded successfully:', img.width, 'x', img.height);
               mapImage.src = img.src;
               mainMenu.style.display = 'block';
+              mapContainer.style.display = 'block';
               document.getElementById('saveElementsBtn').style.display = 'inline-block';
               document.getElementById('loadElementsBtn').style.display = 'inline-block';
+              document.querySelector('.top-buttons').style.visibility = 'visible';
 
               // Clear all existing data
               labels.forEach(label => {
