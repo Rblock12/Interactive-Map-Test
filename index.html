@@ -90,7 +90,6 @@
     border-color: #f57c00;
     font-weight: 500;
     box-shadow: 0 2px 4px rgba(255,152,0,0.2);
-    animation: pulse 1.5s ease-in-out infinite;
   }
 
   #stopTestBtn {
@@ -337,7 +336,8 @@
     border: 1px solid rgba(0,0,0,0.1);
     padding: 4px 8px;
     font-size: 13px;
-    min-width: 80px;
+    min-width: 40px;  /* Reduced from 80px */
+    width: fit-content;  /* Allow content to determine width */
     max-width: 200px;
     user-select: text;
     text-transform: uppercase;
@@ -476,10 +476,10 @@
   }
 
   .leader-line.highlight-test {
-    stroke: #ff9800;
-    stroke-width: 2;
-    stroke-dasharray: none;
-    animation: svgPulse 1.5s ease-in-out infinite;
+    stroke: #ff9800 !important;
+    stroke-width: 3 !important;
+    stroke-dasharray: 4,7 !important;
+    animation: none !important;
   }
 
   .polygon-path.highlight-test,
@@ -516,6 +516,17 @@
     box-sizing: border-box;
   }
 
+  #identifyInterface,
+  #findInterface {
+    display: none;
+  }
+
+  #findInterface .progress {
+    font-size: 14px;
+    color: #666;
+    margin-top: 15px;
+  }
+
   #testInterface input {
     width: calc(100% - 24px);
     padding: 12px;
@@ -531,6 +542,18 @@
   #testInterface input:focus {
     border-color: #2196F3;
     box-shadow: 0 0 0 3px rgba(33,150,243,0.2);
+  }
+
+  #targetLabel {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 10px 0;
+    color: #333;
+  }
+
+  #targetLabel span {
+    color: #2196F3;
+    text-transform: uppercase;
   }
 
   #testInterface .feedback {
@@ -584,6 +607,19 @@
 
   #testInterface #stopTestBtn:active {
     transform: translateY(0);
+  }
+
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(10px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
   }
 
   #leaderLines {
@@ -775,13 +811,20 @@
   </div>
 
   <div id="testInterface">
-    <div class="feedback"></div>
+    <div id="identifyInterface">
     <input type="text" id="testInput" placeholder="Enter the name of the highlighted item..." />
+      <div class="feedback"></div>
     <div class="progress"></div>
+    </div>
+    <div id="findInterface">
+      <div id="targetLabel">Find: <span></span></div>
+      <div class="feedback"></div>
+      <div class="progress"></div>
+    </div>
     <div class="test-controls">
-          <button id="stopTestBtn" onclick="stopTest()" title="Stop the test">
-      <i class="fas fa-stop"></i> Stop Test
-    </button>
+      <button id="stopTestBtn" onclick="stopTest()" title="Stop the test">
+        <i class="fas fa-stop"></i> Stop Test
+      </button>
     </div>
   </div>
 
@@ -864,7 +907,7 @@
     window.addEventListener('resize', () => {
       requestAnimationFrame(() => {
         updateAllPositions();
-        updateLeaderLines();
+    updateLeaderLines();
       });
     });
 
@@ -920,6 +963,7 @@
       }
       updateButtons();
     } else {
+      setMode(currentMode);
       // If Add submenu is hidden, show it but don't activate any mode
       addSubMenu.style.display = 'flex';
       addBtn.setAttribute('aria-pressed', 'true');
@@ -1128,8 +1172,11 @@
       document.querySelectorAll('.menu button').forEach(btn => {
         btn.setAttribute('aria-pressed', 'false');
         btn.classList.remove('active');
-        // Disable edit tool buttons except for editToggle and quiz mode buttons
-        if (btn.id !== 'editToggle' && btn.id !== 'identPointBtn' && btn.id !== 'findPointBtn') {
+        // Only disable certain buttons
+        if (btn.id !== 'editToggle' && 
+            btn.id !== 'identPointBtn' && 
+            btn.id !== 'findPointBtn' && 
+            btn.id !== 'editLabelBtn') {  // Don't disable edit text button
           btn.disabled = true;
           btn.setAttribute('aria-disabled', 'true');
         }
@@ -1189,56 +1236,59 @@
 
     // Draw leader lines for regular labels
     labels.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY }) => {
-      // Use absolute coordinates instead of getBoundingClientRect for consistent positioning
       const x1 = refX;
       const y1 = refY;
       const x2 = labelX;
       const y2 = labelY;
-
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
       line.setAttribute('x1', x1);
       line.setAttribute('y1', y1);
       line.setAttribute('x2', x2);
       line.setAttribute('y2', y2);
       line.setAttribute('class', 'leader-line');
+      // Set data-for to match labelBoxEl's id
+      if (labelBoxEl.id) {
+        line.setAttribute('data-for', labelBoxEl.id);
+      }
       leaderLinesSVG.appendChild(line);
     });
 
     // Draw leader lines for polygon labels
     polygons.forEach(polygon => {
-      // Use stored anchor coordinates for consistent positioning
       const x1 = polygon.anchorX;
       const y1 = polygon.anchorY;
       const x2 = parseInt(polygon.labelBoxEl.style.left);
       const y2 = parseInt(polygon.labelBoxEl.style.top);
-
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
       line.setAttribute('x1', x1);
       line.setAttribute('y1', y1);
       line.setAttribute('x2', x2);
       line.setAttribute('y2', y2);
       line.setAttribute('class', 'leader-line');
+      if (polygon.labelBoxEl.id) {
+        line.setAttribute('data-for', polygon.labelBoxEl.id);
+      }
       leaderLinesSVG.appendChild(line);
     });
 
     // Draw leader lines for line labels
-    lines.forEach(line => {
-      // Use stored anchor coordinates for consistent positioning
-      const x1 = line.anchorX;
-      const y1 = line.anchorY;
-      const x2 = parseInt(line.labelBoxEl.style.left);
-      const y2 = parseInt(line.labelBoxEl.style.top);
-
-      const leaderLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      leaderLine.setAttribute('x1', x1);
-      leaderLine.setAttribute('y1', y1);
-      leaderLine.setAttribute('x2', x2);
-      leaderLine.setAttribute('y2', y2);
-      leaderLine.setAttribute('class', 'leader-line');
-      leaderLinesSVG.appendChild(leaderLine);
+    lines.forEach(lineObj => {
+      const x1 = lineObj.anchorX;
+      const y1 = lineObj.anchorY;
+      const x2 = parseInt(lineObj.labelBoxEl.style.left);
+      const y2 = parseInt(lineObj.labelBoxEl.style.top);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('class', 'leader-line');
+      if (lineObj.labelBoxEl.id) {
+        line.setAttribute('data-for', lineObj.labelBoxEl.id);
+      }
+      leaderLinesSVG.appendChild(line);
     });
 
-    // Update save button state
     updateSaveButtonState();
   }
 
@@ -1278,6 +1328,10 @@
     labelBoxEl.setAttribute('role', 'textbox');
     labelBoxEl.setAttribute('aria-label', 'Label text');
     labelBoxEl.contentEditable = (shouldFocus || isNewFix) ? 'true' : 'false';
+        // Assign a unique id if not already set
+        if (!labelBoxEl.id) {
+      labelBoxEl.id = `label-${labelIdCounter++}`;
+    }
     mapContainer.appendChild(labelBoxEl);
     // Trigger the creation animation
     requestAnimationFrame(() => labelBoxEl.classList.add('visible'));
@@ -1287,13 +1341,6 @@
       requestAnimationFrame(() => {
         labelBoxEl.contentEditable = 'true';
         labelBoxEl.focus();
-        // Place cursor at the end of any existing text
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(labelBoxEl);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
       });
 
       // Add blur handler to make non-editable when focus is lost
@@ -1343,6 +1390,8 @@
     };
 
     labels.push(labelObj);
+    updateLeaderLines();
+    labelObj.labelBoxEl.focus();
 
     // Remove contentEditable when user blurs the label
     labelBoxEl.addEventListener('blur', () => {
@@ -1857,10 +1906,40 @@
       polyline.setAttribute('class', 'line-path');
       shapesLayer.appendChild(polyline);
 
-      // Calculate anchor point (midpoint of the line)
-      const midIndex = Math.floor(currentShapePoints.length / 2);
-      const anchorX = currentShapePoints[midIndex].x;
-      const anchorY = currentShapePoints[midIndex].y;
+      // Calculate the true midpoint of the line by finding the point halfway along its total length
+      let totalLength = 0;
+      const segmentLengths = [];
+      
+      // Calculate total length and individual segment lengths
+      for (let i = 0; i < currentShapePoints.length - 1; i++) {
+        const p1 = currentShapePoints[i];
+        const p2 = currentShapePoints[i + 1];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        totalLength += length;
+        segmentLengths.push(length);
+      }
+      
+      // Find which segment contains the midpoint and calculate its position
+      let currentLength = 0;
+      let anchorX, anchorY;
+      const halfLength = totalLength / 2;
+      
+      for (let i = 0; i < segmentLengths.length; i++) {
+        if (currentLength + segmentLengths[i] >= halfLength) {
+          // This segment contains our midpoint
+          const p1 = currentShapePoints[i];
+          const p2 = currentShapePoints[i + 1];
+          const segmentFraction = (halfLength - currentLength) / segmentLengths[i];
+          
+          // Linear interpolation to find the exact midpoint
+          anchorX = p1.x + (p2.x - p1.x) * segmentFraction;
+          anchorY = p1.y + (p2.y - p1.y) * segmentFraction;
+          break;
+        }
+        currentLength += segmentLengths[i];
+      }
 
       // Create anchor point
       const anchorPoint = document.createElement('div');
@@ -1874,7 +1953,7 @@
       // Create label
       const labelX = anchorX + 20;
       const labelY = anchorY + 20;
-      const { labelBoxEl } = createLabel(anchorX, anchorY, labelX, labelY, '', false);
+      const { labelBoxEl } = createLabel(anchorX, anchorY, labelX, labelY, '', false, true);
 
       // Keep the existing points but update their classes and add relative coordinates
       const finalPoints = currentShapePoints.map(point => {
@@ -1928,7 +2007,7 @@
       // Create label
       const labelX = centroid.x + 20;
       const labelY = centroid.y + 20;
-      const { labelBoxEl } = createLabel(centroid.x, centroid.y, labelX, labelY, '', false);
+      const { labelBoxEl } = createLabel(centroid.x, centroid.y, labelX, labelY, '', false, true);
 
       // Keep the existing points but update their classes and add relative coordinates
       const finalPoints = currentShapePoints.map(point => {
@@ -2188,14 +2267,18 @@
   function togglePolygonMode() {
     if (!editEnabled) return;
     
+    // Cancel the current shape
+    currentShapePoints.forEach(point => {
+      point.element.classList.add('removing');
+      setTimeout(() => point.element.remove(), 300);
+    });
+    currentShapePoints = [];
+    currentShape = null;
+    // Remove preview line if it exists
+    const previewLine = document.getElementById('previewLine');
+    if (previewLine) previewLine.remove();
+    
     if (currentMode === 'polygon') {
-      // Cancel the current shape
-        currentShapePoints.forEach(point => {
-          point.element.classList.add('removing');
-          setTimeout(() => point.element.remove(), 300);
-        });
-        currentShapePoints = [];
-        currentShape = null;
         // Exit polygon mode
         setMode(null);
         // Reset cursor
@@ -2209,17 +2292,18 @@
   function toggleLineMode() {
     if (!editEnabled) return;
     
+    // Cancel the current line
+    currentShapePoints.forEach(point => {
+      point.element.classList.add('removing');
+      setTimeout(() => point.element.remove(), 300);
+    });
+    currentShapePoints = [];
+    currentShape = null;
+    // Remove preview line if it exists
+    const previewLine = document.getElementById('previewLine');
+    if (previewLine) previewLine.remove();
+
     if (currentMode === 'line') {
-      // Cancel the current line
-        currentShapePoints.forEach(point => {
-          point.element.classList.add('removing');
-          setTimeout(() => point.element.remove(), 300);
-        });
-        currentShapePoints = [];
-        currentShape = null;
-        // Remove preview line if it exists
-        const previewLine = document.getElementById('previewLine');
-        if (previewLine) previewLine.remove();
         // Exit line mode
         setMode(null);
         // Reset cursor
@@ -3137,14 +3221,166 @@
   }
 
   function endTest(isNaturalCompletion = false) {
+    // If in find mode, restore labels before ending
+    if (currentTestMode === 'find') {
+      cleanupFindMode();
+    }
+    
     testingMode = false;
     currentTestMode = null;
     
-    // Only show completion message if this is a natural end (not a stop)
+    // Show completion message in test interface if this is a natural end
     if (isNaturalCompletion) {
-      alert('Congratulations! You\'ve completed the test!');
-    }
+      const testInterface = document.getElementById('testInterface');
+      const testContent = document.getElementById('testContent');
+      const identInterface = document.getElementById('identifyInterface');
+      // const feedback = document.querySelector('.feedback');
+      // const progress = document.querySelector('.progress');
+      const targetLabel = document.getElementById('targetLabel');
+      // const testInput = document.getElementById('testInput');
+      
+      // Hide test elements and stop button
+      if (identInterface) identInterface.style.display = 'none';
+      if (testContent) testContent.style.display = 'none';
+      // if (feedback) feedback.style.display = 'none';
+      // if (progress) progress.style.display = 'none';
+      if (targetLabel) targetLabel.style.display = 'none';
+      // if (testInput) testInput.style.display = 'none';
+      
+      const stopTestBtn = document.getElementById('stopTestBtn');
+      if (stopTestBtn) {
+        stopTestBtn.style.display = 'none';
+        stopTestBtn.disabled = true;
+      }
+      
+      // Create completion message
+      const completionDiv = document.createElement('div');
+      completionDiv.style.textAlign = 'center';
+      completionDiv.style.padding = '20px';
+      completionDiv.innerHTML = `
+        <h2 style="color: #4CAF50; margin-bottom: 20px;">Congratulations!</h2>
+        <p style="font-size: 16px; margin-bottom: 20px;">You've successfully completed the test!</p>
+        <button id="continueBtn" style="
+          background-color: #4CAF50;
+          color: white;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+        ">Continue</button>
+      `;
+      
+      testInterface.appendChild(completionDiv);
+      
+      // Add event listener to continue button
+      document.getElementById('continueBtn').addEventListener('click', () => {
+        testInterface.removeChild(completionDiv);
+        endTestCleanup();
+      });
+      
+      return; // Exit early to prevent immediate cleanup
+    } 
     
+    endTestCleanup();
+  }
+  
+  function endTestCleanup() {
+
+    
+
+    // Re-enable all menu buttons and their submenus
+    const menuButtons = {
+      'loadImageBtn': true,
+      'saveLabelsBtn': true,
+      'loadLabelsBtn': true,
+      'addBtn': true,
+      'moveBtn': true,
+      'editLabelBtn': true,  // Changed from editTextBtn
+      'deleteBtn': true,
+      'identPointBtn': true,
+      'findPointBtn': true,
+      'editToggle': true,
+      // Add submenu buttons
+      'addFixedPointBtn': true,
+      'addShapeBtn': true,
+      'addLineBtn': true
+    };
+
+    // Enable each button and reset its styles
+    Object.keys(menuButtons).forEach(btnId => {
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.style.pointerEvents = 'auto';
+        btn.classList.remove('test-active');
+        btn.setAttribute('aria-disabled', 'false');
+        
+        // Special handling for buttons that might need additional attributes reset
+        if (btnId === 'loadImageBtn' || btnId === 'editLabelBtn') {  // Changed from editTextBtn
+          btn.style.display = '';  // Reset to default display
+        }
+        // Special handling for edit toggle
+        if (btnId === 'editToggle') {
+          btn.setAttribute('onclick', 'toggleEditMode()');
+        }
+      }
+    });
+
+    // Make sure the add submenu is properly reset
+    const addSubMenu = document.getElementById('addSubMenu');
+    if (addSubMenu) {
+      addSubMenu.querySelectorAll('button').forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.style.pointerEvents = 'auto';
+        btn.setAttribute('aria-disabled', 'false');
+      });
+    }
+
+    // Re-enable and reset all menu buttons
+    document.querySelectorAll('.menu button').forEach(button => {
+      button.disabled = false;
+      button.style.opacity = '1';
+      button.style.cursor = 'pointer';
+      button.style.pointerEvents = 'auto';
+      button.classList.remove('test-active');
+      button.setAttribute('aria-disabled', 'false');
+    });
+
+    // Re-enable and reset load map container elements
+    const loadMapContainer = document.getElementById('loadMapContainer');
+    if (loadMapContainer) {
+      loadMapContainer.querySelectorAll('button, label, input').forEach(element => {
+        if (element.tagName.toLowerCase() === 'label') {
+          element.style.opacity = '1';
+          element.style.cursor = 'pointer';
+          element.style.pointerEvents = 'auto';
+        } else {
+          element.disabled = false;
+          element.style.opacity = '1';
+          element.style.cursor = 'pointer';
+          element.style.pointerEvents = 'auto';
+        }
+      });
+    }
+
+    // Hide test interface
+    const testInterface = document.getElementById('testInterface');
+    if (testInterface) {
+      testInterface.style.display = 'none';
+    }
+
+    // Hide and disable stop button
+    const stopTestBtn = document.getElementById('stopTestBtn');
+    if (stopTestBtn) {
+      stopTestBtn.style.display = 'none';
+      stopTestBtn.disabled = true;
+    }
+
     // Show all correct answers and reset styles
     document.querySelectorAll('.label-box').forEach(label => {
       if (label.dataset.correctAnswer) {
@@ -3173,72 +3409,90 @@
       point.style.filter = '';
     });
 
-    // Hide test interface
-    document.getElementById('testInterface').style.display = 'none';
+    // Reset any highlighted shapes (polygons and lines)
+    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
+      shape.classList.remove('highlight-test');
+      shape.style.animation = 'none';
+      shape.setAttribute('stroke', 'none');
+      shape.setAttribute('stroke-width', '2');
+      shape.style.filter = '';
+      if (shape.classList.contains('polygon-path')) {
+        shape.setAttribute('fill', 'none');
+      }
+    });
 
-    // Reset button states
-    const identBtn = document.getElementById('identPointBtn');
-    const findBtn = document.getElementById('findPointBtn');
-    const editToggle = document.getElementById('editToggle');
-    const stopTestBtn = document.getElementById('stopTestBtn');
+    // Reset leader lines
+    document.querySelectorAll('.leader-line').forEach(line => {
+      line.classList.remove('highlight-test');
+      line.style.animation = 'none';
+      line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '4,3');
+      line.style.filter = '';
+    });
 
-    // Re-enable and reset all test mode buttons
-    identBtn.classList.remove('test-active');
-    findBtn.classList.remove('test-active');
-    identBtn.disabled = false;
-    findBtn.disabled = false;
-    identBtn.style.opacity = '1';
-    findBtn.style.opacity = '1';
-    identBtn.style.cursor = 'pointer';
-    findBtn.style.cursor = 'pointer';
-    
-    // Hide and disable stop button
-    stopTestBtn.style.display = 'none';
-    stopTestBtn.disabled = true;
+    // Restore visibility of labels and leader lines
+    restoreVisibility();
 
-    // Re-enable edit toggle
-    editToggle.disabled = false;
-    editToggle.style.opacity = '1';
-    editToggle.style.cursor = 'pointer';
+    // Force a reflow to ensure animations are properly reset
+    void document.documentElement.offsetHeight;
 
-    // Clear test items
+    // Remove animation: none after reflow to allow future animations
+    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
+      element.style.animation = '';
+    });
+
+    // Clear any remaining test items
     testItems = [];
     remainingTestItems = [];
     currentTestItem = null;
   }
 
   function stopTest() {
-    const identBtn = document.getElementById('identPointBtn');
-    const findBtn = document.getElementById('findPointBtn');
-    const editToggle = document.getElementById('editToggle');
-    const stopTestBtn = document.getElementById('stopTestBtn');
     const testInterface = document.getElementById('testInterface');
+    const stopTestBtn = document.getElementById('stopTestBtn');
 
     // Reset test mode states
     testingMode = false;
     currentTestMode = null;
 
+    // Re-enable and reset all menu buttons
+    document.querySelectorAll('.menu button').forEach(button => {
+      button.disabled = false;
+      button.style.opacity = '1';
+      button.style.cursor = 'pointer';
+      button.style.pointerEvents = 'auto';
+      button.classList.remove('test-active');
+      button.setAttribute('aria-disabled', 'false');
+    });
+
+    // Re-enable and reset load map container elements
+    const loadMapContainer = document.getElementById('loadMapContainer');
+    if (loadMapContainer) {
+      loadMapContainer.querySelectorAll('button, label, input').forEach(element => {
+        if (element.tagName.toLowerCase() === 'label') {
+          element.style.opacity = '1';
+          element.style.cursor = 'pointer';
+          element.style.pointerEvents = 'auto';
+        } else {
+          element.disabled = false;
+          element.style.opacity = '1';
+          element.style.cursor = 'pointer';
+          element.style.pointerEvents = 'auto';
+        }
+      });
+    }
+
     // Hide test interface
-    testInterface.style.display = 'none';
+    if (testInterface) {
+      testInterface.style.display = 'none';
+    }
 
-    // Reset button states
-    identBtn.classList.remove('test-active');
-    findBtn.classList.remove('test-active');
-    identBtn.disabled = false;
-    findBtn.disabled = false;
-    identBtn.style.opacity = '1';
-    findBtn.style.opacity = '1';
-    identBtn.style.cursor = 'pointer';
-    findBtn.style.cursor = 'pointer';
-    
     // Hide and disable stop button
-    stopTestBtn.style.display = 'none';
-    stopTestBtn.disabled = true;
-
-    // Re-enable edit toggle
-    editToggle.disabled = false;
-    editToggle.style.opacity = '1';
-    editToggle.style.cursor = 'pointer';
+    if (stopTestBtn) {
+      stopTestBtn.style.display = 'none';
+      stopTestBtn.disabled = true;
+    }
 
     // Show all label text and reset point visibility
     document.querySelectorAll('.label-box').forEach(label => {
@@ -3351,6 +3605,7 @@
     // If we're in a different test mode, stop it first
     if (testingMode) {
       endTest(false); // false indicates this is not a natural completion
+      restoreVisibility(); // Make sure everything is visible before starting new mode
     }
 
     // If we're in edit mode, disable it
@@ -3387,77 +3642,138 @@
     // Update cursor styles for test mode
     updateCursorStyles(null);
 
-    if (mode === 'ident') {
-      // Initialize test mode without the label check since we did it above
-      // Hide all movable points except the current test item
-      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-        point.style.display = 'none';
-      });
+    // Common initialization for both modes
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+      point.style.display = 'none';
+    });
 
-      // Store correct answers and hide label text
+    // Store correct answers
+    document.querySelectorAll('.label-box').forEach(label => {
+      if (!label.dataset.correctAnswer) {
+        label.dataset.correctAnswer = label.textContent;
+      }
+    });
+
+    // Prepare test items
+    testItems = [
+      ...labels.map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
+      ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
+      ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
+    ].filter(item => item.element && item.label);
+    
+    // Shuffle the test items array for random order
+    for (let i = testItems.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [testItems[i], testItems[j]] = [testItems[j], testItems[i]];
+    }
+    
+    remainingTestItems = [...testItems];
+    
+    // Log the number of test items for debugging
+    console.log(`Starting test with ${testItems.length} items`);
+
+    // Show test interface and stop button
+    const testInterface = document.getElementById('testInterface');
+    const identifyInterface = document.getElementById('identifyInterface');
+    const findInterface = document.getElementById('findInterface');
+    testInterface.style.display = 'block';
+
+    // Show and enable stop button
+    stopTestBtn.style.display = 'block';
+    stopTestBtn.disabled = false;
+
+    // Initialize progress counter
+    const progress = document.querySelector('#testInterface .progress');
+    progress.textContent = `Progress: 0/${testItems.length}`;
+
+    if (mode === 'ident') {
+      // Hide labels for identify mode
       document.querySelectorAll('.label-box').forEach(label => {
-        // Only store the correct answer if we don't already have it
-        if (!label.dataset.correctAnswer) {
-          label.dataset.correctAnswer = label.textContent;
-        }
         label.textContent = '???';
       });
 
-      // Prepare test items
-      testItems = [
-        ...labels.map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
-        ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
-        ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
-      ].filter(item => item.element && item.label); // Filter out any invalid items
+      // Show identify interface
+      identifyInterface.style.display = 'block';
+      findInterface.style.display = 'none';
       
-      // Shuffle the test items array for random order
-      for (let i = testItems.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [testItems[i], testItems[j]] = [testItems[j], testItems[i]];
-      }
-      
-      remainingTestItems = [...testItems];
-      
-      // Log the number of test items for debugging
-      console.log(`Starting test with ${testItems.length} items`);
-
-      // Show test interface and stop button
-      const testInterface = document.getElementById('testInterface');
-      testInterface.style.display = 'block';
+      // Focus the input
       const testInput = document.getElementById('testInput');
       testInput.value = '';
       testInput.focus();
+          } else if (mode === 'find') {
+        // Initialize progress counter
+        const progress = document.querySelector('#findInterface .progress');
+        progress.textContent = `Progress: 0/${testItems.length}`;
+        
+        // Hide all reference points in find mode but keep them in the layout
+        document.querySelectorAll('.ref-point').forEach(point => {
+          point.style.visibility = 'hidden';
+          point.style.display = 'block'; // Keep in layout for hit detection
+        });
+        
+        // Hide labels and leader lines in find mode
+        document.querySelectorAll('.label-box').forEach(label => {
+          label.style.display = 'none';
+        });
+        document.querySelectorAll('.leader-line').forEach(line => {
+        line.style.display = 'none';
+      });
 
-      // Show and enable stop button
-      stopTestBtn.style.display = 'block';
-      stopTestBtn.disabled = false;
-
-      // Initialize progress counter
-      const progress = document.querySelector('#testInterface .progress');
-      progress.textContent = `Progress: 0/${testItems.length}`;
+      // Show find interface
+      identifyInterface.style.display = 'none';
+      findInterface.style.display = 'block';
       
-      // Select the first test item after UI is ready
-      selectNextTestItem();
-    } else if (mode === 'find') {
-      // Implement find mode later
-      alert('Find mode not implemented yet');
-      testingMode = false;
-      currentTestMode = null;
-      return;
+      // Show and update the target label
+      const targetLabel = document.querySelector('#targetLabel');
+      const targetLabelSpan = targetLabel.querySelector('span');
+      targetLabel.style.display = 'block';
+      
+      // Set initial target label text from first test item
+      if (remainingTestItems.length > 0) {
+        targetLabelSpan.textContent = remainingTestItems[0].label.dataset.correctAnswer;
+      }
+      
+      // Add click handler for map elements
+      mapContainer.addEventListener('click', handleFindModeClick);
     }
+    
+    // Select the first test item after UI is ready
+    selectNextTestItem();
 
     // Disable edit toggle during test
     editToggle.disabled = true;
     editToggle.style.opacity = '0.5';
     editToggle.style.cursor = 'not-allowed';
 
-    // Update button states
+    // Update button states and disable all menu buttons
     identBtn.classList.toggle('test-active', mode === 'ident');
     findBtn.classList.toggle('test-active', mode === 'find');
     
-    // Disable other test mode buttons
-    identBtn.disabled = mode === 'find';  // Disable identify button only if in find mode
-    findBtn.disabled = mode === 'ident';  // Disable find button only if in identify mode
+    // Disable all menu buttons except stop test
+    document.querySelectorAll('.menu button').forEach(button => {
+      if (button.id !== 'stopTestBtn') {
+        button.disabled = true;
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+        button.style.pointerEvents = 'none';
+      }
+    });
+    
+    // Disable load map and save/load labels buttons
+    const loadMapContainer = document.getElementById('loadMapContainer');
+    if (loadMapContainer) {
+      loadMapContainer.querySelectorAll('button, label, input').forEach(element => {
+        if (element.tagName.toLowerCase() === 'label') {
+          element.style.opacity = '0.5';
+          element.style.cursor = 'not-allowed';
+          element.style.pointerEvents = 'none';
+        } else {
+          element.disabled = true;
+          element.style.opacity = '0.5';
+          element.style.cursor = 'not-allowed';
+        }
+      });
+    }
   }
 
   // Also update stopTest to properly reset button states
@@ -3589,8 +3905,11 @@
     document.querySelectorAll('.menu button').forEach(btn => {
       btn.setAttribute('aria-pressed', 'false');
       btn.classList.remove('active');
-      // Disable edit tool buttons except for editToggle and quiz mode buttons
-      if (btn.id !== 'editToggle' && btn.id !== 'identPointBtn' && btn.id !== 'findPointBtn') {
+      // Only disable certain buttons
+      if (btn.id !== 'editToggle' && 
+          btn.id !== 'identPointBtn' && 
+          btn.id !== 'findPointBtn' && 
+          btn.id !== 'editLabelBtn') {  // Don't disable edit text button
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
       }
@@ -3627,6 +3946,468 @@
     // Reset cursor styles
     updateCursorStyles(null);
   }
+
+  function handleFindModeClick(e) {
+    if (!testingMode || currentTestMode !== 'find') return;
+
+    // Get click coordinates relative to the map container
+    const rect = mapContainer.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const buffer = 25; // Buffer zone in pixels - increased for better line detection
+
+    const feedback = document.querySelector('#findInterface .feedback');
+
+    // Check if we clicked on the correct element with buffer zone
+    let isCorrect = false;
+    if (currentTestItem) {
+      if (currentTestItem.type === 'label') {
+        // For points, temporarily make the element visible to get its position
+        const refPoint = currentTestItem.element;
+        const originalVisibility = refPoint.style.visibility;
+        const originalDisplay = refPoint.style.display;
+        
+        // Make it invisible but still take up space
+        refPoint.style.visibility = 'hidden';
+        refPoint.style.display = 'block';
+        
+        // Get the position
+        const pointRect = refPoint.getBoundingClientRect();
+        const pointX = pointRect.left + pointRect.width/2 - rect.left;
+        const pointY = pointRect.top + pointRect.height/2 - rect.top;
+        
+        // Restore original visibility
+        refPoint.style.visibility = originalVisibility;
+        refPoint.style.display = originalDisplay;
+        
+        // Check distance
+        const distance = Math.sqrt(Math.pow(clickX - pointX, 2) + Math.pow(clickY - pointY, 2));
+        isCorrect = distance <= buffer;
+      } else if (currentTestItem.type === 'polygon') {
+        // For polygons, check if click is inside polygon or near its edges
+        const path = currentTestItem.element;
+        // Get points from the path's d attribute
+        const points = getPointsFromPath(path.getAttribute('d'));
+        
+        // Check if point is inside polygon or near its edges
+        isCorrect = isPointInOrNearPolygon(clickX, clickY, points, buffer);
+      } else if (currentTestItem.type === 'line') {
+        // For lines, temporarily make it visible to get coordinates
+        const line = currentTestItem.element;
+        const originalVisibility = line.style.visibility;
+        const originalDisplay = line.style.display;
+        const originalStroke = line.getAttribute('stroke');
+        
+        // Make it invisible but still take up space
+        line.style.visibility = 'hidden';
+        line.style.display = 'block';
+        line.setAttribute('stroke', 'rgba(0,0,0,0.001)'); // Nearly invisible but still rendered
+        
+        // Get the points from the path
+        const points = getPointsFromPath(line.getAttribute('d'));
+        
+        // Restore original state
+        line.style.visibility = originalVisibility;
+        line.style.display = originalDisplay;
+        line.setAttribute('stroke', originalStroke);
+        
+        // Check distance
+        isCorrect = isPointNearPolyline(clickX, clickY, points, buffer);
+      }
+    }
+
+    if (isCorrect) {
+      // Correct click
+      feedback.textContent = 'Correct!';
+      feedback.className = 'feedback correct';
+      
+      // Remove current item from remaining items
+      remainingTestItems.shift();
+      console.log(`After removal, remaining items: ${remainingTestItems.length}`);
+      
+      // Update progress counter
+      const completed = testItems.length - remainingTestItems.length;
+      const progress = document.querySelector('#findInterface .progress');
+      progress.textContent = `Progress: ${completed}/${testItems.length}`;
+      
+      // Update progress
+      updateTestProgress();
+      
+      // Clear feedback and select next item after delay
+      setTimeout(() => {
+        feedback.textContent = '';
+        feedback.className = 'feedback';
+        selectNextTestItem();
+      }, 1500);
+    } else {
+      // Incorrect click
+      feedback.textContent = 'Try again!';
+      feedback.className = 'feedback incorrect';
+      setTimeout(() => {
+        feedback.textContent = '';
+        feedback.className = 'feedback';
+      }, 1500);
+    }
+  }
+
+  function selectNextTestItem() {
+    // Remove highlight from previous item and its label if exists
+    if (currentTestItem) {
+      currentTestItem.element.classList.remove('highlight-test');
+      currentTestItem.label.classList.remove('highlight-test');
+      
+      // Remove highlight from leader line if it exists
+      const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
+      if (leaderLine) {
+        leaderLine.classList.remove('highlight-test');
+      }
+      
+      // Hide the previous test item's point if it's a label type
+      if (currentTestItem.type === 'label') {
+        currentTestItem.element.style.display = 'none';
+      }
+    }
+
+    // Log remaining items for debugging
+    console.log(`Remaining items: ${remainingTestItems.length}`);
+
+    if (remainingTestItems.length === 0) {
+      endTest(true); // true indicates this is a natural completion
+      return;
+    }
+
+    // Take the next item from the front of the array (they're already shuffled)
+    currentTestItem = remainingTestItems[0];
+    console.log(`Selected item at index 0. Current length: ${remainingTestItems.length}`);
+    
+    if (currentTestMode === 'ident') {
+      // Show and highlight both the item and its label in identify mode
+      currentTestItem.element.classList.add('highlight-test');
+      currentTestItem.label.classList.add('highlight-test');
+
+      // Highlight the leader line
+      const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
+      if (leaderLine) {
+        leaderLine.classList.add('highlight-test');
+      }
+
+      // If it's a label type, make sure its point is visible
+      if (currentTestItem.type === 'label') {
+        currentTestItem.element.style.display = 'block';
+      }
+    } else {
+      // In find mode, only make shapes visible, not reference points
+      if (currentTestItem.type === 'polygon') {
+        currentTestItem.element.style.display = 'block';
+      } else if (currentTestItem.type === 'line') {
+        currentTestItem.element.style.display = 'block';
+      }
+      // Reference points (label type) stay hidden in find mode
+    }
+
+    // Update the target label in find mode
+    if (currentTestMode === 'find') {
+      const targetLabel = document.querySelector('#targetLabel span');
+      targetLabel.textContent = currentTestItem.label.dataset.correctAnswer;
+    } else if (currentTestMode === 'ident') {
+      // Only scroll in identify mode
+      // Use the element's bounding rect to determine its position
+      const elementRect = currentTestItem.element.getBoundingClientRect();
+      const labelRect = currentTestItem.label.getBoundingClientRect();
+      
+      // Calculate the midpoint between the element and its label
+      const midpointY = (elementRect.top + labelRect.top) / 2;
+      
+      // Get the viewport height
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate the ideal scroll position that centers the midpoint
+      const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
+      
+      // Scroll smoothly to the calculated position
+      window.scrollTo({
+        top: idealScrollTop,
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  // Update stopTest to remove the click handler and cleanup find mode
+  function stopTest() {
+    // Remove find mode click handler and cleanup if in find mode
+    if (currentTestMode === 'find') {
+      mapContainer.removeEventListener('click', handleFindModeClick);
+      cleanupFindMode();
+    }
+
+    const identBtn = document.getElementById('identPointBtn');
+    const findBtn = document.getElementById('findPointBtn');
+    const editToggle = document.getElementById('editToggle');
+    const stopTestBtn = document.getElementById('stopTestBtn');
+    const testInterface = document.getElementById('testInterface');
+
+    // Reset test mode states
+    testingMode = false;
+    currentTestMode = null;
+
+    // Hide test interface
+    testInterface.style.display = 'none';
+
+    // Reset button states
+    identBtn.classList.remove('test-active');
+    findBtn.classList.remove('test-active');
+    identBtn.disabled = false;
+    findBtn.disabled = false;
+    identBtn.style.opacity = '1';
+    findBtn.style.opacity = '1';
+    identBtn.style.cursor = 'pointer';
+    findBtn.style.cursor = 'pointer';
+    
+    // Hide and disable stop button
+    stopTestBtn.style.display = 'none';
+    stopTestBtn.disabled = true;
+
+    // Re-enable edit toggle
+    editToggle.disabled = false;
+    editToggle.style.opacity = '1';
+    editToggle.style.cursor = 'pointer';
+
+    // Show all label text and reset point visibility
+    document.querySelectorAll('.label-box').forEach(label => {
+      if (label.dataset.correctAnswer) {
+        label.textContent = label.dataset.correctAnswer;
+        delete label.dataset.correctAnswer;
+      }
+      // Reset any test-related styles
+      label.classList.remove('highlight-test');
+      label.style.animation = 'none';
+      label.style.backgroundColor = '';
+      label.style.color = '';
+      label.style.borderColor = '';
+      label.style.boxShadow = '';
+      label.style.filter = '';
+    });
+
+    // Reset reference point visibility and styles
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+      point.style.display = 'none';
+      point.classList.remove('highlight-test');
+      point.style.animation = 'none';
+      point.style.backgroundColor = '';
+      point.style.borderColor = '';
+      point.style.transform = 'translate(-50%, -50%) scale(1)';
+      point.style.boxShadow = '';
+      point.style.filter = '';
+    });
+
+    // Reset any highlighted shapes (polygons and lines)
+    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
+      shape.classList.remove('highlight-test');
+      shape.style.animation = 'none';
+      shape.setAttribute('stroke', 'none');
+      shape.setAttribute('stroke-width', '2');
+      shape.style.filter = '';
+      if (shape.classList.contains('polygon-path')) {
+        shape.setAttribute('fill', 'none');
+      }
+    });
+
+    // Reset leader lines
+    document.querySelectorAll('.leader-line').forEach(line => {
+      line.classList.remove('highlight-test');
+      line.style.animation = 'none';
+      line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '4,3');
+      line.style.filter = '';
+    });
+
+    // Clear test items
+    testItems = [];
+    remainingTestItems = [];
+    currentTestItem = null;
+  }
+
+  function isPointInOrNearPolygon(x, y, points, buffer) {
+    // First check if point is inside polygon
+    if (isPointInPolygon(x, y, points)) return true;
+
+    // If not inside, check distance to edges
+    for (let i = 0; i < points.length; i++) {
+      const p1 = points[i];
+      const p2 = points[(i + 1) % points.length];
+      if (distanceToLineSegment(x, y, p1.x, p1.y, p2.x, p2.y) <= buffer) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function isPointInPolygon(x, y, points) {
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const xi = points[i].x, yi = points[i].y;
+      const xj = points[j].x, yj = points[j].y;
+      
+      const intersect = ((yi > y) !== (yj > y))
+          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  function isPointNearPolyline(x, y, points, buffer) {
+    // Increase buffer for line segments and endpoints
+    const lineBuffer = buffer * 2; // Double the buffer for lines
+    const endpointBuffer = buffer * 1.5; // 50% larger buffer for endpoints
+    
+    // Check each line segment
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      
+      // Check if point is near the line segment with increased buffer
+      if (distanceToLineSegment(x, y, p1.x, p1.y, p2.x, p2.y) <= lineBuffer) {
+        return true;
+      }
+      
+      // Check endpoints with larger buffer
+      const distToP1 = Math.sqrt(Math.pow(x - p1.x, 2) + Math.pow(y - p1.y, 2));
+      const distToP2 = Math.sqrt(Math.pow(x - p2.x, 2) + Math.pow(y - p2.y, 2));
+      if (distToP1 <= endpointBuffer || distToP2 <= endpointBuffer) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function distanceToLineSegment(x, y, x1, y1, x2, y2) {
+    const A = x - x1;
+    const B = y - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
+    let param = -1;
+
+    if (len_sq !== 0) {
+      param = dot / len_sq;
+    }
+
+    let xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    } else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = x - xx;
+    const dy = y - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function restoreVisibility() {
+    // Restore label visibility
+    document.querySelectorAll('.label-box').forEach(label => {
+      label.style.display = 'block';  // Explicitly set to block instead of empty string
+      label.style.visibility = 'visible';
+      label.style.opacity = '1';
+    });
+
+    // Restore leader line visibility
+    document.querySelectorAll('.leader-line').forEach(line => {
+      line.style.display = 'block';  // Explicitly set to block instead of empty string
+      line.style.visibility = 'visible';
+      line.style.opacity = '1';
+    });
+  }
+
+  function getPointsFromPath(d) {
+    if (!d) return [];
+    
+    // Split the path data into commands and coordinates
+    const parts = d.match(/[a-zA-Z][^a-zA-Z]*/g);
+    const points = [];
+    let currentX = 0;
+    let currentY = 0;
+
+    parts.forEach(part => {
+      const command = part[0];
+      const coords = part.slice(1).trim().split(/[\s,]+/).map(Number);
+
+      switch (command.toUpperCase()) {
+        case 'M': // Move to (absolute)
+          currentX = coords[0];
+          currentY = coords[1];
+          points.push({ x: currentX, y: currentY });
+          break;
+        case 'L': // Line to (absolute)
+          currentX = coords[0];
+          currentY = coords[1];
+          points.push({ x: currentX, y: currentY });
+          break;
+        case 'H': // Horizontal line (absolute)
+          currentX = coords[0];
+          points.push({ x: currentX, y: currentY });
+          break;
+        case 'V': // Vertical line (absolute)
+          currentY = coords[0];
+          points.push({ x: currentX, y: currentY });
+          break;
+        case 'Z': // Close path
+          if (points.length > 0) {
+            points.push({ x: points[0].x, y: points[0].y });
+          }
+          break;
+        // Add relative commands if needed
+        case 'm': // Move to (relative)
+          currentX += coords[0];
+          currentY += coords[1];
+          points.push({ x: currentX, y: currentY });
+          break;
+        case 'l': // Line to (relative)
+          currentX += coords[0];
+          currentY += coords[1];
+          points.push({ x: currentX, y: currentY });
+          break;
+        case 'h': // Horizontal line (relative)
+          currentX += coords[0];
+          points.push({ x: currentX, y: currentY });
+          break;
+        case 'v': // Vertical line (relative)
+          currentY += coords[0];
+          points.push({ x: currentX, y: currentY });
+          break;
+      }
+    });
+
+    return points;
+  }
+
+  function cleanupFindMode() {
+    // Restore all labels and leader lines
+    document.querySelectorAll('.label-box').forEach(label => {
+      label.style.display = 'block';
+      label.style.visibility = 'visible';
+      label.style.opacity = '1';
+    });
+
+    document.querySelectorAll('.leader-line').forEach(line => {
+      line.style.display = 'block';
+      line.style.visibility = 'visible';
+      line.style.opacity = '1';
+    });
+  }
+
+  // Add a global counter for label IDs
+  let labelIdCounter = 1;
 </script>
 </body>
 </html>
