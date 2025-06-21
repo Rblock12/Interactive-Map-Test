@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Map Labeling Tool</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3Cfilter id='shadow' x='-20%' y='-20%' width='140%' height='140%'%3E%3CfeDropShadow dx='0' dy='2' stdDeviation='2' flood-color='%23000' flood-opacity='0.3'/%3E%3C/filter%3E%3C/defs%3E%3Cpath d='M32 6c-9 0-16 7-16 16 0 10.5 13.5 28.5 15.1 30.6a2 2 0 0 0 3.8 0C34.5 50.5 48 32.5 48 22c0-9-7-16-16-16z' fill='%23ea4335' filter='url(%23shadow)'/%3E%3Ccircle cx='32' cy='22' r='7' fill='white' stroke='%23b71c1c' stroke-width='2'/%3E%3C/svg%3E" />
+<title>Map Testing Tool</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 <style>
   body {
@@ -14,7 +15,7 @@
     user-select: none;
     background-color: #f5f5f5;
     color: #333;
-    margin-bottom: 180px; /* Allow scrolling to reach points under test interface */
+    margin-bottom: 180px; /* Allow scrolling to reach elements under test interface */
   }
 
   h1 {
@@ -143,7 +144,6 @@
     display: none;
   }
 
-  #loadMapContainer label,
   #loadMapContainer button {
     padding: 12px 24px;
     background-color: #2196F3;
@@ -158,18 +158,14 @@
     transition: all 0.2s ease;
     font-size: 14px;
     box-shadow: 0 2px 4px rgba(33,150,243,0.2);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-weight: 500;
   }
 
-  #loadMapContainer label:hover,
   #loadMapContainer button:hover {
     background-color: #1976D2;
     transform: translateY(-1px);
     box-shadow: 0 3px 6px rgba(33,150,243,0.3);
-  }
-
-  #loadMapContainer label.loading {
-    background-color: #9e9e9e;
-    cursor: wait;
   }
 
   #errorMessage {
@@ -192,7 +188,7 @@
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
-  #mapContainer.add-mode {
+  #mapContainer.point-mode {
     cursor: crosshair;
   }
   #mapContainer.polygon-mode {
@@ -645,7 +641,7 @@
     height: 100%;
     overflow: visible;
   }
-  #saveLabelsBtn, #loadLabelsBtn {
+  #saveElementsBtn, #loadElementsBtn {
     display: none;
   }
   #mainMenu {
@@ -740,35 +736,326 @@
       opacity: 1;
     }
   }
+
+  /* Tag/Type Sidebar Panel */
+  #typePanel {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.12);
+    z-index: 2000;
+    padding: 24px 20px 20px 20px;
+    overflow-y: auto;
+    transition: transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.3s;
+    transform: translateX(-100%);
+  }
+  #typePanel .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  #typePanel h2 {
+    font-size: 20px;
+    color: #2196F3;
+    margin: 0;
+  }
+  #typePanel button {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+  }
+  #typePanel .tag-list {
+    margin-bottom: 18px;
+  }
+  #typePanel label {
+    font-weight: 500;
+    color: #333;
+  }
+  #typePanel select {
+    margin-top: 8px;
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+  }
+  #typePanel hr {
+    margin: 18px 0;
+  }
+  #typePanel .tag-management {
+    margin-top: 12px;
+  }
+  #typePanel input[type="text"] {
+    flex: 1;
+    padding: 7px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+  }
+  #typePanel button[type="submit"] {
+    padding: 7px 14px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  #typePanel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  #typePanel li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    /* animation styles for reordering */
+    transition: transform 0.25s cubic-bezier(.4,2,.6,1), opacity 0.2s;
+    position: relative;
+    /* for animation */
+  }
+  #typePanel li.moving {
+    z-index: 2;
+    opacity: 0.7;
+  }
+  #typePanel li span {
+    flex: 1;
+    padding-right: 10px;
+  }
+  #typePanel button {
+    padding: 2px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #typePanel .edit-tag-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 3000;
+    padding: 24px 20px;
+    min-width: 300px;
+  }
+  #typePanel .edit-tag-modal h3 {
+    margin-top: 0;
+    color: #2196F3;
+  }
+  #typePanel .edit-tag-modal input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  #typePanel .edit-tag-modal button[type="submit"] {
+    padding: 7px 16px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  #typePanel .delete-tag-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 3000;
+    padding: 24px 20px;
+    min-width: 300px;
+  }
+  #typePanel .delete-tag-modal h3 {
+    margin-top: 0;
+    color: #f44336;
+  }
+  #typePanel .delete-tag-modal p {
+    margin-bottom: 20px;
+  }
+  #typePanel .delete-tag-modal button[type="submit"] {
+    padding: 7px 16px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  #testTagTypeModal {
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.25);
+    z-index:4000;
+    align-items:center;
+    justify-content:center;
+  }
+  #testTagTypeModal > div {
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 4px 24px rgba(33,150,243,0.13), 0 1.5px 6px rgba(0,0,0,0.08);
+    border:1.5px solid #e3eafc;
+    padding:32px 28px 24px 28px;
+    min-width:220px;
+    max-width:340px;
+    width:auto;
+    margin:auto;
+    position:relative;
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    font-size:16px;
+    transition:box-shadow 0.2s;
+  }
+  #testTagTypeModal h3 {
+    margin-top:0;
+    color:#2196F3;
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    margin-bottom:18px;
+  }
+  #testTagTypeForm {
+    margin-bottom:18px;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+  }
+  #testTagTypeForm div {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:0;
+  }
+  #testTagTypeForm input[type=checkbox] {
+    accent-color:#2196F3;
+    width:18px;
+    height:18px;
+    margin:0;
+    border-radius:4px;
+    border:1.5px solid #b0c4de;
+    box-shadow:0 1px 2px rgba(33,150,243,0.04);
+    transition:box-shadow 0.2s;
+  }
+  #testTagTypeForm label {
+    font-size:15px;
+    color:#333;
+    font-weight:500;
+    cursor:pointer;
+    margin-left:2px;
+  }
+  #testTagTypeModal button[type=button] {
+    padding:7px 16px;
+    background:#2196F3;
+    color:white;
+    border:none;
+    border-radius:6px;
+    font-size:15px;
+    cursor:pointer;
+    font-weight:500;
+    transition:background 0.18s, box-shadow 0.18s;
+    box-shadow:0 1.5px 6px rgba(33,150,243,0.08);
+  }
+  #testTagTypeModal button[type=button]:hover {
+    background:#1976D2;
+  }
+  #testTagTypeModal .select-btns {
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+    justify-content:center;
+    width:100%;
+  }
+  #testTagTypeModal .modal-btns {
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:10px;
+  }
+  .tag-eye-icon {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .tag-eye-icon i {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s;
+    font-size: 18px;
+    padding: 0;
+  }
+  /* Tag change highlight animation */
+  .label-box.tag-changed {
+    animation: tagChangedFlash 0.7s cubic-bezier(.4,2,.6,1);
+  }
+  @keyframes tagChangedFlash {
+    0% { background: #fffbe6; box-shadow: 0 0 0 0 #ffe082; }
+    30% { background: #ffe082; box-shadow: 0 0 8px 2px #ffe082; }
+    70% { background: #ffe082; box-shadow: 0 0 8px 2px #ffe082; }
+    100% { background: rgba(255,255,255,0.95); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  }
 </style>
 </head>
 <body>
-<h1><i class="fas fa-map-marked-alt"></i> Map Labeling Tool</h1>
+<h1><i class="fas fa-map-marked-alt"></i> Map Testing Tool</h1>
 
 <div id="loadMapContainer">
-  <input type="file" id="mapFileInput" accept="image/*" />
-  <label for="mapFileInput" id="loadMapLabel">
+  <input type="file" id="mapFileInput" accept="image/*" style="display:none;" />
+  <button id="loadMapButton" type="button">
     <i class="fas fa-upload"></i> Load Map Image
-    </label>
-  <button id="saveLabelsBtn" onclick="saveLabels()" style="display: none;">
-    <i class="fas fa-save"></i> Save Labels
   </button>
-  <button id="loadLabelsBtn" onclick="loadLabels()" style="display: none;">
-    <i class="fas fa-folder-open"></i> Load Labels
+  <button id="saveElementsBtn" onclick="saveElements()" style="display: none;">
+    <i class="fas fa-save"></i> Save Elements
   </button>
-  <input type="file" id="labelsFileInput" accept=".json" style="display: none;" />
-  <input type="file" id="saveLabelsFileInput" nwsaveas="map_labels.json" accept=".json" style="display: none;" />
+  <button id="loadElementsBtn" onclick="loadElements()" style="display: none;">
+    <i class="fas fa-folder-open"></i> Load Elements
+  </button>
+  <input type="file" id="elementsFileInput" accept=".json" style="display: none;" />
+  <input type="file" id="saveElementsFileInput" nwsaveas="map_elements.json" accept=".json" style="display: none;" />
   <div id="errorMessage"><i class="fas fa-exclamation-circle"></i> <span></span></div>
 </div>
 
 <div id="mainMenu">
   <div class="menu" role="toolbar" aria-label="Map interaction controls">
     <div class="menu-row">
-        <button id="identPointBtn" title="Identify the points">
-        <i class="fas fa-map-pin"></i> Identify Points
+        <button id="identPointBtn" title="Identify the elements">
+        <i class="fas fa-map-pin"></i> Identify Elements
       </button>
-        <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the points">
-        <i class="fas fa-search"></i> Find Points
+        <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
+        <i class="fas fa-search"></i> Find Elements
       </button>
     </div>
     <div class="menu-row">
@@ -778,24 +1065,27 @@
     </div>
     <div class="edit-tools">
       <div class="menu-row">
-        <button id="addBtn" onclick="toggleAddMenu()" disabled aria-pressed="false" title="Add items">
+        <button id="addBtn" onclick="toggleAddMenu()" disabled aria-pressed="false" title="Add elements">
           <i class="fas fa-plus"></i> Add
         </button>
-        <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move items">
+        <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move elements">
           <i class="fas fa-arrows-alt"></i> Move
         </button>
-        <button id="editLabelBtn" onclick="setMode('editLabel')" disabled aria-pressed="false" title="Edit text">
+        <button id="editElementBtn" onclick="setMode('editLabel')" disabled aria-pressed="false" title="Edit element text">
           <i class="fas fa-font"></i> Edit Text
         </button>
-        <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false" title="Delete items">
+        <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false" title="Delete elements">
           <i class="fas fa-trash-alt"></i> Delete
+        </button>
+        <button id="tagPanelBtn" onclick="setMode('changeTag')" aria-pressed="false" title="Change existing element tags">
+          <i class="fas fa-tags"></i> Change Tag
         </button>
       </div>
       <div id="addSubMenu" class="menu-row" style="display: none;">
-        <button id="fixBtn" onclick="setMode('add')" disabled aria-pressed="false" title="Add new fix">
-          <i class="fas fa-thumbtack"></i> Fix
+        <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false" title="Add new point">
+          <i class="fas fa-thumbtack"></i> Point
         </button>
-        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false" title="Draw or finish shape">
+        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false" title="Draw shape">
           <i class="fas fa-draw-polygon"></i> Shape
         </button>
         <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
@@ -805,7 +1095,40 @@
   </div>
 </div>
 
-  <div id="mapContainer" tabindex="0" aria-label="Map with labels and leader lines" style="outline:none;">
+  <!-- Tag/Type Sidebar Panel -->
+  <div id="typePanel" style="display:none; position:fixed; top:0; left:0; width:320px; height:100%; background:#fff; box-shadow:2px 0 8px rgba(0,0,0,0.12); z-index:2000; padding:24px 20px 20px 20px; overflow-y:auto; transition:transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.3s; transform:translateX(-100%);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2 style="font-size:20px; color:#2196F3; margin:0;">Select a Tag</h2>
+      <button onclick="toggleTypePanel()" style="background:none; border:none; font-size:22px; color:#888; cursor:pointer;" title="Close panel"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="tagTypeListContainer">
+      <ul id="tagTypeList" style="list-style:none; padding:0; margin:12px 0 0 0;"></ul>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <input id="newTagInput" type="text" placeholder="Add new tag..." style="flex:1; padding:7px; border-radius:6px; border:1px solid #ccc; font-size:15px;">
+        <button onclick="addNewTag()" style="padding:7px 14px; background:#2196F3; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Add</button>
+      </div>
+    </div>
+    <!-- Edit Tag Modal -->
+    <div id="editTagModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:3000; padding:24px 20px; min-width:300px;">
+      <h3 style="margin-top:0; color:#2196F3;">Edit Tag</h3>
+      <input id="editTagInput" type="text" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:15px; margin-bottom:16px;">
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button onclick="closeEditTagModal()" style="padding:7px 16px; background:#9e9e9e; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Cancel</button>
+        <button onclick="saveEditTag()" style="padding:7px 16px; background:#2196F3; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Save</button>
+      </div>
+    </div>
+    <!-- Delete Tag Confirmation Modal -->
+    <div id="deleteTagModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:3000; padding:24px 20px; min-width:300px;">
+      <h3 style="margin-top:0; color:#f44336;">Delete Tag</h3>
+      <p id="deleteTagMsg">Are you sure you want to delete this tag?</p>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button onclick="closeDeleteTagModal()" style="padding:7px 16px; background:#9e9e9e; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Cancel</button>
+        <button onclick="confirmDeleteTag()" style="padding:7px 16px; background:#f44336; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mapContainer" tabindex="0" aria-label="Map with annotated elements" style="outline:none;">
     <img id="mapImage" alt="Map" />
     <svg id="shapesLayer" aria-hidden="true"></svg>
     <svg id="leaderLines" aria-hidden="true"></svg>
@@ -813,7 +1136,7 @@
 
   <div id="testInterface">
     <div id="identifyInterface">
-    <input type="text" id="testInput" placeholder="Enter the name of the highlighted item..." />
+    <input type="text" id="testInput" placeholder="Enter element name..." />
       <div class="feedback"></div>
     <div class="progress"></div>
     </div>
@@ -836,6 +1159,22 @@
   </div>
 </div>
 
+<div id="testTagTypeModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:4000; align-items:center; justify-content:center;">
+  <div>
+    <h3>Select Tag Types for Test</h3>
+    <div class="select-btns">
+      <button type="button" id="selectAllTestTagsBtn" style="background:#ebe7fb; color:#1522d8;">Select All</button>
+      <button type="button" id="deselectAllTestTagsBtn" style="background:#fbe9e7; color:#d84315;">Deselect All</button>
+    </div>
+    <form id="testTagTypeForm"></form>
+    <div class="modal-btns">
+      <button type="button" onclick="closeTestTagTypeModal()" style="background:#9e9e9e;">Cancel</button>
+      <button type="button" onclick="confirmTestTagTypeModal()">Start Test</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
   const mapContainer = document.getElementById('mapContainer');
   const leaderLinesSVG = document.getElementById('leaderLines');
@@ -843,7 +1182,7 @@
   const mapImage = document.getElementById('mapImage');
   const mapFileInput = document.getElementById('mapFileInput');
   const mainMenu = document.getElementById('mainMenu');
-  const loadMapLabel = document.getElementById('loadMapLabel');
+  const loadMapElement = document.getElementById('loadMapElement');
 
   let editEnabled = false;
   let currentMode = null;
@@ -885,7 +1224,7 @@
     editEnabled = false;
     
     // Ensure all edit buttons are disabled initially
-    ['addBtn', 'deleteBtn', 'moveBtn', 'polygonBtn', 'lineBtn', 'editLabelBtn'].forEach(id => {
+    ['addBtn', 'deleteBtn', 'moveBtn', 'polygonBtn', 'lineBtn', 'editElementBtn', 'tagPanelBtn'].forEach(id => {
       const btn = document.getElementById(id);
       if (btn) {
         btn.disabled = true;
@@ -934,7 +1273,7 @@
       addBtn.classList.remove('active');
       
       // Turn off current mode if it's a drawing mode
-      if (currentMode === 'add' || currentMode === 'polygon' || currentMode === 'line') {
+      if (currentMode === 'point' || currentMode === 'polygon' || currentMode === 'line') {
         currentMode = null;
         currentShape = null;
         // Clear any remaining points
@@ -959,7 +1298,7 @@
         lineBtn.title = 'Draw line';
         
         // Reset cursor
-        mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
+        mapContainer.classList.remove('point-mode', 'polygon-mode', 'line-mode');
         mapContainer.style.cursor = 'default';
       }
       updateButtons();
@@ -977,7 +1316,7 @@
     const mapContainer = document.getElementById('mapContainer');
     
     // Reset all cursor-related classes first
-    mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
+    mapContainer.classList.remove('point-mode', 'polygon-mode', 'line-mode');
     mapContainer.style.cursor = 'default';
     
     // Reset all element cursor styles
@@ -1002,7 +1341,7 @@
     }
 
     switch (mode) {
-      case 'add':
+      case 'point':
       case 'polygon':
       case 'line':
         mapContainer.classList.add(`${mode}-mode`);
@@ -1056,8 +1395,8 @@
     // Update cursor styles for the new mode
     updateCursorStyles(mode);
 
-    if (mode === 'add') {
-      mapContainer.classList.add('add-mode');
+    if (mode === 'point') {
+      mapContainer.classList.add('point-mode');
     } else if (mode === 'polygon') {
       mapContainer.classList.add('polygon-mode');
     } else if (mode === 'line') {
@@ -1100,14 +1439,14 @@
     
     // Only hide Add submenu if explicitly switching to a non-Add mode
     // Keep it open when finishing shapes/lines
-    if (mode !== null && mode !== 'add' && mode !== 'polygon' && mode !== 'line') {
+    if (mode !== null && mode !== 'point' && mode !== 'polygon' && mode !== 'line') {
       addSubMenu.style.display = 'none';
       addBtn.setAttribute('aria-pressed', 'false');
       addBtn.classList.remove('active');
     }
     
     // If switching to Add mode, show Add submenu and activate Add button
-    if (mode === 'add') {
+    if (mode === 'point') {
       addSubMenu.style.display = 'flex';
       addBtn.setAttribute('aria-pressed', 'true');
       addBtn.classList.add('active');
@@ -1137,7 +1476,7 @@
     if (editEnabled) {
       editTools.classList.add('visible');
       // Enable edit tool buttons
-      ['addBtn', 'moveBtn', 'editLabelBtn', 'deleteBtn', 'fixBtn', 'polygonBtn', 'lineBtn'].forEach(id => {
+      ['addBtn', 'moveBtn', 'editElementBtn', 'deleteBtn', 'pointBtn', 'polygonBtn', 'lineBtn', 'tagPanelBtn'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
           btn.disabled = false;
@@ -1178,7 +1517,7 @@
         if (btn.id !== 'editToggle' && 
             btn.id !== 'identPointBtn' && 
             btn.id !== 'findPointBtn' && 
-            btn.id !== 'editLabelBtn') {  // Don't disable edit text button
+            btn.id !== 'editElementBtn') {  // Don't disable edit text button
           btn.disabled = true;
           btn.setAttribute('aria-disabled', 'true');
         }
@@ -1190,6 +1529,13 @@
       const addBtn = document.getElementById('addBtn');
       addBtn.setAttribute('aria-pressed', 'false');
       addBtn.classList.remove('active');
+
+      // Close the tag type panel if open
+      const typePanel = document.getElementById('typePanel');
+      if (typePanel && typePanel.style.display !== 'none') {
+        typePanel.style.transform = 'translateX(-100%)';
+        setTimeout(() => { typePanel.style.display = 'none'; }, 300);
+      }
     }
 
     // Update cursor styles based on edit mode state
@@ -1213,10 +1559,10 @@
   }
 
   function updateButtons() {
-    ['moveBtn', 'deleteBtn', 'fixBtn', 'polygonBtn', 'lineBtn', 'editLabelBtn'].forEach(id => {
+    ['moveBtn', 'deleteBtn', 'pointBtn', 'polygonBtn', 'lineBtn', 'editElementBtn', 'tagPanelBtn'].forEach(id => {
       const btn = document.getElementById(id);
       if (btn) {
-        const btnMode = id === 'fixBtn' ? 'add' : id.replace('Btn', '');
+        const btnMode = id === 'pointBtn' ? 'point' : id.replace('Btn', '');
       const active = (btnMode === currentMode);
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-pressed', active);
@@ -1237,7 +1583,7 @@
     leaderLinesSVG.setAttribute('height', containerRect.height);
 
     // Draw leader lines for regular labels
-    labels.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY }) => {
+    labels.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
       const x1 = refX;
       const y1 = refY;
       const x2 = labelX;
@@ -1248,10 +1594,10 @@
       line.setAttribute('x2', x2);
       line.setAttribute('y2', y2);
       line.setAttribute('class', 'leader-line');
-      // Set data-for to match labelBoxEl's id
       if (labelBoxEl.id) {
         line.setAttribute('data-for', labelBoxEl.id);
       }
+      line.setAttribute('data-type', type);
       leaderLinesSVG.appendChild(line);
     });
 
@@ -1270,6 +1616,7 @@
       if (polygon.labelBoxEl.id) {
         line.setAttribute('data-for', polygon.labelBoxEl.id);
       }
+      line.setAttribute('data-type', polygon.type);
       leaderLinesSVG.appendChild(line);
     });
 
@@ -1288,6 +1635,7 @@
       if (lineObj.labelBoxEl.id) {
         line.setAttribute('data-for', lineObj.labelBoxEl.id);
       }
+      line.setAttribute('data-type', lineObj.type);
       leaderLinesSVG.appendChild(line);
     });
 
@@ -1296,7 +1644,7 @@
 
   // Function to update save button state
   function updateSaveButtonState() {
-    const saveButton = document.getElementById('saveLabelsBtn');
+    const saveButton = document.getElementById('saveElementsBtn');
     const hasData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
     saveButton.disabled = !hasData;
     saveButton.style.opacity = hasData ? '1' : '0.5';
@@ -1304,7 +1652,7 @@
   }
 
   // Add label at ref point with label offset
-  function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = true, shouldFocus = true, isNewFix = false) {
+  function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = true, shouldFocus = true, isNewPoint = false) {
     let refPointEl = null;
     if (createRefPoint) {
       refPointEl = document.createElement('div');
@@ -1329,7 +1677,7 @@
     labelBoxEl.setAttribute('tabindex', '0');
     labelBoxEl.setAttribute('role', 'textbox');
     labelBoxEl.setAttribute('aria-label', 'Label text');
-    labelBoxEl.contentEditable = (shouldFocus || isNewFix) ? 'true' : 'false';
+    labelBoxEl.contentEditable = (shouldFocus || isNewPoint) ? 'true' : 'false';
         // Assign a unique id if not already set
         if (!labelBoxEl.id) {
       labelBoxEl.id = `label-${labelIdCounter++}`;
@@ -1338,8 +1686,8 @@
     // Trigger the creation animation
     requestAnimationFrame(() => labelBoxEl.classList.add('visible'));
 
-    // Focus and set up editing if it's a new fix or shouldFocus is true
-    if (shouldFocus || isNewFix) {
+    // Focus and set up editing if it's a new point or shouldFocus is true
+    if (shouldFocus || isNewPoint) {
       requestAnimationFrame(() => {
         labelBoxEl.contentEditable = 'true';
         labelBoxEl.focus();
@@ -1361,7 +1709,7 @@
 
   // Add a new label at position x,y relative to map container
   function addLabel(x, y) {
-    if (!editEnabled || currentMode !== 'add') return;
+    if (!editEnabled || currentMode !== 'point') return;
 
     // Position reference point
     const refX = x;
@@ -1388,7 +1736,8 @@
       relLabelX: relLabelCoords.x,
       relLabelY: relLabelCoords.y,
       correctText: '',
-      userGuess: ''
+      userGuess: '',
+      type: currentType || tags[0] || ''
     };
 
     labels.push(labelObj);
@@ -1992,6 +2341,7 @@
       ).join(' ') + 'Z';
       svgPath.setAttribute('d', pathData);
       svgPath.setAttribute('class', 'polygon-path');
+      svgPath.setAttribute('data-type', currentShape === 'polygon' ? currentType || tags[0] || '' : 'default');
       shapesLayer.appendChild(svgPath);
 
       // Calculate centroid for anchor point
@@ -2005,6 +2355,7 @@
       mapContainer.appendChild(anchorPoint);
       // Trigger the creation animation
       requestAnimationFrame(() => anchorPoint.classList.add('visible'));
+      anchorPoint.setAttribute('data-type', currentShape === 'polygon' ? currentType || tags[0] || '' : 'default');
 
       // Create label
       const labelX = centroid.x + 20;
@@ -2035,7 +2386,8 @@
         relAnchorX: relCentroidCoords.x,
         relAnchorY: relCentroidCoords.y,
         relLabelX: relLabelCoords.x,
-        relLabelY: relLabelCoords.y
+        relLabelY: relLabelCoords.y,
+        type: currentShape === 'polygon' ? currentType || tags[0] || '' : 'default'
       });
     }
 
@@ -2072,7 +2424,7 @@
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (currentMode === 'add') {
+    if (currentMode === 'point') {
       addLabel(x, y);
     } else if (currentMode === 'delete') {
     removeLabelAtPoint(x, y);
@@ -2195,8 +2547,8 @@
     // Update cursor styles for the new mode
     updateCursorStyles(mode);
 
-    if (mode === 'add') {
-      mapContainer.classList.add('add-mode');
+    if (mode === 'point') {
+      mapContainer.classList.add('point-mode');
     } else if (mode === 'polygon') {
       mapContainer.classList.add('polygon-mode');
     } else if (mode === 'line') {
@@ -2239,14 +2591,14 @@
     
     // Only hide Add submenu if explicitly switching to a non-Add mode
     // Keep it open when finishing shapes/lines
-    if (mode !== null && mode !== 'add' && mode !== 'polygon' && mode !== 'line') {
+    if (mode !== null && mode !== 'point' && mode !== 'polygon' && mode !== 'line') {
       addSubMenu.style.display = 'none';
       addBtn.setAttribute('aria-pressed', 'false');
       addBtn.classList.remove('active');
     }
     
     // If switching to Add mode, show Add submenu and activate Add button
-    if (mode === 'add') {
+    if (mode === 'point') {
       addSubMenu.style.display = 'flex';
       addBtn.setAttribute('aria-pressed', 'true');
       addBtn.classList.add('active');
@@ -2370,16 +2722,14 @@
 
     const loadNewMap = () => {
       return new Promise((resolve, reject) => {
-        loadMapLabel.classList.add('loading');
-        loadMapLabel.textContent = 'Loading...';
         errorMessage.style.display = 'none';
 
         // Reset all UI states
         resetUIState();
 
         // Hide save/load buttons while loading
-        document.getElementById('saveLabelsBtn').style.display = 'none';
-        document.getElementById('loadLabelsBtn').style.display = 'none';
+        document.getElementById('saveElementsBtn').style.display = 'none';
+        document.getElementById('loadElementsBtn').style.display = 'none';
 
         const reader = new FileReader();
         
@@ -2390,10 +2740,8 @@
             console.log('Image loaded successfully:', img.width, 'x', img.height);
             mapImage.src = img.src;
             mainMenu.style.display = 'block';
-            document.getElementById('saveLabelsBtn').style.display = 'inline-block';
-            document.getElementById('loadLabelsBtn').style.display = 'inline-block';
-            loadMapLabel.classList.remove('loading');
-            loadMapLabel.textContent = 'Load New Map Image';
+            document.getElementById('saveElementsBtn').style.display = 'inline-block';
+            document.getElementById('loadElementsBtn').style.display = 'inline-block';
             
             // Clear all existing data
             labels.forEach(label => {
@@ -2444,13 +2792,9 @@
             console.error('Failed to load image');
             errorMessage.textContent = 'Failed to load the image. Please try another file.';
             errorMessage.style.display = 'block';
-            loadMapLabel.classList.remove('loading');
-            loadMapLabel.classList.add('error');
-            setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
-            loadMapLabel.textContent = 'Load Map Image';
             // Keep save/load buttons hidden
-            document.getElementById('saveLabelsBtn').style.display = 'none';
-            document.getElementById('loadLabelsBtn').style.display = 'none';
+            document.getElementById('saveElementsBtn').style.display = 'none';
+            document.getElementById('loadElementsBtn').style.display = 'none';
             // Reset file input to allow selecting the same file again
             mapFileInput.value = '';
             reject(new Error('Failed to load image'));
@@ -2464,13 +2808,9 @@
           console.error('Failed to read file');
           errorMessage.textContent = 'Error reading the file. Please try again.';
           errorMessage.style.display = 'block';
-          loadMapLabel.classList.remove('loading');
-          loadMapLabel.classList.add('error');
-                      setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
-            loadMapLabel.textContent = 'Load Map Image';
           // Keep save/load buttons hidden
-          document.getElementById('saveLabelsBtn').style.display = 'none';
-          document.getElementById('loadLabelsBtn').style.display = 'none';
+          document.getElementById('saveElementsBtn').style.display = 'none';
+          document.getElementById('loadElementsBtn').style.display = 'none';
             // Reset file input to allow selecting the same file again
             mapFileInput.value = '';
             reject(new Error('Failed to read file'));
@@ -2525,7 +2865,7 @@
       document.getElementById('saveAndContinue').onclick = async () => {
         // Save current labels first
         await new Promise(resolve => {
-        saveLabels();
+        saveElements();
           // Give time for the save dialog to complete
           const checkInterval = setInterval(() => {
             const saveDialog = document.querySelector('input[type="file"][nwsaveas]');
@@ -2576,14 +2916,10 @@
     const errorMessage = document.getElementById('errorMessage');
     errorMessage.textContent = 'Failed to display the image. Please try another file.';
     errorMessage.style.display = 'block';
-    loadMapLabel.classList.remove('loading');
-    loadMapLabel.classList.add('error');
-    setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
-    loadMapLabel.textContent = 'Load Map Image';
   });
 
   // Save labels to JSON file
-  function saveLabels() {
+  function saveElements() {
     const exportData = {
       labels: labels.map(label => ({
         refX: label.relRefX,
@@ -2591,7 +2927,7 @@
         labelX: label.relLabelX,
         labelY: label.relLabelY,
         text: label.labelBoxEl.textContent,
-        type: 'label'
+        type: label.type || 'default'
       })),
       polygons: polygons.map(polygon => ({
         points: polygon.points.map(p => ({ x: p.relX, y: p.relY })),
@@ -2600,7 +2936,7 @@
         labelX: polygon.relLabelX,
         labelY: polygon.relLabelY,
         text: polygon.labelBoxEl.textContent,
-        type: 'polygon'
+        type: polygon.type || 'default'
       })),
       lines: lines.map(line => ({
         points: line.points.map(p => ({ x: p.relX, y: p.relY })),
@@ -2609,7 +2945,7 @@
         labelX: line.relLabelX,
         labelY: line.relLabelY,
         text: line.labelBoxEl.textContent,
-        type: 'line'
+        type: line.type || 'default'
       }))
     };
 
@@ -2629,8 +2965,8 @@
   }
 
   // Load labels from JSON file
-  function loadLabels() {
-    const input = document.getElementById('labelsFileInput');
+  function loadElements() {
+    const input = document.getElementById('elementsFileInput');
 
     // Check if there are any existing labels, polygons, or lines
     const hasExistingData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
@@ -2646,6 +2982,25 @@
         const data = JSON.parse(e.target.result);
           // Reset the file input so the same file can be loaded again
           input.value = '';
+
+        // Collect all tag types from the file
+        const foundTags = new Set();
+        (data.labels || []).forEach(label => { if (label.type) foundTags.add(label.type); });
+        (data.polygons || []).forEach(polygon => { if (polygon.type) foundTags.add(polygon.type); });
+        (data.lines || []).forEach(line => { if (line.type) foundTags.add(line.type); });
+        tags = Array.from(foundTags);
+        // Automatically select the first tag as active
+        if (tags.length > 0) {
+          currentType = tags[0];
+          saveTags();
+        }
+        // Make all tags visible and remove any not present in the file
+        tagVisibility = {};
+        tags.forEach(tag => { tagVisibility[tag] = true; });
+        saveTags();
+        saveTagVisibility();
+        updateTagVisibilityOnMap();
+        renderTypePanel();
 
         // Clear existing labels
         labels.forEach(label => {
@@ -2719,7 +3074,8 @@
             relRefX: label.refX,
             relRefY: label.refY,
             relLabelX: label.labelX,
-            relLabelY: label.labelY
+            relLabelY: label.labelY,
+            type: label.type || 'default'
           });
         });
 
@@ -2730,7 +3086,7 @@
             const absPos = toAbsoluteCoords(p.x, p.y);
             const pointEl = document.createElement('div');
             pointEl.className = 'polygon-point visible';
-            
+            pointEl.setAttribute('data-type', polygon.type || 'default');
             // Add appropriate classes based on current mode
             if (currentMode === 'move') {
               pointEl.classList.add('movable');
@@ -2762,6 +3118,7 @@
           svgPath.setAttribute('stroke-width', '2');
           svgPath.setAttribute('class', 'polygon-path');
           svgPath.style.pointerEvents = 'none';
+          svgPath.setAttribute('data-type', polygon.type || 'default');
           shapesLayer.appendChild(svgPath);
 
           // Create anchor point
@@ -2782,6 +3139,7 @@
           anchorPoint.style.top = absAnchorPos.y + 'px';
           anchorPoint.style.display = editEnabled ? 'block' : 'none';
           mapContainer.appendChild(anchorPoint);
+          anchorPoint.setAttribute('data-type', polygon.type || 'default');
 
           // Create label
           const absLabelPos = toAbsoluteCoords(polygon.labelX, polygon.labelY);
@@ -2814,7 +3172,8 @@
             relAnchorX: polygon.anchorX,
             relAnchorY: polygon.anchorY,
             relLabelX: polygon.labelX,
-            relLabelY: polygon.labelY
+            relLabelY: polygon.labelY,
+            type: polygon.type || 'default'
           });
         });
 
@@ -2825,7 +3184,7 @@
             const absPos = toAbsoluteCoords(p.x, p.y);
             const pointEl = document.createElement('div');
             pointEl.className = 'polygon-point visible';
-            
+            pointEl.setAttribute('data-type', line.type || 'default');
             // Add appropriate classes based on current mode
             if (currentMode === 'move') {
               pointEl.classList.add('movable');
@@ -2857,6 +3216,7 @@
           polyline.setAttribute('stroke-width', '2');
           polyline.setAttribute('class', 'line-path');
           polyline.style.pointerEvents = 'none';
+          polyline.setAttribute('data-type', line.type || 'default');
           shapesLayer.appendChild(polyline);
 
           // Create anchor point
@@ -2877,6 +3237,7 @@
           anchorPoint.style.top = absAnchorPos.y + 'px';
           anchorPoint.style.display = editEnabled ? 'block' : 'none';
           mapContainer.appendChild(anchorPoint);
+          anchorPoint.setAttribute('data-type', line.type || 'default');
 
           // Create label
           const absLabelPos = toAbsoluteCoords(line.labelX, line.labelY);
@@ -2909,7 +3270,8 @@
             relAnchorX: line.anchorX,
             relAnchorY: line.anchorY,
             relLabelX: line.labelX,
-            relLabelY: line.labelY
+            relLabelY: line.labelY,
+            type: line.type || 'default'
           });
         });
 
@@ -2962,7 +3324,7 @@
       
       // Handle dialog buttons
       document.getElementById('saveAndContinue').onclick = () => {
-        saveLabels();
+        saveElements();
         dialog.remove();
         overlay.remove();
         processLabelsFile();
@@ -3112,7 +3474,7 @@
       ...labels.map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
       ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
       ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
-    ];
+    ].filter(item => item.element && item.label);
     
     remainingTestItems = [...testItems];
     selectNextTestItem();
@@ -3304,17 +3666,17 @@
     // Re-enable all menu buttons and their submenus
     const menuButtons = {
       'loadImageBtn': true,
-      'saveLabelsBtn': true,
-      'loadLabelsBtn': true,
+      'saveElementsBtn': true,
+      'loadElementsBtn': true,
       'addBtn': true,
       'moveBtn': true,
-      'editLabelBtn': true,  // Changed from editTextBtn
+      'editElementBtn': true,  // Changed from editTextBtn
       'deleteBtn': true,
       'identPointBtn': true,
       'findPointBtn': true,
       'editToggle': true,
       // Add submenu buttons
-      'addFixedPointBtn': true,
+      'addPointBtn': true,
       'addShapeBtn': true,
       'addLineBtn': true
     };
@@ -3331,7 +3693,7 @@
         btn.setAttribute('aria-disabled', 'false');
         
         // Special handling for buttons that might need additional attributes reset
-        if (btnId === 'loadImageBtn' || btnId === 'editLabelBtn') {  // Changed from editTextBtn
+        if (btnId === 'loadImageBtn' || btnId === 'editElementBtn') {  // Changed from editTextBtn
           btn.style.display = '';  // Reset to default display
         }
         // Special handling for edit toggle
@@ -3458,6 +3820,9 @@
     testItems = [];
     remainingTestItems = [];
     currentTestItem = null;
+
+    // Restore element visibility after Identify Elements mode
+    restoreIdentifyTestVisibility();
   }
 
   function stopTest() {
@@ -3598,6 +3963,24 @@
   });
 
   function toggleTestMode(mode) {
+    // Show tag type selection modal before starting test
+    showTestTagTypeModal(mode, function(selectedTags) {
+      // Check if there are any elements in the selected subset
+      const hasAny =
+        labels.some(label => selectedTags.includes(label.type)) ||
+        polygons.some(polygon => selectedTags.includes(polygon.type)) ||
+        lines.some(line => selectedTags.includes(line.type));
+      if (!hasAny) {
+        alert('No elements exist for the selected tag types. Please add elements or select different tags.');
+        return;
+      }
+      // Proceed with test setup using only selected tag types
+      _toggleTestModeInternal(mode, selectedTags);
+    });
+  }
+
+  // Internal function to handle test setup after tag selection
+  function _toggleTestModeInternal(mode, selectedTags) {
     const identBtn = document.getElementById('identPointBtn');
     const findBtn = document.getElementById('findPointBtn');
     const editToggle = document.getElementById('editToggle');
@@ -3666,11 +4049,11 @@
       }
     });
 
-    // Prepare test items
+    // Prepare test items (filter by selected tag types)
     testItems = [
-      ...labels.map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
-      ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
-      ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
+      ...labels.filter(label => selectedTags.includes(label.type)).map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
+      ...polygons.filter(polygon => selectedTags.includes(polygon.type)).map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
+      ...lines.filter(line => selectedTags.includes(line.type)).map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
     ].filter(item => item.element && item.label);
     
     // Shuffle the test items array for random order
@@ -3786,6 +4169,22 @@
         }
       });
     }
+
+    // Close the tag type panel if open
+    const typePanel = document.getElementById('typePanel');
+    if (typePanel && typePanel.style.display !== 'none') {
+      typePanel.style.transform = 'translateX(-100%)';
+      setTimeout(() => { typePanel.style.display = 'none'; }, 300);
+    }
+
+    // In Identify Elements mode, temporarily show/hide only the elements being tested
+    if (mode === 'ident') {
+      setIdentifyTestVisibility(testItems);
+      if (currentTestItem.type === 'label') {
+      currentTestItem.element.style.display = 'block';
+    }
+    }
+    
   }
 
   // Also update stopTest to properly reset button states
@@ -3921,7 +4320,7 @@
       if (btn.id !== 'editToggle' && 
           btn.id !== 'identPointBtn' && 
           btn.id !== 'findPointBtn' && 
-          btn.id !== 'editLabelBtn') {  // Don't disable edit text button
+          btn.id !== 'editElementBtn') {  // Don't disable edit text button
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
       }
@@ -3966,7 +4365,7 @@
     const rect = mapContainer.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
-    const buffer = 10; //fixes
+    const buffer = 10; //points
 
     const feedback = document.querySelector('#findInterface .feedback');
 
@@ -4452,6 +4851,801 @@
 
   // Add image load handler to update overlays after image loads
   mapImage.addEventListener('load', updateAllPositions);
+
+  // Tag/Type Management
+  let tags = [];
+  let currentType = '';
+  let tagToEdit = null;
+  let tagToDelete = null;
+
+  function loadTags() {
+    const stored = localStorage.getItem('mapTags');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          tags = parsed;
+        } else {
+          tags = ['Fix', 'Navaid', 'Warning Area', 'Airway', 'Sector'];
+        }
+      } catch (e) {
+        tags = ['Fix', 'Navaid', 'Warning Area', 'Airway', 'Sector'];
+      }
+    } else {
+      tags = ['Fix', 'Navaid', 'Warning Area', 'Airway', 'Sector'];
+    }
+    currentType = localStorage.getItem('currentType') || tags[0];
+  }
+
+  function saveTags() {
+    localStorage.setItem('mapTags', JSON.stringify(tags));
+    localStorage.setItem('currentType', currentType);
+  }
+
+  // Track the last tag order for FLIP animation
+  let lastTagOrder = [];
+
+  // Add global flag for tag panel editing mode
+  let tagPanelEditing = false;
+
+  function renderTypePanel() {
+    const tagTypeList = document.getElementById('tagTypeList');
+    // FLIP animation logic (unchanged)
+    const prevPositions = new Map();
+    const prevOrder = lastTagOrder.join('|');
+    const currOrder = tags.join('|');
+    const shouldAnimate = prevOrder !== currOrder && lastTagOrder.length > 0;
+    if (shouldAnimate) {
+      Array.from(tagTypeList.children).forEach(li => {
+        prevPositions.set(li.textContent, li.getBoundingClientRect());
+      });
+    }
+    tagTypeList.innerHTML = '';
+    tags.forEach((tag, idx) => {
+      const li = document.createElement('li');
+      li.style.display = 'flex';
+      li.style.alignItems = 'center';
+      li.style.justifyContent = 'space-between';
+      li.style.marginBottom = '6px';
+      li.style.padding = '8px 12px';
+      li.style.borderRadius = '6px';
+      li.style.fontWeight = '500';
+      li.style.background = (tag === currentType) ? '#2196F3' : 'transparent';
+      li.style.color = (tag === currentType) ? 'white' : '#333';
+      // --- Visibility toggle ---
+      const visBtn = document.createElement('button');
+      visBtn.title = tagVisibility[tag] === false ? 'Show this tag type' : 'Hide this tag type';
+      visBtn.style.color = (tag === currentType) ? 'white' : '#333';
+      visBtn.innerHTML = `
+        <span class="tag-eye-icon">
+          <i class="fas fa-eye" style="opacity:${tagVisibility[tag] === false ? '0' : '1'};"></i>
+          <i class="fas fa-eye-slash" style="opacity:${tagVisibility[tag] === false ? '1' : '0'};"></i>
+        </span>
+      `;
+      visBtn.style.width = '28px';
+      visBtn.style.height = '28px';
+      visBtn.style.marginRight = '0';
+      visBtn.style.padding = '0';
+      visBtn.onclick = function(e) {
+        e.stopPropagation();
+        setTagVisibility(tag, tagVisibility[tag] === false);
+      };
+      li.appendChild(visBtn);
+      // --- Up/Down reorder buttons (only in edit mode) ---
+      const orderGroup = document.createElement('div');
+      orderGroup.style.display = 'flex';
+      orderGroup.style.flexDirection = 'row';
+      orderGroup.style.gap = '2px';
+      orderGroup.style.marginLeft = '6px';
+      orderGroup.style.marginRight = '8px';
+      if (tagPanelEditing) {
+        // Up button
+        const upBtn = document.createElement('button');
+        upBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+        upBtn.style.background = 'none';
+        upBtn.style.border = 'none';
+        upBtn.style.cursor = idx === 0 ? 'not-allowed' : 'pointer';
+        upBtn.style.fontSize = '14px';
+        upBtn.style.padding = '0 2px';
+        upBtn.disabled = idx === 0;
+        upBtn.title = 'Move up';
+        upBtn.style.visibility = idx === 0 ? 'hidden' : 'visible';
+        upBtn.style.color = (tag === currentType) ? 'white' : '#333';
+        upBtn.onclick = function(e) {
+          e.stopPropagation();
+          if (idx > 0) {
+            const tmp = tags[idx-1];
+            tags[idx-1] = tags[idx];
+            tags[idx] = tmp;
+            saveTags();
+            renderTypePanel();
+          }
+        };
+        orderGroup.appendChild(upBtn);
+        // Down button
+        const downBtn = document.createElement('button');
+        downBtn.innerHTML = '<i class="fas fa-arrow-down"></i>';
+        downBtn.style.background = 'none';
+        downBtn.style.border = 'none';
+        downBtn.style.cursor = idx === tags.length-1 ? 'not-allowed' : 'pointer';
+        downBtn.style.fontSize = '14px';
+        downBtn.style.padding = '0 2px';
+        downBtn.disabled = idx === tags.length-1;
+        downBtn.title = 'Move down';
+        downBtn.style.visibility = idx === tags.length-1 ? 'hidden' : 'visible';
+        downBtn.style.color = (tag === currentType) ? 'white' : '#333';
+        downBtn.onclick = function(e) {
+          e.stopPropagation();
+          if (idx < tags.length-1) {
+            const tmp = tags[idx+1];
+            tags[idx+1] = tags[idx];
+            tags[idx] = tmp;
+            saveTags();
+            renderTypePanel();
+          }
+        };
+        orderGroup.appendChild(downBtn);
+      }
+      li.appendChild(orderGroup);
+      // Tag name clickable for selection
+      const tagSpan = document.createElement('span');
+      tagSpan.textContent = tag;
+      tagSpan.style.cursor = 'pointer';
+      tagSpan.onclick = function() {
+        currentType = tag;
+        if (tagVisibility[tag] === false) {
+          setTagVisibility(tag, true);
+        } else {
+          saveTags();
+          renderTypePanel();
+        }
+      };
+      li.appendChild(tagSpan);
+      // Edit/Delete buttons (only in edit mode)
+      const btnGroup = document.createElement('div');
+      if (tagPanelEditing) {
+        // Rename button
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Rename';
+        editBtn.style.background = '#FFC107';
+        editBtn.style.color = '#333';
+        editBtn.style.border = 'none';
+        editBtn.style.borderRadius = '4px';
+        editBtn.style.padding = '2px 10px';
+        editBtn.style.fontSize = '13px';
+        editBtn.style.cursor = 'pointer';
+        editBtn.style.marginRight = '6px';
+        editBtn.onclick = function(e) {
+          e.stopPropagation();
+          tagToEdit = tag;
+          document.getElementById('editTagInput').value = tag;
+          document.getElementById('editTagModal').style.display = 'block';
+        };
+        btnGroup.appendChild(editBtn);
+        // Only show delete button if more than one tag exists
+        if (tags.length > 1) {
+          const delBtn = document.createElement('button');
+          delBtn.textContent = 'Delete';
+          delBtn.style.background = '#f44336';
+          delBtn.style.color = 'white';
+          delBtn.style.border = 'none';
+          delBtn.style.borderRadius = '4px';
+          delBtn.style.padding = '2px 10px';
+          delBtn.style.fontSize = '13px';
+          delBtn.style.cursor = 'pointer';
+          delBtn.onclick = function(e) {
+            e.stopPropagation();
+            tagToDelete = tag;
+            // Check if any elements use this tag
+            const usedBy = [
+              ...labels.filter(l => l.type === tag),
+              ...polygons.filter(p => p.type === tag),
+              ...lines.filter(l => l.type === tag)
+            ];
+            if (usedBy.length === 0) {
+              tags = tags.filter(t => t !== tag);
+              if (currentType === tag) currentType = tags[0] || '';
+              saveTags();
+              renderTypePanel();
+              return;
+            }
+            const msg = document.getElementById('deleteTagMsg');
+            const modal = document.getElementById('deleteTagModal');
+            const prevDropdown = document.getElementById('deleteTagDropdown');
+            if (prevDropdown) prevDropdown.remove();
+            msg.innerHTML = `There are <b>${usedBy.length}</b> elements using the tag "${tag}".<br>Please select a new tag type to reassign them to before deleting.`;
+            const select = document.createElement('select');
+            select.id = 'deleteTagDropdown';
+            select.style.margin = '16px 0 0 0';
+            select.style.width = '100%';
+            select.style.padding = '8px';
+            select.style.borderRadius = '6px';
+            select.style.border = '1px solid #ccc';
+            select.style.fontSize = '15px';
+            tags.filter(t => t !== tag).forEach(t => {
+              const opt = document.createElement('option');
+              opt.value = t;
+              opt.textContent = t;
+              select.appendChild(opt);
+            });
+            msg.appendChild(select);
+            modal.style.display = 'block';
+          };
+          btnGroup.appendChild(delBtn);
+        }
+      }
+      li.appendChild(btnGroup);
+      tagTypeList.appendChild(li);
+    });
+    // FLIP animation after DOM update (unchanged)
+    if (shouldAnimate) {
+      requestAnimationFrame(() => {
+        Array.from(tagTypeList.children).forEach(li => {
+          const prev = prevPositions.get(li.textContent);
+          if (prev) {
+            const now = li.getBoundingClientRect();
+            const dy = prev.top - now.top;
+            if (dy !== 0) {
+              li.style.transition = 'none';
+              li.style.transform = `translateY(${dy}px)`;
+              li.classList.add('moving');
+              void li.offsetHeight;
+              li.style.transition = 'transform 0.25s cubic-bezier(.4,2,.6,1), opacity 0.2s';
+              li.style.transform = '';
+              setTimeout(() => {
+                li.classList.remove('moving');
+                li.style.transition = '';
+              }, 300);
+            }
+          }
+        });
+      });
+    }
+    lastTagOrder = tags.slice();
+    // --- Edit/Done button at top ---
+    const typePanel = document.getElementById('typePanel');
+    const panelHeader = typePanel && typePanel.querySelector('div');
+    if (panelHeader) {
+      // Remove any previous edit/done buttons
+      Array.from(panelHeader.querySelectorAll('.tag-edit-btn, .tag-done-btn')).forEach(btn => btn.remove());
+      // Find the h2 and close button
+      const h2 = panelHeader.querySelector('h2');
+      const closeBtn = panelHeader.querySelector('button');
+      // Create edit button
+      const editBtn = document.createElement('button');
+      editBtn.className = 'tag-edit-btn';
+      editBtn.textContent = 'Edit';
+      editBtn.style.background = '#e3eafc';
+      editBtn.style.color = '#1976D2';
+      editBtn.style.border = 'none';
+      editBtn.style.borderRadius = '6px';
+      editBtn.style.fontSize = '15px';
+      editBtn.style.cursor = 'pointer';
+      editBtn.style.padding = '5px 14px';
+      editBtn.style.marginLeft = '10px';
+      editBtn.onclick = function() {
+        tagPanelEditing = true;
+        renderTypePanel();
+      };
+      // Create done button
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'tag-done-btn';
+      doneBtn.textContent = 'Done';
+      doneBtn.style.background = '#2196F3';
+      doneBtn.style.color = 'white';
+      doneBtn.style.border = 'none';
+      doneBtn.style.borderRadius = '6px';
+      doneBtn.style.fontSize = '15px';
+      doneBtn.style.cursor = 'pointer';
+      doneBtn.style.padding = '5px 14px';
+      doneBtn.style.marginLeft = '10px';
+      doneBtn.onclick = function() {
+        tagPanelEditing = false;
+        renderTypePanel();
+      };
+      // Insert after h2, before close button
+      if (h2 && closeBtn) {
+        panelHeader.insertBefore(editBtn, closeBtn);
+        panelHeader.insertBefore(doneBtn, closeBtn);
+      }
+      editBtn.style.display = tagPanelEditing ? 'none' : '';
+      doneBtn.style.display = tagPanelEditing ? '' : 'none';
+    }
+    // --- Add section (only in edit mode) ---
+    const addSection = document.getElementById('newTagInput')?.parentElement;
+    if (addSection) {
+      addSection.style.display = tagPanelEditing ? 'flex' : 'none';
+    }
+  }
+
+  // When the panel is closed, exit edit mode
+  function toggleTypePanel(forceOpen) {
+    const panel = document.getElementById('typePanel');
+    if (forceOpen === true) {
+      renderTypePanel();
+      panel.style.display = 'block';
+      // Use double requestAnimationFrame for reliable animation
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          panel.style.transform = 'translateX(0)';
+        });
+      });
+      return;
+    }
+    if (panel.style.display === 'none' || panel.style.transform === 'translateX(-100%)') {
+      renderTypePanel();
+      panel.style.display = 'block';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          panel.style.transform = 'translateX(0)';
+        });
+      });
+    } else {
+      panel.style.transform = 'translateX(-100%)';
+      setTimeout(() => {
+        panel.style.display = 'none';
+        tagPanelEditing = false;
+        renderTypePanel();
+        // If in changeTag mode, turn it off when the panel is closed
+        if (currentMode === 'changeTag') {
+          setMode(null);
+        }
+      }, 300);
+    }
+  }
+
+  function addNewTag() {
+    const input = document.getElementById('newTagInput');
+    const val = input.value.trim();
+    if (val && !tags.includes(val)) {
+      tags.push(val);
+      saveTags();
+      renderTypePanel();
+      input.value = '';
+    }
+  }
+
+  // Edit Tag Modal logic
+  function closeEditTagModal() {
+    document.getElementById('editTagModal').style.display = 'none';
+    tagToEdit = null;
+  }
+  function saveEditTag() {
+    const newName = document.getElementById('editTagInput').value.trim();
+    if (!newName || tags.includes(newName)) return;
+    // Update tag in tags array
+    const idx = tags.indexOf(tagToEdit);
+    if (idx !== -1) tags[idx] = newName;
+    // Update all elements using this tag
+    labels.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
+    polygons.forEach(p => { if (p.type === tagToEdit) p.type = newName; });
+    lines.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
+    // Update currentType if needed
+    if (currentType === tagToEdit) currentType = newName;
+    saveTags();
+    renderTypePanel();
+    closeEditTagModal();
+  }
+
+  // Delete Tag Modal logic
+  function closeDeleteTagModal() {
+    document.getElementById('deleteTagModal').style.display = 'none';
+    tagToDelete = null;
+  }
+  function confirmDeleteTag() {
+    // Remove tag from tags array
+    const prevTags = [...tags];
+    tags = tags.filter(t => t !== tagToDelete);
+    // Check if a dropdown exists (i.e., elements use this tag)
+    const dropdown = document.getElementById('deleteTagDropdown');
+    let fallback = tags[0] || '';
+    if (dropdown) {
+      fallback = dropdown.value;
+    }
+    // Update all elements using this tag to the selected fallback
+    labels.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
+    polygons.forEach(p => { if (p.type === tagToDelete) p.type = fallback; });
+    lines.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
+    // Update currentType if needed
+    if (currentType === tagToDelete) currentType = fallback;
+    saveTags();
+    renderTypePanel();
+    closeDeleteTagModal();
+  }
+
+  // Load tags on startup
+  loadTags();
+
+  // When adding a new label, use the currentType
+  function addLabel(x, y) {
+    if (!editEnabled || currentMode !== 'point') return;
+    const refX = x;
+    const refY = y;
+    const labelX = x + 20;
+    const labelY = y + 20;
+    const { refPointEl, labelBoxEl } = createLabel(refX, refY, labelX, labelY, '', true, false, true);
+    const relCoords = toRelativeCoords(refX, refY);
+    const relLabelCoords = toRelativeCoords(labelX, labelY);
+    const labelObj = {
+      refPointEl,
+      labelBoxEl,
+      refX,
+      refY,
+      labelX,
+      labelY,
+      relRefX: relCoords.x,
+      relRefY: relCoords.y,
+      relLabelX: relLabelCoords.x,
+      relLabelY: relLabelCoords.y,
+      correctText: '',
+      userGuess: '',
+      type: currentType || tags[0] || ''
+    };
+    labels.push(labelObj);
+    updateLeaderLines();
+    labelObj.labelBoxEl.focus();
+    labelBoxEl.addEventListener('blur', () => {
+      labelBoxEl.contentEditable = 'false';
+    }, { once: true });
+    updateLabelEditable();
+    updateLeaderLines();
+    updateSaveButtonState();
+  }
+
+  // Auto-expand type panel when point/shape/line is pressed
+  document.getElementById('pointBtn').addEventListener('click', function() { toggleTypePanel(true); });
+  document.getElementById('polygonBtn').addEventListener('click', function() { toggleTypePanel(true); });
+  document.getElementById('lineBtn').addEventListener('click', function() { toggleTypePanel(true); });
+
+  // --- Test Tag Type Modal Logic ---
+  let pendingTestMode = null;
+  let pendingTestModeCallback = null;
+  function showTestTagTypeModal(testMode, callback) {
+    pendingTestMode = testMode;
+    pendingTestModeCallback = callback;
+    const modal = document.getElementById('testTagTypeModal');
+    const form = document.getElementById('testTagTypeForm');
+    form.innerHTML = '';
+    tags.forEach(tag => {
+      const id = `testTagType_${tag}`;
+      const div = document.createElement('div');
+      div.style.marginBottom = '8px';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = id;
+      checkbox.value = tag;
+      checkbox.checked = true;
+      div.appendChild(checkbox);
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.textContent = tag;
+      label.style.marginLeft = '8px';
+      div.appendChild(label);
+      form.appendChild(div);
+    });
+    modal.style.display = 'block';
+    // Add select/deselect all logic
+    setTimeout(() => {
+      const selectAllBtn = document.getElementById('selectAllTestTagsBtn');
+      const deselectAllBtn = document.getElementById('deselectAllTestTagsBtn');
+      if (selectAllBtn) {
+        selectAllBtn.onclick = function() {
+          const form = document.getElementById('testTagTypeForm');
+          form.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = true; });
+          updateStartTestButtonState();
+        };
+      }
+      if (deselectAllBtn) {
+        deselectAllBtn.onclick = function() {
+          const form = document.getElementById('testTagTypeForm');
+          form.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = false; });
+          updateStartTestButtonState();
+        };
+      }
+      // Add change listeners to checkboxes to update button state
+      const checkboxes = form.querySelectorAll('input[type=checkbox]');
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateStartTestButtonState);
+      });
+      updateStartTestButtonState();
+    }, 0);
+  }
+  function closeTestTagTypeModal() {
+    document.getElementById('testTagTypeModal').style.display = 'none';
+    pendingTestMode = null;
+    pendingTestModeCallback = null;
+  }
+  function confirmTestTagTypeModal() {
+    const form = document.getElementById('testTagTypeForm');
+    const checked = Array.from(form.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+    if (pendingTestModeCallback) {
+      pendingTestModeCallback(checked);
+    }
+    closeTestTagTypeModal();
+  }
+
+  // Change Tag Mode
+  let changeTagMode = false;
+
+  function toggleChangeTagMode() {
+    if (!editEnabled) return;
+    // Open the tag panel if not already open
+    const typePanel = document.getElementById('typePanel');
+    if (typePanel && (typePanel.style.display === 'none' || typePanel.style.transform === 'translateX(-100%)')) {
+      renderTypePanel();
+      typePanel.style.display = 'block';
+      setTimeout(() => { typePanel.style.transform = 'translateX(0)'; }, 10);
+    }
+    // If in add, polygon, or line mode, exit that mode
+    if (currentMode) {
+      const currentBtn = document.getElementById(`${currentMode}Btn`);
+      if (currentBtn) {
+        currentBtn.classList.remove('active');
+        currentBtn.setAttribute('aria-pressed', 'false');
+      }
+    }
+    if (['point', 'polygon', 'line'].includes(currentMode)) {
+      // Use setMode(null) to exit any other mode for better integration
+      setMode(null);
+    }
+    changeTagMode = !changeTagMode;
+    const btn = document.getElementById('tagPanelBtn');
+    btn.classList.toggle('active', changeTagMode);
+    btn.setAttribute('aria-pressed', changeTagMode);
+    // Change cursor for feedback
+    if (changeTagMode) {
+      mapContainer.style.cursor = 'normal';
+    } else {
+      updateCursorStyles(currentMode);
+    }
+  }
+
+  // Exit change tag mode when edit mode is turned off
+  const origToggleEditMode = toggleEditMode;
+  toggleEditMode = function() {
+    if (changeTagMode) {
+      changeTagMode = false;
+      const btn = document.getElementById('tagPanelBtn');
+      btn.classList.remove('active');
+      btn.setAttribute('aria-pressed', 'false');
+      updateCursorStyles(currentMode);
+    }
+    origToggleEditMode.apply(this, arguments);
+  };
+
+  // Change tag on click in changeTag mode
+  mapContainer.addEventListener('click', function(e) {
+    if (!editEnabled || currentMode !== 'changeTag') return;
+    const rect = mapContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    let changed = false;
+    let changedLabelBox = null;
+    // Check regular labels
+    for (const label of labels) {
+      const refRect = label.refPointEl.getBoundingClientRect();
+      const labelRect = label.labelBoxEl.getBoundingClientRect();
+      const offsetX = rect.left;
+      const offsetY = rect.top;
+      if (
+        x >= refRect.left - offsetX && x <= refRect.right - offsetX &&
+        y >= refRect.top - offsetY && y <= refRect.bottom - offsetY
+      ) {
+        label.type = currentType;
+        changed = true;
+        changedLabelBox = label.labelBoxEl;
+        break;
+      }
+      if (
+        x >= labelRect.left - offsetX && x <= labelRect.right - offsetX &&
+        y >= labelRect.top - offsetY && y <= labelRect.bottom - offsetY
+      ) {
+        label.type = currentType;
+        changed = true;
+        changedLabelBox = label.labelBoxEl;
+        break;
+      }
+    }
+    // Check polygons
+    if (!changed) {
+      for (const polygon of polygons) {
+        const labelRect = polygon.labelBoxEl.getBoundingClientRect();
+        if (
+          x >= labelRect.left - rect.left && x <= labelRect.right - rect.left &&
+          y >= labelRect.top - rect.top && y <= labelRect.bottom - rect.top
+        ) {
+          polygon.type = currentType;
+          changed = true;
+          changedLabelBox = polygon.labelBoxEl;
+          break;
+        }
+      }
+    }
+    // Check lines
+    if (!changed) {
+      for (const line of lines) {
+        const labelRect = line.labelBoxEl.getBoundingClientRect();
+        if (
+          x >= labelRect.left - rect.left && x <= labelRect.right - rect.left &&
+          y >= labelRect.top - rect.top && y <= labelRect.bottom - rect.top
+        ) {
+          line.type = currentType;
+          changed = true;
+          changedLabelBox = line.labelBoxEl;
+          break;
+        }
+      }
+    }
+    if (changed) {
+      saveTags();
+      renderTypePanel();
+      // Update leader line data-type for the changed element
+      // Only update the leader line and animate the label for the changed labelBox
+      if (changedLabelBox && changedLabelBox.id) {
+        const line = document.querySelector(`.leader-line[data-for="${changedLabelBox.id}"]`);
+        if (line) line.setAttribute('data-type', currentType);
+        // Visual indication: animate only the changed label
+        changedLabelBox.classList.remove('tag-changed');
+        void changedLabelBox.offsetWidth;
+        changedLabelBox.classList.add('tag-changed');
+        setTimeout(() => changedLabelBox.classList.remove('tag-changed'), 700);
+      }
+      updateTagVisibilityOnMap();
+    }
+  });
+
+  // --- Integrate changeTag mode into setMode ---
+  // (Add this at the end of setMode)
+  (function() {
+    const origSetMode = setMode;
+    setMode = function(mode) {
+      origSetMode.apply(this, arguments);
+      // UI for changeTag mode
+      const tagPanelBtn = document.getElementById('tagPanelBtn');
+      if (tagPanelBtn) {
+        tagPanelBtn.classList.toggle('active', currentMode === 'changeTag');
+        tagPanelBtn.setAttribute('aria-pressed', currentMode === 'changeTag');
+        if (currentMode === 'changeTag') {
+          mapContainer.style.cursor = 'normal';
+          // Open the tag panel if not already open
+          const typePanel = document.getElementById('typePanel');
+          if (typePanel && (typePanel.style.display === 'none' || typePanel.style.transform === 'translateX(-100%)')) {
+            renderTypePanel();
+            typePanel.style.display = 'block';
+            setTimeout(() => { typePanel.style.transform = 'translateX(0)'; }, 10);
+          }
+        } else {
+          // Hide the side panel if leaving changeTag mode
+          const typePanel = document.getElementById('typePanel');
+          if (typePanel && typePanel.style.display !== 'none') {
+            typePanel.style.transform = 'translateX(-100%)';
+            setTimeout(() => { typePanel.style.display = 'none'; }, 300);
+          }
+          updateCursorStyles(currentMode);
+        }
+      }
+    };
+  })();
+
+  // --- Tag Visibility State ---
+  let tagVisibility = {};
+  function loadTagVisibility() {
+    try {
+      tagVisibility = JSON.parse(localStorage.getItem('tagVisibility') || '{}');
+    } catch { tagVisibility = {}; }
+    // Ensure all tags have a value
+    tags.forEach(tag => { if (!(tag in tagVisibility)) tagVisibility[tag] = true; });
+  }
+  function saveTagVisibility() {
+    localStorage.setItem('tagVisibility', JSON.stringify(tagVisibility));
+  }
+  function setTagVisibility(tag, visible) {
+    tagVisibility[tag] = visible;
+    saveTagVisibility();
+    updateTagVisibilityOnMap();
+    renderTypePanel();
+  }
+  function updateTagVisibilityOnMap() {
+    // Labels
+    labels.forEach(l => {
+      l.labelBoxEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
+      if (l.refPointEl) l.refPointEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
+    });
+    // Polygons
+    polygons.forEach(p => {
+      if (p.labelBoxEl) p.labelBoxEl.style.display = tagVisibility[p.type] !== false ? '' : 'none';
+      if (p.svgPath) p.svgPath.style.display = tagVisibility[p.type] !== false ? '' : 'none';
+      if (p.points) p.points.forEach(pt => { if (pt.element) pt.element.style.display = tagVisibility[p.type] !== false ? '' : 'none'; });
+    });
+    // Lines
+    lines.forEach(l => {
+      if (l.labelBoxEl) l.labelBoxEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
+      if (l.polyline) l.polyline.style.display = tagVisibility[l.type] !== false ? '' : 'none';
+      if (l.anchorPoint) l.anchorPoint.style.display = tagVisibility[l.type] !== false ? '' : 'none';
+    });
+    // Leader lines
+    document.querySelectorAll('.leader-line').forEach(line => {
+      const type = line.getAttribute('data-type');
+      line.style.display = tagVisibility[type] !== false ? '' : 'none';
+    });
+    // Polygon/line points, anchors, and paths
+    document.querySelectorAll('.polygon-point, .polygon-anchor, .polygon-path, .line-path').forEach(el => {
+      const type = el.getAttribute('data-type');
+      el.style.display = tagVisibility[type] !== false ? '' : 'none';
+    });
+  }
+
+  // Ensure tagVisibility is loaded on startup
+  document.addEventListener('DOMContentLoaded', loadTagVisibility);
+
+  // --- Identify Elements Test Mode: Temporary Element Visibility ---
+  let prevElementDisplayMap = new Map();
+
+  function setIdentifyTestVisibility(testItems) {
+    prevElementDisplayMap.clear();
+    // Build a Set of labelBoxEls, polygon labelBoxEls, line labelBoxEls, and their associated shapes/lines
+    const testLabelEls = new Set(testItems.map(item => item.label));
+    const testPolygonPaths = new Set(testItems.filter(item => item.type === 'polygon').map(item => item.element));
+    const testLinePolylines = new Set(testItems.filter(item => item.type === 'line').map(item => item.element));
+
+    // LABELS
+    document.querySelectorAll('.label-box').forEach(el => {
+      prevElementDisplayMap.set(el, el.style.display);
+      el.style.display = testLabelEls.has(el) ? 'block' : 'none';
+    });
+    // POLYGON SHAPES
+    document.querySelectorAll('.polygon-path').forEach(el => {
+      prevElementDisplayMap.set(el, el.style.display);
+      el.style.display = testPolygonPaths.has(el) ? 'block' : 'none';
+    });
+    // LINE SHAPES
+    document.querySelectorAll('.line-path').forEach(el => {
+      prevElementDisplayMap.set(el, el.style.display);
+      el.style.display = testLinePolylines.has(el) ? 'block' : 'none';
+    });
+    // LEADER LINES
+    document.querySelectorAll('.leader-line').forEach(el => {
+      // Find the label this line is for
+      const forId = el.getAttribute('data-for');
+      const label = forId && document.getElementById(forId);
+      prevElementDisplayMap.set(el, el.style.display);
+      el.style.display = (label && testLabelEls.has(label)) ? 'block' : 'none';
+    });
+    // Hide all ref-points (red points)
+    document.querySelectorAll('.ref-point').forEach(el => {
+      prevElementDisplayMap.set(el, el.style.display);
+      el.style.display = 'none';
+    });
+    // Hide all polygon/line points and anchors
+    document.querySelectorAll('.polygon-point, .polygon-anchor').forEach(el => {
+      prevElementDisplayMap.set(el, el.style.display);
+      el.style.display = 'none';
+    });
+  }
+
+  function restoreIdentifyTestVisibility() {
+    if (!prevElementDisplayMap) return;
+    prevElementDisplayMap.forEach((display, el) => {
+      el.style.display = display;
+    });
+    prevElementDisplayMap.clear();
+  }
+
+  loadMapButton.addEventListener('click', () => {
+    document.getElementById('mapFileInput').click();
+  });
+
+  // Helper to enable/disable the Start Test button
+  function updateStartTestButtonState() {
+    const form = document.getElementById('testTagTypeForm');
+    const checked = form.querySelectorAll('input[type=checkbox]:checked');
+    const startBtn = document.querySelector('#testTagTypeModal .modal-btns button[type=button]:not([style*="background:#9e9e9e"])');
+    if (startBtn) {
+      startBtn.disabled = checked.length === 0;
+      startBtn.style.opacity = checked.length === 0 ? '0.5' : '1';
+      startBtn.style.cursor = checked.length === 0 ? 'not-allowed' : 'pointer';
+    }
+  }
 
 </script>
 </body>
