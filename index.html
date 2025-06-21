@@ -14,6 +14,7 @@
     user-select: none;
     background-color: #f5f5f5;
     color: #333;
+    margin-bottom: 180px; /* Allow scrolling to reach points under test interface */
   }
 
   h1 {
@@ -1145,6 +1146,7 @@
           btn.setAttribute('aria-pressed', 'false');
         }
       });
+      showReferencePoints();
     } else {
       editTools.classList.remove('visible');
       // Reset current mode when exiting edit mode
@@ -2268,12 +2270,12 @@
     if (!editEnabled) return;
     
     // Cancel the current shape
-    currentShapePoints.forEach(point => {
-      point.element.classList.add('removing');
-      setTimeout(() => point.element.remove(), 300);
-    });
-    currentShapePoints = [];
-    currentShape = null;
+        currentShapePoints.forEach(point => {
+          point.element.classList.add('removing');
+          setTimeout(() => point.element.remove(), 300);
+        });
+        currentShapePoints = [];
+        currentShape = null;
     // Remove preview line if it exists
     const previewLine = document.getElementById('previewLine');
     if (previewLine) previewLine.remove();
@@ -2293,15 +2295,15 @@
     if (!editEnabled) return;
     
     // Cancel the current line
-    currentShapePoints.forEach(point => {
-      point.element.classList.add('removing');
-      setTimeout(() => point.element.remove(), 300);
-    });
-    currentShapePoints = [];
-    currentShape = null;
-    // Remove preview line if it exists
-    const previewLine = document.getElementById('previewLine');
-    if (previewLine) previewLine.remove();
+        currentShapePoints.forEach(point => {
+          point.element.classList.add('removing');
+          setTimeout(() => point.element.remove(), 300);
+        });
+        currentShapePoints = [];
+        currentShape = null;
+        // Remove preview line if it exists
+        const previewLine = document.getElementById('previewLine');
+        if (previewLine) previewLine.remove();
 
     if (currentMode === 'line') {
         // Exit line mode
@@ -3954,7 +3956,7 @@
     const rect = mapContainer.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
-    const buffer = 25; // Buffer zone in pixels - increased for better line detection
+    const buffer = 10; //fixes
 
     const feedback = document.querySelector('#findInterface .feedback');
 
@@ -4004,15 +4006,15 @@
         line.setAttribute('stroke', 'rgba(0,0,0,0.001)'); // Nearly invisible but still rendered
         
         // Get the points from the path
-        const points = getPointsFromPath(line.getAttribute('d'));
-        
+        const points = getPointsFromPolyline(line.getAttribute('points'));
+             
         // Restore original state
         line.style.visibility = originalVisibility;
         line.style.display = originalDisplay;
         line.setAttribute('stroke', originalStroke);
         
         // Check distance
-        isCorrect = isPointNearPolyline(clickX, clickY, points, buffer);
+        isCorrect = isPointOnLine(clickX, clickY, points, 10);
       }
     }
 
@@ -4033,10 +4035,17 @@
       // Update progress
       updateTestProgress();
       
+      // Disable click handler until next point is loaded
+      mapContainer.removeEventListener('click', handleFindModeClick);
+
       // Clear feedback and select next item after delay
       setTimeout(() => {
         feedback.textContent = '';
         feedback.className = 'feedback';
+        // Re-enable click handler if there are more items
+        if (remainingTestItems.length > 0) {
+          mapContainer.addEventListener('click', handleFindModeClick);
+        }
         selectNextTestItem();
       }, 1500);
     } else {
@@ -4256,63 +4265,6 @@
     return inside;
   }
 
-  function isPointNearPolyline(x, y, points, buffer) {
-    // Increase buffer for line segments and endpoints
-    const lineBuffer = buffer * 2; // Double the buffer for lines
-    const endpointBuffer = buffer * 1.5; // 50% larger buffer for endpoints
-    
-    // Check each line segment
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
-      
-      // Check if point is near the line segment with increased buffer
-      if (distanceToLineSegment(x, y, p1.x, p1.y, p2.x, p2.y) <= lineBuffer) {
-        return true;
-      }
-      
-      // Check endpoints with larger buffer
-      const distToP1 = Math.sqrt(Math.pow(x - p1.x, 2) + Math.pow(y - p1.y, 2));
-      const distToP2 = Math.sqrt(Math.pow(x - p2.x, 2) + Math.pow(y - p2.y, 2));
-      if (distToP1 <= endpointBuffer || distToP2 <= endpointBuffer) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function distanceToLineSegment(x, y, x1, y1, x2, y2) {
-    const A = x - x1;
-    const B = y - y1;
-    const C = x2 - x1;
-    const D = y2 - y1;
-
-    const dot = A * C + B * D;
-    const len_sq = C * C + D * D;
-    let param = -1;
-
-    if (len_sq !== 0) {
-      param = dot / len_sq;
-    }
-
-    let xx, yy;
-
-    if (param < 0) {
-      xx = x1;
-      yy = y1;
-    } else if (param > 1) {
-      xx = x2;
-      yy = y2;
-    } else {
-      xx = x1 + param * C;
-      yy = y1 + param * D;
-    }
-
-    const dx = x - xx;
-    const dy = y - yy;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
   function restoreVisibility() {
     // Restore label visibility
     document.querySelectorAll('.label-box').forEach(label => {
@@ -4408,6 +4360,86 @@
 
   // Add a global counter for label IDs
   let labelIdCounter = 1;
+
+  function isPointNearPolyline(x, y, points) {
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      if (distanceToLineSegment(x, y, p1.x, p1.y, p2.x, p2.y) === 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function distanceToLineSegment(x, y, x1, y1, x2, y2) {
+    const A = x - x1;
+    const B = y - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
+    let param = -1;
+
+    if (len_sq !== 0) {
+      param = dot / len_sq;
+    }
+
+    let xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    } else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = x - xx;
+    const dy = y - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Add this helper near getPointsFromPath
+  function getPointsFromPolyline(pointsAttr) {
+    if (!pointsAttr) return [];
+    return pointsAttr.trim().split(' ').map(pair => {
+      const [x, y] = pair.split(',').map(Number);
+      return { x, y };
+    });
+  }
+
+  // Add this function for aggressive debugging
+  function isPointOnLine(x, y, points, buffer) {
+    let minDist = Infinity;
+    let minSeg = -1;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const dist = distanceToLineSegment(x, y, p1.x, p1.y, p2.x, p2.y);
+      if (dist < minDist) {
+        minDist = dist;
+        minSeg = i;
+      }
+      if (dist <= buffer) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Add this helper near toggleEditMode
+  function showReferencePoints() {
+    document.querySelectorAll('.ref-point').forEach(point => {
+      point.style.display = 'block';
+      point.style.visibility = 'visible';
+    });
+  }
+
 </script>
 </body>
 </html>
