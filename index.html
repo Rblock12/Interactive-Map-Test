@@ -1461,6 +1461,11 @@
         finishDrawingInterface.style.display = 'none';
       }
     }
+    if(mode == null || mode === previousMode) {
+      toggleTypePanel(false);
+    } else if (['polygon', 'line', 'point'].includes(mode)) {
+      toggleTypePanel(true);
+    }
 
     // Update all button states
     updateButtons();
@@ -2525,97 +2530,6 @@
     if (currentMode !== 'editLabel') {
       makeLabelsNonEditable();
     }
-  }
-
-  // Set mode helper
-  function setMode(mode) {
-    if (!editEnabled) return;
-    
-    // Deactivate the current mode's button first
-    if (currentMode) {
-      const currentBtn = document.getElementById(`${currentMode}Btn`);
-      if (currentBtn) {
-        currentBtn.classList.remove('active');
-        currentBtn.setAttribute('aria-pressed', 'false');
-      }
-    }
-    
-    // Set the new mode before updating UI
-    const previousMode = currentMode;
-    currentMode = mode;
-
-    // Update cursor styles for the new mode
-    updateCursorStyles(mode);
-
-    if (mode === 'point') {
-      mapContainer.classList.add('point-mode');
-    } else if (mode === 'polygon') {
-      mapContainer.classList.add('polygon-mode');
-    } else if (mode === 'line') {
-      mapContainer.classList.add('line-mode');
-    }
-
-    // Handle drawing mode transitions
-    const finishDrawingInterface = document.getElementById('finishDrawingInterface');
-    
-    // If entering a drawing mode
-    if (mode === 'polygon' || mode === 'line') {
-      finishDrawingInterface.style.display = 'none'; // Start hidden, will show when enough points are added
-    } 
-    // If leaving a drawing mode
-    else if ((previousMode === 'polygon' || previousMode === 'line') && mode !== 'polygon' && mode !== 'line') {
-      finishDrawingInterface.style.display = 'none';
-      
-      // If we have points, finish the current shape
-      if (currentShapePoints.length > 0) {
-        finishCurrentShape();
-      }
-      
-      // Clear any remaining points and reset state
-      currentShape = null;
-      currentShapePoints.forEach(point => {
-        if (point.element && point.element.parentNode) {
-          point.element.remove();
-        }
-      });
-      currentShapePoints = [];
-      
-      // Remove preview line if it exists
-      const previewLine = document.getElementById('previewLine');
-      if (previewLine) previewLine.remove();
-    }
-
-    // Handle Add submenu and button state
-    const addSubMenu = document.getElementById('addSubMenu');
-    const addBtn = document.getElementById('addBtn');
-    
-    // Only hide Add submenu if explicitly switching to a non-Add mode
-    // Keep it open when finishing shapes/lines
-    if (mode !== null && mode !== 'point' && mode !== 'polygon' && mode !== 'line') {
-      addSubMenu.style.display = 'none';
-      addBtn.setAttribute('aria-pressed', 'false');
-      addBtn.classList.remove('active');
-    }
-    
-    // If switching to Add mode, show Add submenu and activate Add button
-    if (mode === 'point') {
-      addSubMenu.style.display = 'flex';
-      addBtn.setAttribute('aria-pressed', 'true');
-      addBtn.classList.add('active');
-    }
-
-    // If clicking the same mode button again, deactivate the mode
-    if (mode === previousMode) {
-      currentMode = null;
-      updateCursorStyles(null);
-      // Hide finish drawing interface when deactivating drawing mode
-      if (previousMode === 'polygon' || previousMode === 'line') {
-        finishDrawingInterface.style.display = 'none';
-      }
-    }
-
-    // Update all button states
-    updateButtons();
   }
 
   function togglePolygonMode() {
@@ -5161,20 +5075,14 @@
   // When the panel is closed, exit edit mode
   function toggleTypePanel(forceOpen) {
     const panel = document.getElementById('typePanel');
-    if (forceOpen === true) {
+    const isClosed = (panel.style.display === 'none' || panel.style.transform === 'translateX(-100%)');
+
+    if(!isClosed === forceOpen) return; // already in requested state
+
+    if (isClosed) {
       renderTypePanel();
       panel.style.display = 'block';
       // Use double requestAnimationFrame for reliable animation
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          panel.style.transform = 'translateX(0)';
-        });
-      });
-      return;
-    }
-    if (panel.style.display === 'none' || panel.style.transform === 'translateX(-100%)') {
-      renderTypePanel();
-      panel.style.display = 'block';
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           panel.style.transform = 'translateX(0)';
@@ -5293,9 +5201,10 @@
   }
 
   // Auto-expand type panel when point/shape/line is pressed
-  document.getElementById('pointBtn').addEventListener('click', function() { toggleTypePanel(true); });
-  document.getElementById('polygonBtn').addEventListener('click', function() { toggleTypePanel(true); });
-  document.getElementById('lineBtn').addEventListener('click', function() { toggleTypePanel(true); });
+  // document.getElementById('pointBtn').addEventListener('click', function() {
+  //   toggleTypePanel(this.ariaPressed != "true" && this.ariaDisabled != "true"); });
+  // document.getElementById('polygonBtn').addEventListener('click', function() { toggleTypePanel(true); });
+  // document.getElementById('lineBtn').addEventListener('click', function() { toggleTypePanel(true); });
 
   // --- Test Tag Type Modal Logic ---
   let pendingTestMode = null;
@@ -5499,6 +5408,7 @@
   (function() {
     const origSetMode = setMode;
     setMode = function(mode) {
+      const prevMode = currentMode;
       origSetMode.apply(this, arguments);
       // UI for changeTag mode
       const tagPanelBtn = document.getElementById('tagPanelBtn');
@@ -5508,20 +5418,13 @@
         if (currentMode === 'changeTag') {
           mapContainer.style.cursor = 'normal';
           // Open the tag panel if not already open
-          const typePanel = document.getElementById('typePanel');
-          if (typePanel && (typePanel.style.display === 'none' || typePanel.style.transform === 'translateX(-100%)')) {
-            renderTypePanel();
-            typePanel.style.display = 'block';
-            setTimeout(() => { typePanel.style.transform = 'translateX(0)'; }, 10);
-          }
+          toggleTypePanel(true);
         } else {
-          // Hide the side panel if leaving changeTag mode
-          const typePanel = document.getElementById('typePanel');
-          if (typePanel && typePanel.style.display !== 'none') {
-            typePanel.style.transform = 'translateX(-100%)';
-            setTimeout(() => { typePanel.style.display = 'none'; }, 300);
-          }
           updateCursorStyles(currentMode);
+        }
+        if(prevMode == 'changeTag') {
+          // Hide the side panel if leaving changeTag mode
+          toggleTypePanel(false);
         }
       }
     };
