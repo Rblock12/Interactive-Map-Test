@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Map Labeling Tool with Leader Lines</title>
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+  }
+  #mapContainer {
+    position: relative;
+    display: inline-block;
+    user-select: none;
+  }
+  #mapImage {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .ref-point {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: red;
+    border-radius: 50%;
+    border: 1px solid #800;
+    pointer-events: auto;
+    user-select: none;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    cursor: move;
+  }
+  .label-box {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #333;
+    padding: 2px 6px;
+    font-size: 12px;
+    width: 80px;
+    cursor: default;
+    user-select: text;
+    text-transform: uppercase;
+    z-index: 20;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    outline: none;
+  }
+  .label-box.correct {
+    color: green;
+    border-color: green;
+  }
+  .label-box.incorrect {
+    color: red;
+    border-color: red;
+  }
+  #leaderLines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .menu {
+    margin: 10px auto;
+    user-select: none;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 600px;
+  }
+  .menu-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+  .menu label {
+    user-select: none;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+  }
+  .menu button {
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid #333;
+    background: #eee;
+    border-radius: 4px;
+    user-select: none;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .menu button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .menu button.active,
+  .menu button[aria-pressed="true"] {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    border-color: #388E3C;
+  }
+  .menu label input[type="checkbox"] {
+    margin-right: 5px;
+  }
+</style>
+</head>
+<body>
+<h1>Map Labeling Tool with Leader Lines</h1>
+
+<div class="menu" role="toolbar" aria-label="Labeling mode controls">
+  <div class="menu-row">
+    <label>
+      <input type="checkbox" id="editToggle" onchange="toggleEditMode()" aria-checked="false" aria-controls="modeButtons" />
+      Edit Map
+    </label>
+    <button id="addBtn" onclick="setMode('add')" disabled aria-pressed="false" title="Add new label">Add Label</button>
+    <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false" title="Delete label">Delete Label</button>
+    <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move label">Move Label</button>
+  </div>
+</div>
+
+<div id="mapContainer" tabindex="0" aria-label="Map with labels and leader lines" style="outline:none;">
+  <img id="mapImage" src="map.png" alt="Map" />
+  <svg id="leaderLines" aria-hidden="true"></svg>
+</div>
+
+<script>
+  const mapContainer = document.getElementById('mapContainer');
+  const leaderLinesSVG = document.getElementById('leaderLines');
+
+  let currentMode = null;
+  let editEnabled = false;
+
+  // label structure: { refPointEl, labelBoxEl, refX, refY, labelX, labelY, correctText, userGuess }
+  const labels = [];
+
+  let draggingLabel = null;
+  let draggingRefPoint = null;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  // Toggle edit mode
+  function toggleEditMode() {
+    editEnabled = document.getElementById('editToggle').checked;
+
+    ['addBtn', 'deleteBtn', 'moveBtn'].forEach(id => {
+      const btn = document.getElementById(id);
+      btn.disabled = !editEnabled;
+      btn.setAttribute('aria-disabled', !editEnabled);
+    });
+
+    if (!editEnabled) {
+      currentMode = null;
+    }
+
+    updateButtons();
+    updateCursor();
+    updateLabelEditable();
+    updateLeaderLines();
+  }
+
+  // Set mode helper
+  function setMode(mode) {
+    if (!editEnabled) return;
+    if (mode === currentMode) {
+      currentMode = null;
+    } else {
+      currentMode = mode;
+    }
+    updateButtons();
+    updateCursor();
+    updateLabelEditable();
+    updateLeaderLines();
+  }
+
+  function updateButtons() {
+    ['addBtn', 'deleteBtn', 'moveBtn'].forEach(id => {
+      const btn = document.getElementById(id);
+      const btnMode = id.replace('Btn', '');
+      const active = (btnMode === currentMode);
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active);
+    });
+
+    document.getElementById('editToggle').setAttribute('aria-checked', editEnabled);
+  }
+
+  function updateCursor() {
+    if (!editEnabled) {
+      mapContainer.style.cursor = 'default';
+      return;
+    }
+
+    switch(currentMode) {
+      case 'add': mapContainer.style.cursor = 'crosshair'; break;
+      case 'delete': mapContainer.style.cursor = 'not-allowed'; break;
+      case 'move': mapContainer.style.cursor = 'default'; break;
+      default: mapContainer.style.cursor = 'default'; break;
+    }
+  }
+
+  // Editable only when edit mode on and NOT typing (typing mode removed)
+  function updateLabelEditable() {
+    labels.forEach(({ labelBoxEl }) => {
+      if (editEnabled) {
+        labelBoxEl.contentEditable = "true";
+        labelBoxEl.style.cursor = 'text';
+      } else {
+        labelBoxEl.contentEditable = "false";
+        labelBoxEl.style.cursor = 'default';
+      }
+    });
+  }
+
+  // Draw leader lines connecting ref points and label boxes
+  function updateLeaderLines() {
+    // Clear previous lines
+    leaderLinesSVG.innerHTML = '';
+
+    labels.forEach(({ refPointEl, labelBoxEl }) => {
+      const refRect = refPointEl.getBoundingClientRect();
+      const labelRect = labelBoxEl.getBoundingClientRect();
+      const containerRect = mapContainer.getBoundingClientRect();
+
+      const x1 = refRect.left + refRect.width/2 - containerRect.left;
+      const y1 = refRect.top + refRect.height/2 - containerRect.top;
+      const x2 = labelRect.left + labelRect.width/2 - containerRect.left;
+      const y2 = labelRect.top + labelRect.height/2 - containerRect.top;
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', '#333');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '3,2');
+      leaderLinesSVG.appendChild(line);
+    });
+  }
+
+  // Add label at ref point with label offset
+  function createLabel(refX, refY, labelX, labelY, text = '') {
+    const refPointEl = document.createElement('div');
+    refPointEl.className = 'ref-point';
+    refPointEl.style.left = refX + 'px';
+    refPointEl.style.top = refY + 'px';
+    refPointEl.setAttribute('tabindex', '0');
+    refPointEl.setAttribute('aria-label', 'Reference point for label');
+    refPointEl.setAttribute('role', 'button');
+    refPointEl.style.userSelect = 'none';
+    mapContainer.appendChild(refPointEl);
+
+    const labelBoxEl = document.createElement('div');
+    labelBoxEl.className = 'label-box';
+    labelBoxEl.style.left = labelX + 'px';
+    labelBoxEl.style.top = labelY + 'px';
+    labelBoxEl.textContent = text;
+    labelBoxEl.setAttribute('tabindex', '0');
+    labelBoxEl.setAttribute('role', 'textbox');
+    labelBoxEl.setAttribute('aria-label', 'Label text');
+    mapContainer.appendChild(labelBoxEl);
+
+    return { refPointEl, labelBoxEl };
+  }
+
+  // Add a new label at position x,y relative to map container
+  function addLabel(x, y) {
+    if (!editEnabled || currentMode !== 'add') return;
+
+    // Position reference point
+    const refX = x;
+    const refY = y;
+    // Position label box offset (20,20) from ref point
+    const labelX = x + 20;
+    const labelY = y + 20;
+
+    const { refPointEl, labelBoxEl } = createLabel(refX, refY, labelX, labelY);
+
+    const labelObj = {
+      refPointEl,
+      labelBoxEl,
+      refX,
+      refY,
+      labelX,
+      labelY,
+      correctText: '',
+      userGuess: ''
+    };
+
+    labels.push(labelObj);
+
+    // Focus the new label box so user can type immediately
+    labelBoxEl.contentEditable = 'true';
+    labelBoxEl.focus();
+
+    // Remove contentEditable when user blurs the label
+    labelBoxEl.addEventListener('blur', () => {
+      labelBoxEl.contentEditable = 'false';
+    }, { once: true });
+
+    updateLabelEditable();
+    updateLeaderLines();
+  }
+
+  // Remove label under a point (simple hit test)
+  function removeLabelAtPoint(x, y) {
+    if (!editEnabled || currentMode !== 'delete') return;
+
+    for(let i = labels.length - 1; i >= 0; i--) {
+      const { refPointEl, labelBoxEl } = labels[i];
+      const rectRef = refPointEl.getBoundingClientRect();
+      const rectLabel = labelBoxEl.getBoundingClientRect();
+      const containerRect = mapContainer.getBoundingClientRect();
+
+      const offsetX = containerRect.left;
+      const offsetY = containerRect.top;
+
+      if (
+        x >= rectRef.left - offsetX &&
+        x <= rectRef.right - offsetX &&
+        y >= rectRef.top - offsetY &&
+        y <= rectRef.bottom - offsetY
+      ) {
+        refPointEl.remove();
+        labelBoxEl.remove();
+        labels.splice(i, 1);
+        updateLeaderLines();
+        return true;
+      }
+
+      if (
+        x >= rectLabel.left - offsetX &&
+        x <= rectLabel.right - offsetX &&
+        y >= rectLabel.top - offsetY &&
+        y <= rectLabel.bottom - offsetY
+      ) {
+        refPointEl.remove();
+        labelBoxEl.remove();
+        labels.splice(i, 1);
+        updateLeaderLines();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Move label or ref point logic
+  function onPointerDown(e) {
+    if (!editEnabled || currentMode !== 'move') return;
+
+    const rect = mapContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    for (const label of labels) {
+      const refRect = label.refPointEl.getBoundingClientRect();
+      const labelRect = label.labelBoxEl.getBoundingClientRect();
+      const offsetX = rect.left;
+      const offsetY = rect.top;
+
+      // Check if pointer down on ref point
+      if (
+        e.target === label.refPointEl ||
+        (x >= refRect.left - offsetX &&
+        x <= refRect.right - offsetX &&
+        y >= refRect.top - offsetY &&
+        y <= refRect.bottom - offsetY)
+      ) {
+        draggingRefPoint = label;
+        dragOffsetX = x - label.refX;
+        dragOffsetY = y - label.refY;
+        e.preventDefault();
+        return;
+      }
+
+      // Check if pointer down on label box
+      if (
+        e.target === label.labelBoxEl ||
+        (x >= labelRect.left - offsetX &&
+        x <= labelRect.right - offsetX &&
+        y >= labelRect.top - offsetY &&
+        y <= labelRect.bottom - offsetY)
+      ) {
+        draggingLabel = label;
+        dragOffsetX = x - label.labelX;
+        dragOffsetY = y - label.labelY;
+        e.preventDefault();
+        return;
+      }
+    }
+  }
+
+  function onPointerMove(e) {
+    if (!editEnabled || currentMode !== 'move') return;
+
+    if (!draggingLabel && !draggingRefPoint) return;
+
+    const rect = mapContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (draggingRefPoint) {
+      draggingRefPoint.refX = x - dragOffsetX;
+      draggingRefPoint.refY = y - dragOffsetY;
+      draggingRefPoint.refPointEl.style.left = draggingRefPoint.refX + 'px';
+      draggingRefPoint.refPointEl.style.top = draggingRefPoint.refY + 'px';
+    }
+    if (draggingLabel) {
+      draggingLabel.labelX = x - dragOffsetX;
+      draggingLabel.labelY = y - dragOffsetY;
+      draggingLabel.labelBoxEl.style.left = draggingLabel.labelX + 'px';
+      draggingLabel.labelBoxEl.style.top = draggingLabel.labelY + 'px';
+    }
+
+    updateLeaderLines();
+  }
+
+  function onPointerUp(e) {
+    draggingLabel = null;
+    draggingRefPoint = null;
+  }
+
+  // Add label on click if in add mode
+  mapContainer.addEventListener('click', (e) => {
+    if (!editEnabled || currentMode !== 'add') return;
+
+    const rect = mapContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    addLabel(x, y);
+  });
+
+  // Delete label on click in delete mode
+  mapContainer.addEventListener('click', (e) => {
+    if (!editEnabled || currentMode !== 'delete') return;
+
+    const rect = mapContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    removeLabelAtPoint(x, y);
+  });
+
+  // Dragging events
+  mapContainer.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+
+  // Initial disable buttons
+  toggleEditMode();
+</script>
+</body>
+</html>
