@@ -56,9 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initialize SVG size to match container
-    const containerRect = mapContainer.getBoundingClientRect();
-    leaderLinesSVG.setAttribute('width', containerRect.width);
-    leaderLinesSVG.setAttribute('height', containerRect.height);
+    updateSVGDimensions();
 
     // Initialize leader lines
     updateLeaderLines();
@@ -69,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add window resize handler
     window.addEventListener('resize', () => {
     requestAnimationFrame(() => {
+        updateSVGDimensions();
         updateAllPositions();
         updateLeaderLines();
     });
@@ -81,7 +80,46 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('finishDrawingInterface').style.display = 'none';
     }
     });
+
+    // Add MutationObserver to watch for layout changes
+    const observer = new MutationObserver((mutations) => {
+    let shouldUpdate = false;
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && 
+        (mutation.target.id === 'testInterface' || 
+         mutation.target.id === 'finishDrawingInterface' ||
+         mutation.target.classList.contains('edit-tools'))) {
+        shouldUpdate = true;
+        }
+    });
+    
+    if (shouldUpdate) {
+        requestAnimationFrame(() => {
+        updateSVGDimensions();
+        updateAllPositions();
+        updateLeaderLines();
+        });
+    }
+    });
+
+    // Observe changes to the test interface and edit tools
+    const testInterface = document.getElementById('testInterface');
+    const finishDrawingInterface = document.getElementById('finishDrawingInterface');
+    const editToolsElement = document.querySelector('.edit-tools');
+    
+    if (testInterface) observer.observe(testInterface, { attributes: true });
+    if (finishDrawingInterface) observer.observe(finishDrawingInterface, { attributes: true });
+    if (editToolsElement) observer.observe(editToolsElement, { attributes: true });
 });
+
+// Function to update SVG dimensions to match container
+function updateSVGDimensions() {
+    const containerRect = mapContainer.getBoundingClientRect();
+    leaderLinesSVG.setAttribute('width', containerRect.width);
+    leaderLinesSVG.setAttribute('height', containerRect.height);
+    shapesLayer.setAttribute('width', containerRect.width);
+    shapesLayer.setAttribute('height', containerRect.height);
+}
 
 // Toggle Add submenu
 function toggleAddMenu() {
@@ -132,6 +170,13 @@ function toggleAddMenu() {
     addBtn.setAttribute('aria-pressed', 'true');
     addBtn.classList.add('active');
     }
+
+    // Update SVG dimensions and positions after layout changes
+    requestAnimationFrame(() => {
+    updateSVGDimensions();
+    updateAllPositions();
+    updateLeaderLines();
+    });
 }
 
 // Helper function to update cursor styles based on current mode
@@ -405,6 +450,13 @@ function toggleEditMode() {
     document.querySelectorAll('.line-path').forEach(line => {
     line.setAttribute('stroke', editEnabled ? 'blue' : 'none');
     });
+
+    // Update SVG dimensions and positions after layout changes
+    requestAnimationFrame(() => {
+    updateSVGDimensions();
+    updateAllPositions();
+    updateLeaderLines();
+    });
 }
 
 function updateButtons() {
@@ -427,9 +479,7 @@ function updateLeaderLines() {
     leaderLinesSVG.innerHTML = '';
 
     // Update SVG size to match container
-    const containerRect = mapContainer.getBoundingClientRect();
-    leaderLinesSVG.setAttribute('width', containerRect.width);
-    leaderLinesSVG.setAttribute('height', containerRect.height);
+    updateSVGDimensions();
 
     // Draw leader lines for regular labels
     labels.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
@@ -1543,10 +1593,7 @@ mapFileInput.addEventListener('change', async (e) => {
 
             // Update SVG size to match new image
             requestAnimationFrame(() => {
-            const containerRect = mapContainer.getBoundingClientRect();
-            console.log('Container size:', containerRect.width, 'x', containerRect.height);
-            leaderLinesSVG.setAttribute('width', containerRect.width);
-            leaderLinesSVG.setAttribute('height', containerRect.height);
+            updateSVGDimensions();
             // Reset file input to allow selecting the same file again
             mapFileInput.value = '';
             // Update save button state after clearing data
@@ -2731,6 +2778,7 @@ document.getElementById('stopTestBtn').addEventListener('click', () => {
 // Add window resize handler
 window.addEventListener('resize', () => {
     requestAnimationFrame(() => {
+    updateSVGDimensions();
     updateAllPositions();
     updateLeaderLines();
     });
@@ -3956,6 +4004,13 @@ function toggletagPanel(forceOpen) {
         renderTagPanel();
     }, 300);
     }
+
+    // Update SVG dimensions and positions after layout changes
+    requestAnimationFrame(() => {
+    updateSVGDimensions();
+    updateAllPositions();
+    updateLeaderLines();
+    });
 }
 
 function addNewTag() {
@@ -4440,6 +4495,7 @@ function updateInProgressShapePositions() {
 // Update window resize handler to update in-progress shapes
 window.addEventListener('resize', () => {
     requestAnimationFrame(() => {
+    updateSVGDimensions();
     updateAllPositions();
     updateLeaderLines();
     updateInProgressShapePositions();
