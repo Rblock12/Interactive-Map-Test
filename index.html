@@ -3,20 +3,185 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Map Labeling Tool with Leader Lines</title>
+<title>Map Labeling Tool</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 <style>
   body {
-    font-family: sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     text-align: center;
     margin: 0;
-    padding: 0;
+    padding: 20px;
     user-select: none;
+    background-color: #f5f5f5;
+    color: #333;
   }
+
+  h1 {
+    color: #2196F3;
+    margin-bottom: 30px;
+    font-weight: 600;
+  }
+
+  /* Menu Styles */
+  .menu {
+    margin: 20px auto;
+    user-select: none;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: start;
+    flex-wrap: wrap;
+    max-width: 800px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .menu-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .menu button {
+    padding: 8px 16px;
+    font-size: 14px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    user-select: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    cursor: pointer;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .menu button:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #2196F3;
+    color: #2196F3;
+    transform: translateY(-1px);
+  }
+
+  .menu button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .menu button.active,
+  .menu button[aria-pressed="true"] {
+    background-color: #2196F3;
+    color: white;
+    border-color: #1976D2;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(33,150,243,0.2);
+  }
+
+  .menu .edit-tools {
+    display: none;
+    width: 100%;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  .menu .edit-tools.visible {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #addSubMenu {
+    background: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-top: 8px;
+  }
+
+  /* File Loading Container */
+  #loadMapContainer {
+    margin: 20px auto;
+    text-align: center;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  #loadMapContainer input[type="file"] {
+    display: none;
+  }
+
+  #loadMapContainer label,
+  #loadMapContainer button {
+    padding: 12px 24px;
+    background-color: #2196F3;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(33,150,243,0.2);
+  }
+
+  #loadMapContainer label:hover,
+  #loadMapContainer button:hover {
+    background-color: #1976D2;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(33,150,243,0.3);
+  }
+
+  #loadMapContainer label.loading {
+    background-color: #9e9e9e;
+    cursor: wait;
+  }
+
+  #errorMessage {
+    color: #f44336;
+    margin: 10px 0;
+    display: none;
+    padding: 8px 16px;
+    background: #ffebee;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  /* Existing styles remain unchanged */
   #mapContainer {
     position: relative;
     display: inline-block;
     user-select: none;
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
+  #mapContainer.add-mode {
+    cursor: crosshair;
+  }
+  #mapContainer.polygon-mode {
+    cursor: crosshair;
+  }
+  #mapContainer.line-mode {
+    cursor: crosshair;
+  }
+
+  /* Keep all existing styles below this line */
   #mapImage {
     display: block;
     max-width: 100%;
@@ -24,43 +189,184 @@
     -webkit-user-drag: none;
     user-select: none;
   }
+
   .ref-point {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #f44336;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    pointer-events: auto;
+    user-select: none;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 10;
+    cursor: default;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease, box-shadow 0.2s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .ref-point.visible {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  .ref-point.removing {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  .ref-point:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  }
+  .ref-point.movable {
+    cursor: move;
+  }
+  .ref-point.deletable {
+    cursor: no-drop;
+  }
+  .ref-point.editable {
+    cursor: text;
+  }
+  .polygon-point {
     position: absolute;
     width: 10px;
     height: 10px;
-    background: red;
+    background: #2196F3;
     border-radius: 50%;
-    border: 1px solid #800;
+    border: 2px solid #fff;
     pointer-events: auto;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 15;
     user-select: none;
-    transform: translate(-50%, -50%);
-    z-index: 10;
+    cursor: default;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease, box-shadow 0.2s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .polygon-point.visible {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  .polygon-point.removing {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  .polygon-point:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  }
+  .polygon-point.movable {
     cursor: move;
+  }
+  .polygon-point.deletable {
+    cursor: no-drop;
+  }
+  .polygon-point.editable {
+    cursor: text;
+  }
+  .polygon-anchor {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #2196F3;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 10;
+    cursor: default;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease, box-shadow 0.2s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .polygon-anchor.visible {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  .polygon-anchor.removing {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  .polygon-anchor:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  }
+  .polygon-anchor.movable {
+    cursor: move;
+  }
+  .polygon-anchor.deletable {
+    cursor: no-drop;
+  }
+  .polygon-anchor.editable {
+    cursor: text;
+  }
+  .polygon-region {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .line-segment {
+    position: absolute;
+    pointer-events: auto;
+    z-index: 5;
   }
   .label-box {
     position: absolute;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #333;
-    padding: 2px 6px;
-    font-size: 12px;
-    width: 80px;
-    cursor: default;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 4px 8px;
+    font-size: 13px;
+    min-width: 80px;
+    max-width: 200px;
     user-select: text;
     text-transform: uppercase;
     z-index: 20;
-    border-radius: 3px;
+    border-radius: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     outline: none;
+    cursor: default;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 500;
+    color: #333;
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity 0.3s ease, box-shadow 0.2s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .label-box.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .label-box.removing {
+    opacity: 0;
+    transform: scale(0);
+  }
+  .label-box:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  }
+  .label-box:focus {
+    box-shadow: 0 3px 8px rgba(33,150,243,0.3);
+    border-color: #2196F3;
+  }
+  .label-box.movable {
+    cursor: move;
+  }
+  .label-box.deletable {
+    cursor: no-drop;
+  }
+  .label-box.editable {
+    cursor: text;
   }
   .label-box.correct {
-    color: green;
-    border-color: green;
+    color: #4CAF50;
+    border-color: #4CAF50;
+    background: rgba(76,175,80,0.1);
   }
   .label-box.incorrect {
-    color: red;
-    border-color: red;
+    color: #f44336;
+    border-color: #f44336;
+    background: rgba(244,67,54,0.1);
   }
   #leaderLines {
     position: absolute;
@@ -71,163 +377,356 @@
     width: 100%;
     height: 100%;
     overflow: visible;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
-  .menu {
-    margin: 10px auto;
-    user-select: none;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    max-width: 600px;
-  }
-  .menu-row {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+  #shapesLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 4;
     width: 100%;
-    margin-bottom: 6px;
+    height: 100%;
+    overflow: visible;
   }
-  .menu label {
-    user-select: none;
-    cursor: pointer;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
+  #saveLabelsBtn, #loadLabelsBtn {
+    display: none;
   }
-  .menu button {
-    padding: 6px 12px;
-    font-size: 14px;
-    cursor: pointer;
-    border: 1px solid #333;
-    background: #eee;
-    border-radius: 4px;
-    user-select: none;
-    transition: background-color 0.2s, color 0.2s;
+  #mainMenu {
+    display: none;
   }
-  .menu button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
+  .polygon-path {
+    fill: rgba(33, 150, 243, 0.15);
+    stroke: #2196F3;
+    stroke-width: 2;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.2s ease, fill 0.2s ease;
   }
-  .menu button.active,
-  .menu button[aria-pressed="true"] {
-    background-color: #4CAF50;
-    color: white;
-    font-weight: bold;
-    border-color: #388E3C;
+  .polygon-path:hover {
+    fill: rgba(33, 150, 243, 0.25);
   }
-  .menu label input[type="checkbox"] {
-    margin-right: 5px;
+  .line-path {
+    fill: none;
+    stroke: #2196F3;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.2s ease, stroke-width 0.2s ease;
+  }
+  .line-path:hover {
+    stroke-width: 3;
+  }
+  .leader-line {
+    stroke: rgba(0, 0, 0, 0.4);
+    stroke-width: 1;
+    stroke-dasharray: 4,3;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+  }
+  .leader-line:hover {
+    stroke: rgba(0, 0, 0, 0.6);
+    stroke-width: 1.5;
   }
 </style>
 </head>
 <body>
-<h1>Map Labeling Tool with Leader Lines</h1>
+<h1><i class="fas fa-map-marked-alt"></i> Map Labeling Tool</h1>
 
-<div class="menu" role="toolbar" aria-label="Labeling mode controls">
-  <div class="menu-row">
-    <label>
-      <input type="checkbox" id="editToggle" onchange="toggleEditMode()" aria-checked="false" aria-controls="modeButtons" />
-      Edit Map
+<div id="loadMapContainer">
+  <input type="file" id="mapFileInput" accept="image/*" />
+  <label for="mapFileInput" id="loadMapLabel">
+    <i class="fas fa-upload"></i> Load Map Image
     </label>
-    <button id="addBtn" onclick="setMode('add')" disabled aria-pressed="false" title="Add new label">Add Label</button>
-    <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false" title="Delete label">Delete Label</button>
-    <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move label">Move Label</button>
+  <button id="saveLabelsBtn" onclick="saveLabels()">
+    <i class="fas fa-save"></i> Save Labels
+  </button>
+  <button id="loadLabelsBtn" onclick="loadLabels()">
+    <i class="fas fa-folder-open"></i> Load Labels
+  </button>
+  <input type="file" id="labelsFileInput" accept=".json" style="display: none;" />
+  <div id="errorMessage"><i class="fas fa-exclamation-circle"></i> <span></span></div>
+</div>
+
+<div id="mainMenu">
+  <div class="menu" role="toolbar" aria-label="Map interaction controls">
+    <div class="menu-row">
+      <button id="identPointBtn" onclick="setMode('ident')" title="Identify the points">
+        <i class="fas fa-map-pin"></i> Identify Points
+      </button>
+      <button id="findPointBtn" onclick="setMode('find')" title="Find the points">
+        <i class="fas fa-search"></i> Find Points
+      </button>
+    </div>
+    <div class="menu-row">
+      <button id="editToggle" onclick="toggleEditMode()" aria-pressed="false" title="Toggle edit mode">
+        <i class="fas fa-edit"></i> Edit Map
+      </button>
+    </div>
+    <div class="edit-tools">
+      <div class="menu-row">
+        <button id="addBtn" onclick="toggleAddMenu()" disabled aria-pressed="false" title="Add items">
+          <i class="fas fa-plus"></i> Add
+        </button>
+        <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move items">
+          <i class="fas fa-arrows-alt"></i> Move
+        </button>
+        <button id="editLabelBtn" onclick="setMode('editLabel')" disabled aria-pressed="false" title="Edit text">
+          <i class="fas fa-font"></i> Edit Text
+        </button>
+        <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false" title="Delete items">
+          <i class="fas fa-trash-alt"></i> Delete
+        </button>
+      </div>
+      <div id="addSubMenu" class="menu-row" style="display: none;">
+        <button id="fixBtn" onclick="setMode('add')" disabled aria-pressed="false" title="Add new fix">
+          <i class="fas fa-thumbtack"></i> Fix
+        </button>
+        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false" title="Draw or finish shape">
+          <i class="fas fa-draw-polygon"></i> Shape
+        </button>
+        <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
+          <i class="fas fa-minus"></i> Line
+        </button>
+      </div>
   </div>
 </div>
 
 <div id="mapContainer" tabindex="0" aria-label="Map with labels and leader lines" style="outline:none;">
-  <img id="mapImage" src="map.png" alt="Map" />
+    <img id="mapImage" alt="Map" />
+    <svg id="shapesLayer" aria-hidden="true"></svg>
   <svg id="leaderLines" aria-hidden="true"></svg>
+  </div>
 </div>
 
 <script>
   const mapContainer = document.getElementById('mapContainer');
   const leaderLinesSVG = document.getElementById('leaderLines');
+  const shapesLayer = document.getElementById('shapesLayer');
+  const mapImage = document.getElementById('mapImage');
+  const mapFileInput = document.getElementById('mapFileInput');
+  const mainMenu = document.getElementById('mainMenu');
+  const loadMapLabel = document.getElementById('loadMapLabel');
 
-  let currentMode = null;
   let editEnabled = false;
-
-  // label structure: { refPointEl, labelBoxEl, refX, refY, labelX, labelY, correctText, userGuess }
-  const labels = [];
+  let currentMode = null;
+  let currentShape = null;
+  let currentShapePoints = [];
 
   let draggingLabel = null;
   let draggingRefPoint = null;
+  let draggingPolygonPoint = null;
+  let draggingPolygonLabel = null;
+  let draggingLinePoint = null;
+  let draggingLineLabel = null;
+  let draggingPolygonAnchor = null;
+  let draggingLineAnchor = null;
+
   let dragOffsetX = 0;
   let dragOffsetY = 0;
 
-  // Toggle edit mode
-  function toggleEditMode() {
-    editEnabled = document.getElementById('editToggle').checked;
+  // label structure: { refPointEl, labelBoxEl, refX, refY, labelX, labelY, correctText, userGuess }
+  const labels = [];
+  // polygon structure: { points: [{x, y, element}], labelBoxEl, svgPath }
+  const polygons = [];
+  // line structure: { points: [{x, y, element}], labelBoxEl, polyline, anchorPoint, anchorX, anchorY }
+  const lines = [];
 
-    ['addBtn', 'deleteBtn', 'moveBtn'].forEach(id => {
+  // Initialize UI state
+  document.addEventListener('DOMContentLoaded', () => {
+    const editTools = document.querySelector('.edit-tools');
+    editTools.classList.remove('visible');
+    const editToggle = document.getElementById('editToggle');
+    editToggle.setAttribute('aria-pressed', 'false');
+    editToggle.classList.remove('active');
+    editEnabled = false;
+    
+    // Ensure all edit buttons are disabled initially
+    ['addBtn', 'deleteBtn', 'moveBtn', 'polygonBtn', 'lineBtn', 'editLabelBtn'].forEach(id => {
       const btn = document.getElementById(id);
-      btn.disabled = !editEnabled;
-      btn.setAttribute('aria-disabled', !editEnabled);
+      if (btn) {
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+      }
     });
 
-    if (!editEnabled) {
-      currentMode = null;
-    }
+    // Initialize SVG size to match container
+    const containerRect = mapContainer.getBoundingClientRect();
+    leaderLinesSVG.setAttribute('width', containerRect.width);
+    leaderLinesSVG.setAttribute('height', containerRect.height);
 
-    updateButtons();
-    updateCursor();
-    updateLabelEditable();
+    // Initialize leader lines
     updateLeaderLines();
+  });
+
+  // Toggle Add submenu
+  function toggleAddMenu() {
+    const addBtn = document.getElementById('addBtn');
+    const addSubMenu = document.getElementById('addSubMenu');
+    const isVisible = addSubMenu.style.display === 'flex';
+    
+    if (isVisible) {
+      // If Add submenu is visible, hide it and deactivate Add mode
+      addSubMenu.style.display = 'none';
+      addBtn.setAttribute('aria-pressed', 'false');
+      addBtn.classList.remove('active');
+      
+      // Turn off current mode if it's a drawing mode
+      if (currentMode === 'add' || currentMode === 'polygon' || currentMode === 'line') {
+        currentMode = null;
+        currentShape = null;
+        // Clear any remaining points
+        if (currentShapePoints.length > 0) {
+          currentShapePoints.forEach(point => {
+            if (point.element && point.element.parentNode) {
+              point.element.remove();
+            }
+          });
+          currentShapePoints = [];
+        }
+        // Remove preview line if it exists
+        const previewLine = document.getElementById('previewLine');
+        if (previewLine) previewLine.remove();
+        
+        // Reset button text
+        const polygonBtn = document.getElementById('polygonBtn');
+        const lineBtn = document.getElementById('lineBtn');
+        polygonBtn.textContent = 'Shape';
+        polygonBtn.title = 'Draw shape';
+        lineBtn.textContent = 'Line';
+        lineBtn.title = 'Draw line';
+        
+        // Reset cursor
+        mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
+        mapContainer.style.cursor = 'default';
+      }
+      updateButtons();
+    } else {
+      // If Add submenu is hidden, show it but don't activate any mode
+      addSubMenu.style.display = 'flex';
+      addBtn.setAttribute('aria-pressed', 'true');
+      addBtn.classList.add('active');
+    }
   }
 
-  // Set mode helper
-  function setMode(mode) {
-    if (!editEnabled) return;
-    if (mode === currentMode) {
-      currentMode = null;
+  // Toggle edit mode
+  function toggleEditMode() {
+    editEnabled = !editEnabled;
+    document.getElementById('editToggle').setAttribute('aria-pressed', editEnabled);
+    
+    // Toggle visibility of edit tools
+    const editTools = document.querySelector('.edit-tools');
+    if (editEnabled) {
+      editTools.classList.add('visible');
+      // Enable edit tool buttons
+      ['addBtn', 'moveBtn', 'editLabelBtn', 'deleteBtn', 'fixBtn', 'polygonBtn', 'lineBtn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.disabled = false;
+          btn.setAttribute('aria-disabled', 'false');
+          btn.classList.remove('active');
+          btn.setAttribute('aria-pressed', 'false');
+        }
+      });
     } else {
-      currentMode = mode;
+      editTools.classList.remove('visible');
+      // Reset current mode when exiting edit mode
+      currentMode = null;
+      currentShape = null;
+      
+      // Clear any in-progress shape points
+      if (currentShapePoints.length > 0) {
+        currentShapePoints.forEach(point => {
+          if (point.element && point.element.parentNode) {
+            point.element.remove();
+          }
+        });
+        currentShapePoints = [];
+      }
+
+      // Remove preview line if it exists
+      const previewLine = document.getElementById('previewLine');
+      if (previewLine) previewLine.remove();
+
+      // Reset all buttons to inactive state
+      document.querySelectorAll('.menu button').forEach(btn => {
+        btn.setAttribute('aria-pressed', 'false');
+        btn.classList.remove('active');
+        // Disable edit tool buttons except for editToggle and quiz mode buttons
+        if (btn.id !== 'editToggle' && btn.id !== 'identPointBtn' && btn.id !== 'findPointBtn') {
+          btn.disabled = true;
+          btn.setAttribute('aria-disabled', 'true');
+        }
+      });
+
+      // Reset Add submenu
+      const addSubMenu = document.getElementById('addSubMenu');
+      addSubMenu.style.display = 'none';
+      const addBtn = document.getElementById('addBtn');
+      addBtn.setAttribute('aria-pressed', 'false');
+      addBtn.classList.remove('active');
+
+      // Reset polygon and line button text
+      const polygonBtn = document.getElementById('polygonBtn');
+      const lineBtn = document.getElementById('lineBtn');
+      polygonBtn.textContent = 'Shape';
+      polygonBtn.title = 'Draw shape';
+      lineBtn.textContent = 'Line';
+      lineBtn.title = 'Draw line';
+
+      // Reset cursor and all cursor-related styles
+      mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
+      mapContainer.style.cursor = 'default';
+      
+      // Reset cursor styles on all elements
+      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+        element.classList.remove('movable', 'deletable', 'editable');
+        element.style.cursor = 'default';
+      });
     }
-    updateButtons();
-    updateCursor();
-    updateLabelEditable();
-    updateLeaderLines();
+
+    // Toggle visibility of points and anchor points
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+      point.style.display = editEnabled ? 'block' : 'none';
+    });
+
+    // Toggle visibility of shape strokes and fills
+    document.querySelectorAll('.polygon-path').forEach(polygon => {
+      polygon.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+      polygon.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
+    });
+
+    // Toggle visibility of line strokes
+    document.querySelectorAll('.line-path').forEach(line => {
+      line.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+    });
+
+    // Update movable state of labels
+    document.querySelectorAll('.label-box').forEach(label => {
+      if (editEnabled && currentMode === 'move') {
+        label.classList.add('movable');
+      } else {
+        label.classList.remove('movable');
+      }
+    });
   }
 
   function updateButtons() {
-    ['addBtn', 'deleteBtn', 'moveBtn'].forEach(id => {
+    ['moveBtn', 'deleteBtn', 'fixBtn', 'polygonBtn', 'lineBtn', 'editLabelBtn'].forEach(id => {
       const btn = document.getElementById(id);
-      const btnMode = id.replace('Btn', '');
+      if (btn) {
+        const btnMode = id === 'fixBtn' ? 'add' : id.replace('Btn', '');
       const active = (btnMode === currentMode);
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-pressed', active);
+      }
     });
 
     document.getElementById('editToggle').setAttribute('aria-checked', editEnabled);
-  }
-
-  function updateCursor() {
-    if (!editEnabled) {
-      mapContainer.style.cursor = 'default';
-      return;
-    }
-
-    switch(currentMode) {
-      case 'add': mapContainer.style.cursor = 'crosshair'; break;
-      case 'delete': mapContainer.style.cursor = 'not-allowed'; break;
-      case 'move': mapContainer.style.cursor = 'default'; break;
-      default: mapContainer.style.cursor = 'default'; break;
-    }
-  }
-
-  // Editable only when edit mode on and NOT typing (typing mode removed)
-  function updateLabelEditable() {
-    labels.forEach(({ labelBoxEl }) => {
-      if (editEnabled) {
-        labelBoxEl.contentEditable = "true";
-        labelBoxEl.style.cursor = 'text';
-      } else {
-        labelBoxEl.contentEditable = "false";
-        labelBoxEl.style.cursor = 'default';
-      }
-    });
   }
 
   // Draw leader lines connecting ref points and label boxes
@@ -235,39 +734,80 @@
     // Clear previous lines
     leaderLinesSVG.innerHTML = '';
 
-    labels.forEach(({ refPointEl, labelBoxEl }) => {
-      const refRect = refPointEl.getBoundingClientRect();
-      const labelRect = labelBoxEl.getBoundingClientRect();
-      const containerRect = mapContainer.getBoundingClientRect();
+    // Update SVG size to match container
+    const containerRect = mapContainer.getBoundingClientRect();
+    leaderLinesSVG.setAttribute('width', containerRect.width);
+    leaderLinesSVG.setAttribute('height', containerRect.height);
 
-      const x1 = refRect.left + refRect.width/2 - containerRect.left;
-      const y1 = refRect.top + refRect.height/2 - containerRect.top;
-      const x2 = labelRect.left + labelRect.width/2 - containerRect.left;
-      const y2 = labelRect.top + labelRect.height/2 - containerRect.top;
+    // Draw leader lines for regular labels
+    labels.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY }) => {
+      // Use absolute coordinates instead of getBoundingClientRect for consistent positioning
+      const x1 = refX;
+      const y1 = refY;
+      const x2 = labelX;
+      const y2 = labelY;
 
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
       line.setAttribute('x1', x1);
       line.setAttribute('y1', y1);
       line.setAttribute('x2', x2);
       line.setAttribute('y2', y2);
-      line.setAttribute('stroke', '#333');
-      line.setAttribute('stroke-width', '1');
-      line.setAttribute('stroke-dasharray', '3,2');
+      line.setAttribute('class', 'leader-line');
       leaderLinesSVG.appendChild(line);
+    });
+
+    // Draw leader lines for polygon labels
+    polygons.forEach(polygon => {
+      // Use stored anchor coordinates for consistent positioning
+      const x1 = polygon.anchorX;
+      const y1 = polygon.anchorY;
+      const x2 = parseInt(polygon.labelBoxEl.style.left);
+      const y2 = parseInt(polygon.labelBoxEl.style.top);
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('class', 'leader-line');
+      leaderLinesSVG.appendChild(line);
+    });
+
+    // Draw leader lines for line labels
+    lines.forEach(line => {
+      // Use stored anchor coordinates for consistent positioning
+      const x1 = line.anchorX;
+      const y1 = line.anchorY;
+      const x2 = parseInt(line.labelBoxEl.style.left);
+      const y2 = parseInt(line.labelBoxEl.style.top);
+
+      const leaderLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      leaderLine.setAttribute('x1', x1);
+      leaderLine.setAttribute('y1', y1);
+      leaderLine.setAttribute('x2', x2);
+      leaderLine.setAttribute('y2', y2);
+      leaderLine.setAttribute('class', 'leader-line');
+      leaderLinesSVG.appendChild(leaderLine);
     });
   }
 
   // Add label at ref point with label offset
-  function createLabel(refX, refY, labelX, labelY, text = '') {
-    const refPointEl = document.createElement('div');
-    refPointEl.className = 'ref-point';
-    refPointEl.style.left = refX + 'px';
-    refPointEl.style.top = refY + 'px';
-    refPointEl.setAttribute('tabindex', '0');
-    refPointEl.setAttribute('aria-label', 'Reference point for label');
-    refPointEl.setAttribute('role', 'button');
-    refPointEl.style.userSelect = 'none';
-    mapContainer.appendChild(refPointEl);
+  function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = true, shouldFocus = true) {
+    let refPointEl = null;
+    if (createRefPoint) {
+      refPointEl = document.createElement('div');
+      refPointEl.className = 'ref-point';
+      refPointEl.style.left = refX + 'px';
+      refPointEl.style.top = refY + 'px';
+      refPointEl.setAttribute('tabindex', '0');
+      refPointEl.setAttribute('aria-label', 'Reference point for label');
+      refPointEl.setAttribute('role', 'button');
+      refPointEl.style.userSelect = 'none';
+      refPointEl.style.display = editEnabled ? 'block' : 'none';
+      mapContainer.appendChild(refPointEl);
+      // Trigger the creation animation
+      requestAnimationFrame(() => refPointEl.classList.add('visible'));
+    }
 
     const labelBoxEl = document.createElement('div');
     labelBoxEl.className = 'label-box';
@@ -277,7 +817,35 @@
     labelBoxEl.setAttribute('tabindex', '0');
     labelBoxEl.setAttribute('role', 'textbox');
     labelBoxEl.setAttribute('aria-label', 'Label text');
+    labelBoxEl.contentEditable = shouldFocus ? 'true' : 'false';
     mapContainer.appendChild(labelBoxEl);
+    // Trigger the creation animation
+    requestAnimationFrame(() => labelBoxEl.classList.add('visible'));
+
+    // Only focus and set up editing if shouldFocus is true
+    if (shouldFocus) {
+      requestAnimationFrame(() => {
+	labelBoxEl.contentEditable = 'true';
+	labelBoxEl.focus();
+        // Place cursor at the end of any existing text
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(labelBoxEl);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      });
+
+      // Add blur handler to make non-editable when focus is lost
+      labelBoxEl.addEventListener('blur', () => {
+        // Keep editable for a short moment to allow for immediate typing
+        setTimeout(() => {
+          if (!editEnabled || currentMode !== 'editLabel') {
+            labelBoxEl.contentEditable = 'false';
+          }
+        }, 100);
+      });
+    }
 
     return { refPointEl, labelBoxEl };
   }
@@ -295,6 +863,10 @@
 
     const { refPointEl, labelBoxEl } = createLabel(refX, refY, labelX, labelY);
 
+    // Convert to relative coordinates
+    const relCoords = toRelativeCoords(refX, refY);
+    const relLabelCoords = toRelativeCoords(labelX, labelY);
+
     const labelObj = {
       refPointEl,
       labelBoxEl,
@@ -302,15 +874,15 @@
       refY,
       labelX,
       labelY,
+      relRefX: relCoords.x,
+      relRefY: relCoords.y,
+      relLabelX: relLabelCoords.x,
+      relLabelY: relLabelCoords.y,
       correctText: '',
       userGuess: ''
     };
 
     labels.push(labelObj);
-
-    // Focus the new label box so user can type immediately
-    labelBoxEl.contentEditable = 'true';
-    labelBoxEl.focus();
 
     // Remove contentEditable when user blurs the label
     labelBoxEl.addEventListener('blur', () => {
@@ -321,10 +893,47 @@
     updateLeaderLines();
   }
 
+  // Helper function to delete a line
+  function deleteLine(line, index) {
+    // Add removing class to trigger animation
+    line.points.forEach(p => p.element.classList.add('removing'));
+    line.labelBoxEl.classList.add('removing');
+    line.anchorPoint.classList.add('removing');
+    
+    // Remove elements after animation
+    setTimeout(() => {
+      line.points.forEach(p => p.element.remove());
+      line.labelBoxEl.remove();
+      line.polyline.remove();
+      line.anchorPoint.remove();
+      lines.splice(index, 1);
+      updateLeaderLines();
+    }, 300); // Match the animation duration
+  }
+
+  // Helper function to delete a polygon
+  function deletePolygon(polygon, index) {
+    // Add removing class to trigger animation
+    polygon.points.forEach(p => p.element.classList.add('removing'));
+    polygon.labelBoxEl.classList.add('removing');
+    polygon.anchorPoint.element.classList.add('removing');
+    
+    // Remove elements after animation
+    setTimeout(() => {
+      polygon.points.forEach(p => p.element.remove());
+      polygon.labelBoxEl.remove();
+      polygon.svgPath.remove();
+      polygon.anchorPoint.element.remove();
+      polygons.splice(index, 1);
+      updateLeaderLines();
+    }, 300); // Match the animation duration
+  }
+
   // Remove label under a point (simple hit test)
   function removeLabelAtPoint(x, y) {
     if (!editEnabled || currentMode !== 'delete') return;
 
+    // Check regular labels first
     for(let i = labels.length - 1; i >= 0; i--) {
       const { refPointEl, labelBoxEl } = labels[i];
       const rectRef = refPointEl.getBoundingClientRect();
@@ -334,33 +943,88 @@
       const offsetX = containerRect.left;
       const offsetY = containerRect.top;
 
-      if (
-        x >= rectRef.left - offsetX &&
-        x <= rectRef.right - offsetX &&
-        y >= rectRef.top - offsetY &&
-        y <= rectRef.bottom - offsetY
-      ) {
+      if (isPointInRect(x, y, rectRef, offsetX, offsetY) || 
+          isPointInRect(x, y, rectLabel, offsetX, offsetY)) {
+        // Add removing class to trigger animation
+        refPointEl.classList.add('removing');
+        labelBoxEl.classList.add('removing');
+        labelBoxEl.style.pointerEvents = 'none'; // Prevent interaction during animation
+        
+        // Remove elements after animation
+        setTimeout(() => {
         refPointEl.remove();
         labelBoxEl.remove();
         labels.splice(i, 1);
         updateLeaderLines();
-        return true;
-      }
-
-      if (
-        x >= rectLabel.left - offsetX &&
-        x <= rectLabel.right - offsetX &&
-        y >= rectLabel.top - offsetY &&
-        y <= rectLabel.bottom - offsetY
-      ) {
-        refPointEl.remove();
-        labelBoxEl.remove();
-        labels.splice(i, 1);
-        updateLeaderLines();
+        }, 300); // Match the animation duration
         return true;
       }
     }
+
+    // Check polygons
+    for(let i = polygons.length - 1; i >= 0; i--) {
+      const polygon = polygons[i];
+      const containerRect = mapContainer.getBoundingClientRect();
+      const offsetX = containerRect.left;
+      const offsetY = containerRect.top;
+
+      // Check if clicked on any polygon point, label, or inside the polygon
+      const labelRect = polygon.labelBoxEl.getBoundingClientRect();
+      const anchorRect = polygon.anchorPoint.element.getBoundingClientRect();
+
+      // Check points
+      for (const point of polygon.points) {
+        const rect = point.element.getBoundingClientRect();
+        if (isPointInRect(x, y, rect, offsetX, offsetY)) {
+          deletePolygon(polygon, i);
+        return true;
+      }
+    }
+
+      // Check label or anchor
+      if (isPointInRect(x, y, labelRect, offsetX, offsetY) ||
+          isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
+        deletePolygon(polygon, i);
+        return true;
+      }
+    }
+
+    // Check lines
+    for(let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i];
+      const containerRect = mapContainer.getBoundingClientRect();
+      const offsetX = containerRect.left;
+      const offsetY = containerRect.top;
+
+      // Check if clicked on any line point, label, anchor, or the line itself
+      const labelRect = line.labelBoxEl.getBoundingClientRect();
+      const anchorRect = line.anchorPoint.getBoundingClientRect();
+
+      // Check points
+      for (const point of line.points) {
+        const rect = point.element.getBoundingClientRect();
+        if (isPointInRect(x, y, rect, offsetX, offsetY)) {
+          deleteLine(line, i);
+          return true;
+        }
+      }
+
+      // Check label, anchor, or line
+      if (isPointInRect(x, y, labelRect, offsetX, offsetY) ||
+          isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
+        deleteLine(line, i);
+        return true;
+      }
+    }
+
     return false;
+  }
+
+  function isPointInRect(x, y, rect, offsetX, offsetY) {
+    return x >= rect.left - offsetX &&
+           x <= rect.right - offsetX &&
+           y >= rect.top - offsetY &&
+           y <= rect.bottom - offsetY;
   }
 
   // Move label or ref point logic
@@ -371,64 +1035,335 @@
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Check regular labels
     for (const label of labels) {
       const refRect = label.refPointEl.getBoundingClientRect();
       const labelRect = label.labelBoxEl.getBoundingClientRect();
       const offsetX = rect.left;
       const offsetY = rect.top;
 
-      // Check if pointer down on ref point
-      if (
-        e.target === label.refPointEl ||
-        (x >= refRect.left - offsetX &&
-        x <= refRect.right - offsetX &&
-        y >= refRect.top - offsetY &&
-        y <= refRect.bottom - offsetY)
-      ) {
+      if (isPointInRect(x, y, refRect, offsetX, offsetY)) {
         draggingRefPoint = label;
-        dragOffsetX = x - label.refX;
-        dragOffsetY = y - label.refY;
+        dragOffsetX = x - parseInt(label.refPointEl.style.left);
+        dragOffsetY = y - parseInt(label.refPointEl.style.top);
         e.preventDefault();
         return;
       }
 
-      // Check if pointer down on label box
-      if (
-        e.target === label.labelBoxEl ||
-        (x >= labelRect.left - offsetX &&
-        x <= labelRect.right - offsetX &&
-        y >= labelRect.top - offsetY &&
-        y <= labelRect.bottom - offsetY)
-      ) {
+      if (isPointInRect(x, y, labelRect, offsetX, offsetY)) {
         draggingLabel = label;
-        dragOffsetX = x - label.labelX;
-        dragOffsetY = y - label.labelY;
+        dragOffsetX = x - parseInt(label.labelBoxEl.style.left);
+        dragOffsetY = y - parseInt(label.labelBoxEl.style.top);
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Check polygons
+    for (const polygon of polygons) {
+      const labelRect = polygon.labelBoxEl.getBoundingClientRect();
+      const anchorRect = polygon.anchorPoint.element.getBoundingClientRect();
+      const offsetX = rect.left;
+      const offsetY = rect.top;
+
+      // Check polygon points
+      for (let i = 0; i < polygon.points.length; i++) {
+        const point = polygon.points[i];
+        const pointRect = point.element.getBoundingClientRect();
+        if (isPointInRect(x, y, pointRect, offsetX, offsetY)) {
+          draggingPolygonPoint = { polygon, pointIndex: i };
+          dragOffsetX = x - parseInt(point.element.style.left);
+          dragOffsetY = y - parseInt(point.element.style.top);
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // Check polygon anchor point
+      if (isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
+        draggingPolygonAnchor = polygon;
+        dragOffsetX = x - polygon.anchorX;
+        dragOffsetY = y - polygon.anchorY;
+        e.preventDefault();
+        return;
+      }
+
+      // Check polygon label
+      if (isPointInRect(x, y, labelRect, offsetX, offsetY)) {
+        draggingPolygonLabel = polygon;
+        dragOffsetX = x - parseInt(polygon.labelBoxEl.style.left);
+        dragOffsetY = y - parseInt(polygon.labelBoxEl.style.top);
+        e.preventDefault();
+        return;
+      }
+    }
+
+    // Check lines
+    for (const line of lines) {
+      const labelRect = line.labelBoxEl.getBoundingClientRect();
+      const anchorRect = line.anchorPoint.getBoundingClientRect();
+      const offsetX = rect.left;
+      const offsetY = rect.top;
+
+      // Check line points
+      for (let i = 0; i < line.points.length; i++) {
+        const point = line.points[i];
+        const pointRect = point.element.getBoundingClientRect();
+        if (isPointInRect(x, y, pointRect, offsetX, offsetY)) {
+          draggingLinePoint = { line, pointIndex: i };
+          dragOffsetX = x - parseInt(point.element.style.left);
+          dragOffsetY = y - parseInt(point.element.style.top);
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // Check line anchor point
+      if (isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
+        draggingLineAnchor = line;
+        dragOffsetX = x - line.anchorX;
+        dragOffsetY = y - line.anchorY;
+        e.preventDefault();
+        return;
+      }
+
+      // Check line label
+      if (isPointInRect(x, y, labelRect, offsetX, offsetY)) {
+        draggingLineLabel = line;
+        dragOffsetX = x - parseInt(line.labelBoxEl.style.left);
+        dragOffsetY = y - parseInt(line.labelBoxEl.style.top);
         e.preventDefault();
         return;
       }
     }
   }
 
+  function isPointInPolygon(x, y, points) {
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const xi = points[i].x, yi = points[i].y;
+      const xj = points[j].x, yj = points[j].y;
+      
+      const intersect = ((yi > y) !== (yj > y))
+          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
   function onPointerMove(e) {
     if (!editEnabled || currentMode !== 'move') return;
 
-    if (!draggingLabel && !draggingRefPoint) return;
+    if (!draggingLabel && !draggingRefPoint && !draggingPolygonPoint && 
+        !draggingPolygonLabel && !draggingLinePoint && !draggingLineLabel &&
+        !draggingPolygonAnchor && !draggingLineAnchor) return;
 
     const rect = mapContainer.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     if (draggingRefPoint) {
-      draggingRefPoint.refX = x - dragOffsetX;
-      draggingRefPoint.refY = y - dragOffsetY;
-      draggingRefPoint.refPointEl.style.left = draggingRefPoint.refX + 'px';
-      draggingRefPoint.refPointEl.style.top = draggingRefPoint.refY + 'px';
+      const newX = x - dragOffsetX;
+      const newY = y - dragOffsetY;
+      draggingRefPoint.refX = newX;
+      draggingRefPoint.refY = newY;
+      draggingRefPoint.refPointEl.style.left = newX + 'px';
+      draggingRefPoint.refPointEl.style.top = newY + 'px';
+      const relCoords = toRelativeCoords(newX, newY);
+      draggingRefPoint.relRefX = relCoords.x;
+      draggingRefPoint.relRefY = relCoords.y;
     }
     if (draggingLabel) {
-      draggingLabel.labelX = x - dragOffsetX;
-      draggingLabel.labelY = y - dragOffsetY;
-      draggingLabel.labelBoxEl.style.left = draggingLabel.labelX + 'px';
-      draggingLabel.labelBoxEl.style.top = draggingLabel.labelY + 'px';
+      const newX = x - dragOffsetX;
+      const newY = y - dragOffsetY;
+      draggingLabel.labelX = newX;
+      draggingLabel.labelY = newY;
+      draggingLabel.labelBoxEl.style.left = newX + 'px';
+      draggingLabel.labelBoxEl.style.top = newY + 'px';
+      const relCoords = toRelativeCoords(newX, newY);
+      draggingLabel.relLabelX = relCoords.x;
+      draggingLabel.relLabelY = relCoords.y;
+    }
+
+    if (draggingPolygonPoint) {
+      const { polygon, pointIndex } = draggingPolygonPoint;
+      const point = polygon.points[pointIndex];
+      const newX = x - dragOffsetX;
+      const newY = y - dragOffsetY;
+      point.x = newX;
+      point.y = newY;
+      point.element.style.left = newX + 'px';
+      point.element.style.top = newY + 'px';
+      const relCoords = toRelativeCoords(newX, newY);
+      point.relX = relCoords.x;
+      point.relY = relCoords.y;
+
+      // Update polygon path
+      const pathData = `M ${polygon.points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
+      polygon.svgPath.setAttribute('d', pathData);
+      polygon.svgPath.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
+      polygon.svgPath.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+      polygon.svgPath.setAttribute('stroke-width', '2');
+
+      // Update anchor point position to new centroid
+      const centroid = getPolygonCentroid(polygon.points);
+      polygon.anchorX = centroid.x;
+      polygon.anchorY = centroid.y;
+      polygon.anchorPoint.element.style.left = centroid.x + 'px';
+      polygon.anchorPoint.element.style.top = centroid.y + 'px';
+      const relAnchor = toRelativeCoords(centroid.x, centroid.y);
+      polygon.relAnchorX = relAnchor.x;
+      polygon.relAnchorY = relAnchor.y;
+    }
+
+    if (draggingPolygonLabel) {
+      const newX = x - dragOffsetX;
+      const newY = y - dragOffsetY;
+      draggingPolygonLabel.labelBoxEl.style.left = newX + 'px';
+      draggingPolygonLabel.labelBoxEl.style.top = newY + 'px';
+      const relCoords = toRelativeCoords(newX, newY);
+      draggingPolygonLabel.relLabelX = relCoords.x;
+      draggingPolygonLabel.relLabelY = relCoords.y;
+    }
+
+    if (draggingLinePoint) {
+      const { line, pointIndex } = draggingLinePoint;
+      const point = line.points[pointIndex];
+      const newX = x - dragOffsetX;
+      const newY = y - dragOffsetY;
+      point.x = newX;
+      point.y = newY;
+      point.element.style.left = newX + 'px';
+      point.element.style.top = newY + 'px';
+      const relCoords = toRelativeCoords(newX, newY);
+      point.relX = relCoords.x;
+      point.relY = relCoords.y;
+      
+      // Update polyline
+      const points = line.points.map(p => `${p.x},${p.y}`).join(' ');
+      line.polyline.setAttribute('points', points);
+      line.polyline.setAttribute('fill', 'none');
+      line.polyline.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+      line.polyline.setAttribute('stroke-width', '2');
+
+      // Project anchor point onto nearest line segment
+      let minDist = Infinity;
+      let bestProjection = { x: line.anchorX, y: line.anchorY };
+
+      // Check each line segment
+      for (let i = 0; i < line.points.length - 1; i++) {
+        const p1 = line.points[i];
+        const p2 = line.points[i + 1];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        if (length === 0) continue;
+        
+        const t = Math.max(0, Math.min(1, 
+          ((line.anchorX - p1.x) * dx + (line.anchorY - p1.y) * dy) / (length * length)
+        ));
+        
+        const projX = p1.x + t * dx;
+        const projY = p1.y + t * dy;
+        const dist = Math.sqrt(
+          (projX - line.anchorX) * (projX - line.anchorX) + 
+          (projY - line.anchorY) * (projY - line.anchorY)
+        );
+        
+        if (dist < minDist) {
+          minDist = dist;
+          bestProjection = { x: projX, y: projY };
+        }
+      }
+
+      // Update anchor position to the best projection
+      line.anchorX = bestProjection.x;
+      line.anchorY = bestProjection.y;
+      line.anchorPoint.style.left = line.anchorX + 'px';
+      line.anchorPoint.style.top = line.anchorY + 'px';
+      const relAnchor = toRelativeCoords(line.anchorX, line.anchorY);
+      line.relAnchorX = relAnchor.x;
+      line.relAnchorY = relAnchor.y;
+    }
+
+    if (draggingLineLabel) {
+      const newX = x - dragOffsetX;
+      const newY = y - dragOffsetY;
+      draggingLineLabel.labelBoxEl.style.left = newX + 'px';
+      draggingLineLabel.labelBoxEl.style.top = newY + 'px';
+      const relCoords = toRelativeCoords(newX, newY);
+      draggingLineLabel.relLabelX = relCoords.x;
+      draggingLineLabel.relLabelY = relCoords.y;
+    }
+
+    if (draggingPolygonAnchor) {
+      const newX = x - dragOffsetX;
+      const newY = y - dragOffsetY;
+      
+      // If point is inside polygon, use it directly
+      if (isPointInPolygon(newX, newY, draggingPolygonAnchor.points)) {
+        draggingPolygonAnchor.anchorX = newX;
+        draggingPolygonAnchor.anchorY = newY;
+      } else {
+        // If point is outside, find closest point on polygon perimeter
+        const closestPoint = getClosestPointOnPolygon(newX, newY, draggingPolygonAnchor.points);
+        draggingPolygonAnchor.anchorX = closestPoint.x;
+        draggingPolygonAnchor.anchorY = closestPoint.y;
+      }
+      
+      // Update the anchor point position
+      draggingPolygonAnchor.anchorPoint.element.style.left = draggingPolygonAnchor.anchorX + 'px';
+      draggingPolygonAnchor.anchorPoint.element.style.top = draggingPolygonAnchor.anchorY + 'px';
+      const relAnchor = toRelativeCoords(draggingPolygonAnchor.anchorX, draggingPolygonAnchor.anchorY);
+      draggingPolygonAnchor.relAnchorX = relAnchor.x;
+      draggingPolygonAnchor.relAnchorY = relAnchor.y;
+    }
+
+    if (draggingLineAnchor) {
+      const mouseX = x - dragOffsetX;
+      const mouseY = y - dragOffsetY;
+      const line = draggingLineAnchor;
+      
+      // Project the point onto the nearest line segment
+      let minDist = Infinity;
+      let bestProjection = { x: mouseX, y: mouseY };
+
+      // Check each line segment
+      for (let i = 0; i < line.points.length - 1; i++) {
+        const p1 = line.points[i];
+        const p2 = line.points[i + 1];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        if (length === 0) continue;
+        
+        const t = Math.max(0, Math.min(1, 
+          ((mouseX - p1.x) * dx + (mouseY - p1.y) * dy) / (length * length)
+        ));
+        
+        const projX = p1.x + t * dx;
+        const projY = p1.y + t * dy;
+        const dist = Math.sqrt(
+          (projX - mouseX) * (projX - mouseX) + 
+          (projY - mouseY) * (projY - mouseY)
+        );
+        
+        if (dist < minDist) {
+          minDist = dist;
+          bestProjection = { x: projX, y: projY };
+        }
+      }
+
+      // Update anchor position to the best projection
+      line.anchorX = bestProjection.x;
+      line.anchorY = bestProjection.y;
+      line.anchorPoint.style.left = line.anchorX + 'px';
+      line.anchorPoint.style.top = line.anchorY + 'px';
+      const relAnchor = toRelativeCoords(line.anchorX, line.anchorY);
+      line.relAnchorX = relAnchor.x;
+      line.relAnchorY = relAnchor.y;
     }
 
     updateLeaderLines();
@@ -437,28 +1372,248 @@
   function onPointerUp(e) {
     draggingLabel = null;
     draggingRefPoint = null;
+    draggingPolygonPoint = null;
+    draggingPolygonLabel = null;
+    draggingLinePoint = null;
+    draggingLineLabel = null;
+    draggingPolygonAnchor = null;
+    draggingLineAnchor = null;
   }
 
-  // Add label on click if in add mode
+  function finishCurrentShape() {
+    if (!currentShapePoints || currentShapePoints.length < 2) return;
+
+    if (currentShape === 'line') {
+      // Create the final polyline
+      const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      const points = currentShapePoints.map(p => `${p.x},${p.y}`).join(' ');
+      polyline.setAttribute('points', points);
+      polyline.setAttribute('class', 'line-path');
+      shapesLayer.appendChild(polyline);
+
+      // Calculate anchor point (midpoint of the line)
+      const midIndex = Math.floor(currentShapePoints.length / 2);
+      const anchorX = currentShapePoints[midIndex].x;
+      const anchorY = currentShapePoints[midIndex].y;
+
+      // Create anchor point
+      const anchorPoint = document.createElement('div');
+      anchorPoint.className = 'polygon-anchor' + (currentMode === 'move' ? ' movable' : '');
+      anchorPoint.style.left = anchorX + 'px';
+      anchorPoint.style.top = anchorY + 'px';
+      mapContainer.appendChild(anchorPoint);
+      // Trigger the creation animation
+      requestAnimationFrame(() => anchorPoint.classList.add('visible'));
+
+      // Create label
+      const labelX = anchorX + 20;
+      const labelY = anchorY + 20;
+      const { labelBoxEl } = createLabel(anchorX, anchorY, labelX, labelY, '', false);
+
+      // Keep the existing points but update their classes and add relative coordinates
+      const finalPoints = currentShapePoints.map(point => {
+        point.element.className = 'polygon-point visible' + (currentMode === 'move' ? ' movable' : '');
+        const relCoords = toRelativeCoords(point.x, point.y);
+        point.relX = relCoords.x;
+        point.relY = relCoords.y;
+        return point;
+      });
+
+      // Get relative coordinates for anchor and label
+      const relAnchorCoords = toRelativeCoords(anchorX, anchorY);
+      const relLabelCoords = toRelativeCoords(labelX, labelY);
+
+      // Store line data
+      lines.push({
+        points: finalPoints,
+        labelBoxEl,
+        polyline,
+        anchorPoint,
+        anchorX,
+        anchorY,
+        relAnchorX: relAnchorCoords.x,
+        relAnchorY: relAnchorCoords.y,
+        relLabelX: relLabelCoords.x,
+        relLabelY: relLabelCoords.y
+      });
+
+    } else if (currentShape === 'polygon' && currentShapePoints.length >= 3) {
+      // Create the final polygon path
+      const svgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const pathData = currentShapePoints.map((p, i) => 
+        (i === 0 ? 'M' : 'L') + `${p.x},${p.y}`
+      ).join(' ') + 'Z';
+      svgPath.setAttribute('d', pathData);
+      svgPath.setAttribute('class', 'polygon-path');
+      shapesLayer.appendChild(svgPath);
+
+      // Calculate centroid for anchor point
+      const centroid = getPolygonCentroid(currentShapePoints);
+      
+      // Create anchor point
+      const anchorPoint = document.createElement('div');
+      anchorPoint.className = 'polygon-anchor' + (currentMode === 'move' ? ' movable' : '');
+      anchorPoint.style.left = centroid.x + 'px';
+      anchorPoint.style.top = centroid.y + 'px';
+      mapContainer.appendChild(anchorPoint);
+      // Trigger the creation animation
+      requestAnimationFrame(() => anchorPoint.classList.add('visible'));
+
+      // Create label
+      const labelX = centroid.x + 20;
+      const labelY = centroid.y + 20;
+      const { labelBoxEl } = createLabel(centroid.x, centroid.y, labelX, labelY, '', false);
+
+      // Keep the existing points but update their classes and add relative coordinates
+      const finalPoints = currentShapePoints.map(point => {
+        point.element.className = 'polygon-point visible' + (currentMode === 'move' ? ' movable' : '');
+        const relCoords = toRelativeCoords(point.x, point.y);
+        point.relX = relCoords.x;
+        point.relY = relCoords.y;
+        return point;
+      });
+
+      // Get relative coordinates for anchor and label
+      const relCentroidCoords = toRelativeCoords(centroid.x, centroid.y);
+      const relLabelCoords = toRelativeCoords(labelX, labelY);
+
+      // Store polygon data
+      polygons.push({
+        points: finalPoints,
+        labelBoxEl,
+        svgPath,
+        anchorPoint: { element: anchorPoint },
+        anchorX: centroid.x,
+        anchorY: centroid.y,
+        relAnchorX: relCentroidCoords.x,
+        relAnchorY: relCentroidCoords.y,
+        relLabelX: relLabelCoords.x,
+        relLabelY: relLabelCoords.y
+      });
+    }
+
+    // Clear current points array but maintain the current mode
+    currentShapePoints = [];
+    
+    // Remove any preview elements
+    const previewLine = document.getElementById('previewLine');
+    if (previewLine) previewLine.remove();
+
+    updateLeaderLines();
+    updateButtons();
+  }
+
+  function getPolygonCentroid(points) {
+    let sumX = 0;
+    let sumY = 0;
+    points.forEach(point => {
+      sumX += point.x;
+      sumY += point.y;
+    });
+    return {
+      x: sumX / points.length,
+      y: sumY / points.length
+    };
+  }
+
+  // Update click handler
   mapContainer.addEventListener('click', (e) => {
-    if (!editEnabled || currentMode !== 'add') return;
+    if (!editEnabled) return;
 
     const rect = mapContainer.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    addLabel(x, y);
-  });
-
-  // Delete label on click in delete mode
-  mapContainer.addEventListener('click', (e) => {
-    if (!editEnabled || currentMode !== 'delete') return;
-
-    const rect = mapContainer.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
+    if (currentMode === 'add') {
+      addLabel(x, y);
+    } else if (currentMode === 'delete') {
     removeLabelAtPoint(x, y);
+    } else if (currentMode === 'editLabel') {
+      // Check regular labels
+      for (const label of labels) {
+        const labelRect = label.labelBoxEl.getBoundingClientRect();
+        if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
+          label.labelBoxEl.contentEditable = 'true';
+          label.labelBoxEl.focus();
+          return;
+        }
+      }
+      
+      // Check polygon labels
+      for (const polygon of polygons) {
+        const labelRect = polygon.labelBoxEl.getBoundingClientRect();
+        if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
+          polygon.labelBoxEl.contentEditable = 'true';
+          polygon.labelBoxEl.focus();
+          return;
+        }
+      }
+      
+      // Check line labels
+      for (const line of lines) {
+        const labelRect = line.labelBoxEl.getBoundingClientRect();
+        if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
+          line.labelBoxEl.contentEditable = 'true';
+          line.labelBoxEl.focus();
+          return;
+        }
+      }
+    } else if (currentMode === 'polygon' || currentMode === 'line') {
+      const point = document.createElement('div');
+      point.className = 'polygon-point';
+      point.style.left = x + 'px';
+      point.style.top = y + 'px';
+      point.style.pointerEvents = 'auto';
+      mapContainer.appendChild(point);
+      // Trigger the creation animation
+      requestAnimationFrame(() => point.classList.add('visible'));
+
+      currentShapePoints.push({ x, y, element: point });
+      currentShape = currentMode;
+
+      // Update polygon button text if we're drawing a polygon
+      if (currentMode === 'polygon') {
+        const polygonBtn = document.getElementById('polygonBtn');
+        polygonBtn.textContent = 'Finish Shape';
+        polygonBtn.title = 'Finish current shape';
+      }
+
+      // Update line button text if we're drawing a line
+      if (currentMode === 'line') {
+        const lineBtn = document.getElementById('lineBtn');
+        lineBtn.textContent = 'Finish Line';
+        lineBtn.title = 'Finish current line';
+
+        // Draw or update the preview polyline
+        if (currentShapePoints.length > 1) {
+          // Remove old preview if it exists
+          const oldPreview = document.getElementById('previewLine');
+          if (oldPreview) oldPreview.remove();
+
+          // Create new preview polyline
+          const preview = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+          preview.id = 'previewLine';
+          const points = currentShapePoints.map(p => `${p.x},${p.y}`).join(' ');
+          preview.setAttribute('points', points);
+          preview.setAttribute('fill', 'none');
+          preview.setAttribute('stroke', 'blue');
+          preview.setAttribute('stroke-width', '2');
+          shapesLayer.appendChild(preview);
+        }
+      }
+
+      // Update button text to show Finish option
+      if (currentMode === 'polygon') {
+        const polygonBtn = document.getElementById('polygonBtn');
+        polygonBtn.textContent = currentShapePoints.length >= 3 ? 'Finish Shape' : 'Shape';
+      } else if (currentMode === 'line') {
+        const lineBtn = document.getElementById('lineBtn');
+        lineBtn.textContent = currentShapePoints.length >= 2 ? 'Finish Line' : 'Line';
+      }
+
+      // Update leader lines after adding a point
+      updateLeaderLines();
+    }
   });
 
   // Dragging events
@@ -468,6 +1623,978 @@
 
   // Initial disable buttons
   toggleEditMode();
+
+  function updateLabelEditable() {
+    const makeLabelsNonEditable = () => {
+      // Make all labels non-editable
+      labels.forEach(label => {
+        label.labelBoxEl.contentEditable = 'false';
+      });
+      polygons.forEach(polygon => {
+        polygon.labelBoxEl.contentEditable = 'false';
+      });
+      lines.forEach(line => {
+        line.labelBoxEl.contentEditable = 'false';
+      });
+    };
+
+    // Make labels non-editable when not in edit label mode
+    if (currentMode !== 'editLabel') {
+      makeLabelsNonEditable();
+    }
+  }
+
+  // Set mode helper
+  function setMode(mode) {
+    if (!editEnabled) return;
+    
+    // Update map container cursor based on mode
+    const mapContainer = document.getElementById('mapContainer');
+    mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
+    mapContainer.style.cursor = 'default'; // Reset cursor to default
+    
+    // Reset all cursor-related classes first
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+      element.classList.remove('movable', 'deletable', 'editable');
+      element.style.cursor = 'default';
+    });
+
+    if (mode === 'add') {
+      mapContainer.classList.add('add-mode');
+      mapContainer.style.cursor = 'crosshair';
+    } else if (mode === 'polygon') {
+      mapContainer.classList.add('polygon-mode');
+      mapContainer.style.cursor = 'crosshair';
+    } else if (mode === 'line') {
+      mapContainer.classList.add('line-mode');
+      mapContainer.style.cursor = 'crosshair';
+    } else if (mode === 'move') {
+      mapContainer.style.cursor = 'default';
+      // Apply move cursor styles
+      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+        element.classList.add('movable');
+        element.style.cursor = 'move';
+      });
+    } else if (mode === 'delete') {
+      mapContainer.style.cursor = 'default';
+      // Apply delete cursor styles
+      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+        element.classList.add('deletable');
+        element.style.cursor = 'no-drop';
+      });
+    } else if (mode === 'editLabel') {
+      mapContainer.style.cursor = 'default';
+      // Apply edit cursor styles
+      document.querySelectorAll('.label-box').forEach(element => {
+        element.classList.add('editable');
+        element.style.cursor = 'text';
+      });
+    } else if (mode === null) {
+      mapContainer.style.cursor = 'default';
+    }
+    
+    // If we're switching away from a drawing mode to a different mode, finish the current shape
+    if ((currentMode === 'polygon' || currentMode === 'line') && 
+        mode !== currentMode && mode !== 'polygon' && mode !== 'line' && 
+        currentShapePoints.length > 0) {
+      finishCurrentShape();
+    }
+
+    // Reset polygon button only if switching away from polygon mode to a non-drawing mode
+    if (currentMode === 'polygon' && mode !== 'polygon' && mode !== 'line') {
+      const polygonBtn = document.getElementById('polygonBtn');
+      polygonBtn.textContent = 'Shape';
+      polygonBtn.title = 'Draw shape';
+      currentShape = null;
+      // Clear any remaining points
+      currentShapePoints.forEach(point => {
+        if (point.element && point.element.parentNode) {
+          point.element.remove();
+        }
+      });
+      currentShapePoints = [];
+    }
+
+    // Reset line button if switching away from line mode
+    if (currentMode === 'line' && mode !== 'line') {
+      const lineBtn = document.getElementById('lineBtn');
+      lineBtn.textContent = 'Line';
+      lineBtn.title = 'Draw line';
+      currentShape = null;
+      // Clear any remaining points
+      currentShapePoints.forEach(point => {
+        if (point.element && point.element.parentNode) {
+          point.element.remove();
+        }
+      });
+      currentShapePoints = [];
+      // Remove preview line if it exists
+      const previewLine = document.getElementById('previewLine');
+      if (previewLine) previewLine.remove();
+    }
+
+    // Handle Add submenu and button state
+    const addSubMenu = document.getElementById('addSubMenu');
+    const addBtn = document.getElementById('addBtn');
+    
+    // Only hide Add submenu if explicitly switching to a non-Add mode
+    // Keep it open when finishing shapes/lines
+    if (mode !== null && mode !== 'add' && mode !== 'polygon' && mode !== 'line') {
+      addSubMenu.style.display = 'none';
+      addBtn.setAttribute('aria-pressed', 'false');
+      addBtn.classList.remove('active');
+    }
+    
+    // If switching to Add mode, show Add submenu and activate Add button
+    if (mode === 'add') {
+      addSubMenu.style.display = 'flex';
+      addBtn.setAttribute('aria-pressed', 'true');
+      addBtn.classList.add('active');
+    }
+
+    // Update cursor styles based on mode
+    const isMovable = mode === 'move';
+    const isDeletable = mode === 'delete';
+    const isEditable = mode === 'editLabel';
+
+    // Helper function to update element classes
+    const updateElementClasses = (element) => {
+      element.classList.toggle('movable', isMovable);
+      element.classList.toggle('deletable', isDeletable);
+      element.classList.toggle('editable', isEditable);
+    };
+
+    // Update regular labels
+    labels.forEach(label => {
+      updateElementClasses(label.refPointEl);
+      updateElementClasses(label.labelBoxEl);
+    });
+
+    // Update polygons
+    polygons.forEach(polygon => {
+      updateElementClasses(polygon.labelBoxEl);
+      updateElementClasses(polygon.anchorPoint.element);
+      polygon.points.forEach(point => {
+        updateElementClasses(point.element);
+      });
+    });
+
+    // Update lines
+    lines.forEach(line => {
+      updateElementClasses(line.labelBoxEl);
+      updateElementClasses(line.anchorPoint);
+      if (line.points) {
+        line.points.forEach(point => {
+          if (point.element) {
+            updateElementClasses(point.element);
+          }
+        });
+      }
+    });
+
+    // Restore polygon and line styling
+    polygons.forEach(polygon => {
+      polygon.svgPath.setAttribute('fill', 'rgba(0, 0, 255, 0.2)');
+      polygon.svgPath.setAttribute('stroke', 'blue');
+      polygon.svgPath.setAttribute('stroke-width', '2');
+    });
+    lines.forEach(line => {
+      line.polyline.setAttribute('stroke', 'blue');
+      line.polyline.setAttribute('stroke-width', '2');
+    });
+
+    if (mode === currentMode) {
+      // If we're toggling off the current mode, ensure we remove all mode classes
+      if (mode === 'move' || mode === 'delete' || mode === 'editLabel') {
+        const removeClasses = (element) => {
+          element.classList.remove('movable', 'deletable', 'editable');
+        };
+
+        labels.forEach(label => {
+          removeClasses(label.refPointEl);
+          removeClasses(label.labelBoxEl);
+        });
+        polygons.forEach(polygon => {
+          removeClasses(polygon.labelBoxEl);
+          removeClasses(polygon.anchorPoint.element);
+          polygon.points.forEach(point => {
+            removeClasses(point.element);
+          });
+        });
+        lines.forEach(line => {
+          removeClasses(line.labelBoxEl);
+          removeClasses(line.anchorPoint);
+          if (line.points) {
+            line.points.forEach(point => {
+              if (point.element) {
+                removeClasses(point.element);
+              }
+            });
+          }
+        });
+      }
+      currentMode = null;
+      mapContainer.style.cursor = 'default'; // Reset cursor when toggling off a mode
+    } else {
+      currentMode = mode;
+    }
+    updateButtons();
+    updateLabelEditable();
+    updateLeaderLines();
+  }
+
+  function togglePolygonMode() {
+    if (!editEnabled) return;
+    
+    if (currentMode === 'polygon') {
+      // If we have enough points, finish the polygon
+      if (currentShapePoints.length >= 3) {
+        finishCurrentShape();
+        // Reset button text but stay in polygon mode
+        const polygonBtn = document.getElementById('polygonBtn');
+        polygonBtn.textContent = 'Shape';
+        polygonBtn.title = 'Draw shape';
+        // Reset cursor
+        mapContainer.style.cursor = 'default';
+      } else {
+        // Not enough points, cancel the current shape
+        currentShapePoints.forEach(point => {
+          point.element.classList.add('removing');
+          setTimeout(() => point.element.remove(), 300);
+        });
+        currentShapePoints = [];
+        currentShape = null;
+        // Exit polygon mode
+        setMode(null);
+        const polygonBtn = document.getElementById('polygonBtn');
+        polygonBtn.textContent = 'Shape';
+        polygonBtn.title = 'Draw shape';
+        polygonBtn.classList.remove('active');
+        polygonBtn.setAttribute('aria-pressed', 'false');
+        // Reset cursor
+        mapContainer.style.cursor = 'default';
+      }
+    } else {
+      // Start polygon mode
+      setMode('polygon');
+    }
+  }
+
+  function toggleLineMode() {
+    if (!editEnabled) return;
+    
+    if (currentMode === 'line') {
+      // If we have enough points, finish the line
+      if (currentShapePoints.length >= 2) {
+        finishCurrentShape();
+        // Reset button text but stay in line mode
+        const lineBtn = document.getElementById('lineBtn');
+        lineBtn.textContent = 'Line';
+        lineBtn.title = 'Draw line';
+        // Reset cursor
+        mapContainer.style.cursor = 'default';
+      } else {
+        // Not enough points, cancel the current line
+        currentShapePoints.forEach(point => {
+          point.element.classList.add('removing');
+          setTimeout(() => point.element.remove(), 300);
+        });
+        currentShapePoints = [];
+        currentShape = null;
+        // Remove preview line if it exists
+        const previewLine = document.getElementById('previewLine');
+        if (previewLine) previewLine.remove();
+        // Exit line mode
+        setMode(null);
+        const lineBtn = document.getElementById('lineBtn');
+        lineBtn.textContent = 'Line';
+        lineBtn.title = 'Draw line';
+        lineBtn.classList.remove('active');
+        lineBtn.setAttribute('aria-pressed', 'false');
+        // Reset cursor
+        mapContainer.style.cursor = 'default';
+      }
+    } else {
+      // Start line mode
+      setMode('line');
+    }
+  }
+
+  function getClosestPointOnPolygon(x, y, points) {
+    let closestPoint = { x: points[0].x, y: points[0].y };
+    let minDist = Infinity;
+
+    // Check each edge of the polygon
+    for (let i = 0; i < points.length; i++) {
+      const p1 = points[i];
+      const p2 = points[(i + 1) % points.length];
+
+      // Get closest point on this line segment
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      
+      if (length === 0) continue;
+      
+      const t = Math.max(0, Math.min(1, 
+        ((x - p1.x) * dx + (y - p1.y) * dy) / (length * length)
+      ));
+      
+      const projX = p1.x + t * dx;
+      const projY = p1.y + t * dy;
+      const dist = Math.sqrt(
+        (projX - x) * (projX - x) + 
+        (projY - y) * (projY - y)
+      );
+      
+      if (dist < minDist) {
+        minDist = dist;
+        closestPoint = { x: projX, y: projY };
+      }
+    }
+
+    return closestPoint;
+  }
+
+  // Add map file loading functionality
+  mapFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    const errorMessage = document.getElementById('errorMessage');
+    
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      errorMessage.textContent = 'Please select a valid image file.';
+      errorMessage.style.display = 'block';
+      return;
+    }
+
+    // Check if there are any existing labels, polygons, or lines
+    const hasExistingData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
+
+    const loadNewMap = () => {
+      return new Promise((resolve, reject) => {
+        loadMapLabel.classList.add('loading');
+        loadMapLabel.textContent = 'Loading...';
+        errorMessage.style.display = 'none';
+
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          const img = new Image();
+          
+          img.onload = () => {
+            console.log('Image loaded successfully:', img.width, 'x', img.height);
+            mapImage.src = img.src;
+            mainMenu.style.display = 'block';
+            document.getElementById('saveLabelsBtn').style.display = 'block';
+            document.getElementById('loadLabelsBtn').style.display = 'block';
+            loadMapLabel.classList.remove('loading');
+            loadMapLabel.textContent = 'Load New Map Image';
+            
+            // Clear all existing data
+            labels.forEach(label => {
+              if (label.refPointEl) label.refPointEl.remove();
+              if (label.labelBoxEl) label.labelBoxEl.remove();
+            });
+            labels.length = 0;
+
+            polygons.forEach(polygon => {
+              polygon.points.forEach(p => p.element.remove());
+              polygon.labelBoxEl.remove();
+              polygon.svgPath.remove();
+              polygon.anchorPoint.element.remove();
+            });
+            polygons.length = 0;
+
+            lines.forEach(line => {
+              line.points.forEach(p => p.element.remove());
+              line.labelBoxEl.remove();
+              line.polyline.remove();
+              line.anchorPoint.remove();
+            });
+            lines.length = 0;
+
+            // Clear SVG layers
+            while (shapesLayer.firstChild) {
+              shapesLayer.removeChild(shapesLayer.firstChild);
+            }
+            while (leaderLinesSVG.firstChild) {
+              leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
+            }
+            
+            // Update SVG size to match new image
+            requestAnimationFrame(() => {
+              const containerRect = mapContainer.getBoundingClientRect();
+              console.log('Container size:', containerRect.width, 'x', containerRect.height);
+              leaderLinesSVG.setAttribute('width', containerRect.width);
+              leaderLinesSVG.setAttribute('height', containerRect.height);
+              // Reset file input to allow selecting the same file again
+              mapFileInput.value = '';
+              resolve();
+            });
+          };
+          
+          img.onerror = () => {
+            console.error('Failed to load image');
+            errorMessage.textContent = 'Failed to load the image. Please try another file.';
+            errorMessage.style.display = 'block';
+            loadMapLabel.classList.remove('loading');
+            loadMapLabel.classList.add('error');
+            setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
+            loadMapLabel.textContent = 'Load Map Image';
+            // Reset file input to allow selecting the same file again
+            mapFileInput.value = '';
+            reject(new Error('Failed to load image'));
+          };
+          
+          // Set image source from FileReader result
+          img.src = e.target.result;
+        };
+        
+        reader.onerror = () => {
+          console.error('Failed to read file');
+          errorMessage.textContent = 'Error reading the file. Please try again.';
+          errorMessage.style.display = 'block';
+          loadMapLabel.classList.remove('loading');
+          loadMapLabel.classList.add('error');
+                      setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
+            loadMapLabel.textContent = 'Load Map Image';
+            // Reset file input to allow selecting the same file again
+            mapFileInput.value = '';
+            reject(new Error('Failed to read file'));
+        };
+        
+        reader.readAsDataURL(file);
+      });
+    };
+
+    if (hasExistingData) {
+      // Create and show the confirmation dialog
+      const dialog = document.createElement('div');
+      dialog.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+        min-width: 300px;
+        text-align: center;
+      `;
+      
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+      `;
+      
+      dialog.innerHTML = `
+        <h3 style="margin-top: 0; color: #f44336;">Warning</h3>
+        <p>Loading a new map will delete any unsaved labels. Would you like to:</p>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+          <button id="saveAndContinue" style="padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Save & Continue</button>
+          <button id="continueWithoutSaving" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Continue Without Saving</button>
+          <button id="cancelLoad" style="padding: 8px 16px; background: #9e9e9e; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      document.body.appendChild(dialog);
+      
+      // Handle dialog buttons
+      document.getElementById('saveAndContinue').onclick = async () => {
+        saveLabels();
+        dialog.remove();
+        overlay.remove();
+        try {
+          await loadNewMap();
+        } catch (error) {
+          console.error('Failed to load new map:', error);
+        }
+      };
+      
+      document.getElementById('continueWithoutSaving').onclick = async () => {
+        dialog.remove();
+        overlay.remove();
+        try {
+          await loadNewMap();
+        } catch (error) {
+          console.error('Failed to load new map:', error);
+        }
+      };
+      
+      document.getElementById('cancelLoad').onclick = () => {
+        dialog.remove();
+        overlay.remove();
+        // Reset the file input
+        mapFileInput.value = '';
+      };
+    } else {
+      // If no existing data, load the new map directly
+      try {
+        await loadNewMap();
+      } catch (error) {
+        console.error('Failed to load new map:', error);
+      }
+    }
+  });
+
+  // Add image error handler
+  mapImage.addEventListener('error', (e) => {
+    console.error('Error loading image:', e);
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = 'Failed to display the image. Please try another file.';
+    errorMessage.style.display = 'block';
+    loadMapLabel.classList.remove('loading');
+    loadMapLabel.classList.add('error');
+    setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
+    loadMapLabel.textContent = 'Load Map Image';
+  });
+
+  // Save labels to JSON file
+  function saveLabels() {
+    const exportData = {
+      labels: labels.map(label => ({
+        refX: label.relRefX,
+        refY: label.relRefY,
+        labelX: label.relLabelX,
+        labelY: label.relLabelY,
+        text: label.labelBoxEl.textContent,
+        type: 'label'
+      })),
+      polygons: polygons.map(polygon => ({
+        points: polygon.points.map(p => ({ x: p.relX, y: p.relY })),
+        anchorX: polygon.relAnchorX,
+        anchorY: polygon.relAnchorY,
+        labelX: polygon.relLabelX,
+        labelY: polygon.relLabelY,
+        text: polygon.labelBoxEl.textContent,
+        type: 'polygon'
+      })),
+      lines: lines.map(line => ({
+        points: line.points.map(p => ({ x: p.relX, y: p.relY })),
+        anchorX: line.relAnchorX,
+        anchorY: line.relAnchorY,
+        labelX: line.relLabelX,
+        labelY: line.relLabelY,
+        text: line.labelBoxEl.textContent,
+        type: 'line'
+      }))
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'map_labels.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Load labels from JSON file
+  function loadLabels() {
+    const input = document.getElementById('labelsFileInput');
+    input.click();
+
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = JSON.parse(e.target.result);
+
+        // Clear existing labels
+        labels.forEach(label => {
+          if (label.refPointEl) label.refPointEl.remove();
+          if (label.labelBoxEl) label.labelBoxEl.remove();
+        });
+        labels.length = 0;
+
+        // Clear existing polygons
+        polygons.forEach(polygon => {
+          polygon.points.forEach(p => p.element.remove());
+          polygon.labelBoxEl.remove();
+          polygon.svgPath.remove();
+          polygon.anchorPoint.element.remove();
+        });
+        polygons.length = 0;
+
+        // Clear existing lines
+        lines.forEach(line => {
+          line.points.forEach(p => p.element.remove());
+          line.labelBoxEl.remove();
+          line.polyline.remove();
+          line.anchorPoint.remove();
+        });
+        lines.length = 0;
+
+        // Clear SVG layers
+        while (shapesLayer.firstChild) {
+          shapesLayer.removeChild(shapesLayer.firstChild);
+        }
+        while (leaderLinesSVG.firstChild) {
+          leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
+        }
+
+        // Recreate labels
+        data.labels?.forEach(label => {
+          const absPos = toAbsoluteCoords(label.refX, label.refY);
+          const absLabelPos = toAbsoluteCoords(label.labelX, label.labelY);
+          const { refPointEl, labelBoxEl } = createLabel(
+            absPos.x,
+            absPos.y,
+            absLabelPos.x,
+            absLabelPos.y,
+            label.text,
+            true,  // createRefPoint
+            false  // shouldFocus
+          );
+
+          // Set initial visibility based on edit mode
+          refPointEl.style.display = editEnabled ? 'block' : 'none';
+
+          // Add appropriate classes based on current mode
+          if (currentMode === 'move') {
+            refPointEl.classList.add('movable');
+            labelBoxEl.classList.add('movable');
+          } else if (currentMode === 'delete') {
+            refPointEl.classList.add('deletable');
+            labelBoxEl.classList.add('deletable');
+          } else if (currentMode === 'editLabel') {
+            refPointEl.classList.add('editable');
+            labelBoxEl.classList.add('editable');
+          }
+
+          labels.push({
+            refPointEl,
+            labelBoxEl,
+            refX: absPos.x,
+            refY: absPos.y,
+            labelX: absLabelPos.x,
+            labelY: absLabelPos.y,
+            relRefX: label.refX,
+            relRefY: label.refY,
+            relLabelX: label.labelX,
+            relLabelY: label.labelY
+          });
+        });
+
+        // Recreate polygons
+        data.polygons?.forEach(polygon => {
+          // Create points
+          const points = polygon.points.map(p => {
+            const absPos = toAbsoluteCoords(p.x, p.y);
+            const pointEl = document.createElement('div');
+            pointEl.className = 'polygon-point visible';
+            
+            // Add appropriate classes based on current mode
+            if (currentMode === 'move') {
+              pointEl.classList.add('movable');
+            } else if (currentMode === 'delete') {
+              pointEl.classList.add('deletable');
+            } else if (currentMode === 'editLabel') {
+              pointEl.classList.add('editable');
+            }
+            
+            pointEl.style.left = absPos.x + 'px';
+            pointEl.style.top = absPos.y + 'px';
+            pointEl.style.display = editEnabled ? 'block' : 'none';
+            mapContainer.appendChild(pointEl);
+            return {
+              x: absPos.x,
+              y: absPos.y,
+              relX: p.x,
+              relY: p.y,
+              element: pointEl
+            };
+          });
+
+          // Create SVG path
+          const svgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          const pathData = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
+          svgPath.setAttribute('d', pathData);
+          svgPath.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
+          svgPath.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+          svgPath.setAttribute('stroke-width', '2');
+          svgPath.setAttribute('class', 'polygon-path');
+          svgPath.style.pointerEvents = 'none';
+          shapesLayer.appendChild(svgPath);
+
+          // Create anchor point
+          const absAnchorPos = toAbsoluteCoords(polygon.anchorX, polygon.anchorY);
+          const anchorPoint = document.createElement('div');
+          anchorPoint.className = 'polygon-anchor visible';
+          
+          // Add appropriate classes based on current mode
+          if (currentMode === 'move') {
+            anchorPoint.classList.add('movable');
+          } else if (currentMode === 'delete') {
+            anchorPoint.classList.add('deletable');
+          } else if (currentMode === 'editLabel') {
+            anchorPoint.classList.add('editable');
+          }
+          
+          anchorPoint.style.left = absAnchorPos.x + 'px';
+          anchorPoint.style.top = absAnchorPos.y + 'px';
+          anchorPoint.style.display = editEnabled ? 'block' : 'none';
+          mapContainer.appendChild(anchorPoint);
+
+          // Create label
+          const absLabelPos = toAbsoluteCoords(polygon.labelX, polygon.labelY);
+          const { labelBoxEl } = createLabel(
+            absAnchorPos.x,
+            absAnchorPos.y,
+            absLabelPos.x,
+            absLabelPos.y,
+            polygon.text,
+            false,  // createRefPoint
+            false   // shouldFocus
+          );
+
+          // Add appropriate classes to label based on current mode
+          if (currentMode === 'move') {
+            labelBoxEl.classList.add('movable');
+          } else if (currentMode === 'delete') {
+            labelBoxEl.classList.add('deletable');
+          } else if (currentMode === 'editLabel') {
+            labelBoxEl.classList.add('editable');
+          }
+
+          polygons.push({
+            points,
+            labelBoxEl,
+            svgPath,
+            anchorPoint: { element: anchorPoint },
+            anchorX: absAnchorPos.x,
+            anchorY: absAnchorPos.y,
+            relAnchorX: polygon.anchorX,
+            relAnchorY: polygon.anchorY,
+            relLabelX: polygon.labelX,
+            relLabelY: polygon.labelY
+          });
+        });
+
+        // Recreate lines
+        data.lines?.forEach(line => {
+          // Create points
+          const points = line.points.map(p => {
+            const absPos = toAbsoluteCoords(p.x, p.y);
+            const pointEl = document.createElement('div');
+            pointEl.className = 'polygon-point visible';
+            
+            // Add appropriate classes based on current mode
+            if (currentMode === 'move') {
+              pointEl.classList.add('movable');
+            } else if (currentMode === 'delete') {
+              pointEl.classList.add('deletable');
+            } else if (currentMode === 'editLabel') {
+              pointEl.classList.add('editable');
+            }
+            
+            pointEl.style.left = absPos.x + 'px';
+            pointEl.style.top = absPos.y + 'px';
+            pointEl.style.display = editEnabled ? 'block' : 'none';
+            mapContainer.appendChild(pointEl);
+            return {
+              x: absPos.x,
+              y: absPos.y,
+              relX: p.x,
+              relY: p.y,
+              element: pointEl
+            };
+          });
+
+          // Create polyline
+          const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+          const pointsStr = points.map(p => `${p.x},${p.y}`).join(' ');
+          polyline.setAttribute('points', pointsStr);
+          polyline.setAttribute('fill', 'none');
+          polyline.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+          polyline.setAttribute('stroke-width', '2');
+          polyline.setAttribute('class', 'line-path');
+          polyline.style.pointerEvents = 'none';
+          shapesLayer.appendChild(polyline);
+
+          // Create anchor point
+          const absAnchorPos = toAbsoluteCoords(line.anchorX, line.anchorY);
+          const anchorPoint = document.createElement('div');
+          anchorPoint.className = 'polygon-anchor visible';
+          
+          // Add appropriate classes based on current mode
+          if (currentMode === 'move') {
+            anchorPoint.classList.add('movable');
+          } else if (currentMode === 'delete') {
+            anchorPoint.classList.add('deletable');
+          } else if (currentMode === 'editLabel') {
+            anchorPoint.classList.add('editable');
+          }
+          
+          anchorPoint.style.left = absAnchorPos.x + 'px';
+          anchorPoint.style.top = absAnchorPos.y + 'px';
+          anchorPoint.style.display = editEnabled ? 'block' : 'none';
+          mapContainer.appendChild(anchorPoint);
+
+          // Create label
+          const absLabelPos = toAbsoluteCoords(line.labelX, line.labelY);
+          const { labelBoxEl } = createLabel(
+            absAnchorPos.x,
+            absAnchorPos.y,
+            absLabelPos.x,
+            absLabelPos.y,
+            line.text,
+            false,  // createRefPoint
+            false   // shouldFocus
+          );
+
+          // Add appropriate classes to label based on current mode
+          if (currentMode === 'move') {
+            labelBoxEl.classList.add('movable');
+          } else if (currentMode === 'delete') {
+            labelBoxEl.classList.add('deletable');
+          } else if (currentMode === 'editLabel') {
+            labelBoxEl.classList.add('editable');
+          }
+
+          lines.push({
+            points,
+            labelBoxEl,
+            polyline,
+            anchorPoint,
+            anchorX: absAnchorPos.x,
+            anchorY: absAnchorPos.y,
+            relAnchorX: line.anchorX,
+            relAnchorY: line.anchorY,
+            relLabelX: line.labelX,
+            relLabelY: line.labelY
+          });
+        });
+
+        updateLeaderLines();
+      };
+      reader.readAsText(file);
+    };
+  }
+
+  // Convert absolute pixel coordinates to relative percentages
+  function toRelativeCoords(x, y) {
+    const rect = mapImage.getBoundingClientRect();
+    return {
+      x: (x / rect.width) * 100,
+      y: (y / rect.height) * 100
+    };
+  }
+
+  // Convert relative percentages to absolute pixel coordinates
+  function toAbsoluteCoords(relX, relY) {
+    const rect = mapImage.getBoundingClientRect();
+    return {
+      x: (relX * rect.width) / 100,
+      y: (relY * rect.height) / 100
+    };
+  }
+
+  // Update all element positions based on relative coordinates
+  function updateAllPositions() {
+    // Update regular labels
+    labels.forEach(label => {
+      const absPos = toAbsoluteCoords(label.relRefX, label.relRefY);
+      const absLabelPos = toAbsoluteCoords(label.relLabelX, label.relLabelY);
+      
+      label.refPointEl.style.left = absPos.x + 'px';
+      label.refPointEl.style.top = absPos.y + 'px';
+      label.labelBoxEl.style.left = absLabelPos.x + 'px';
+      label.labelBoxEl.style.top = absLabelPos.y + 'px';
+      
+      label.refX = absPos.x;
+      label.refY = absPos.y;
+      label.labelX = absLabelPos.x;
+      label.labelY = absLabelPos.y;
+    });
+
+    // Update polygons
+    polygons.forEach(polygon => {
+      // Update points
+      polygon.points.forEach(point => {
+        const absPos = toAbsoluteCoords(point.relX, point.relY);
+        point.x = absPos.x;
+        point.y = absPos.y;
+        point.element.style.left = absPos.x + 'px';
+        point.element.style.top = absPos.y + 'px';
+      });
+
+      // Update SVG path
+      const pathData = `M ${polygon.points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
+      polygon.svgPath.setAttribute('d', pathData);
+      polygon.svgPath.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
+      polygon.svgPath.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+      polygon.svgPath.setAttribute('stroke-width', '2');
+
+      // Update anchor point
+      const anchorPos = toAbsoluteCoords(polygon.relAnchorX, polygon.relAnchorY);
+      polygon.anchorX = anchorPos.x;
+      polygon.anchorY = anchorPos.y;
+      polygon.anchorPoint.element.style.left = anchorPos.x + 'px';
+      polygon.anchorPoint.element.style.top = anchorPos.y + 'px';
+
+      // Update label
+      const labelPos = toAbsoluteCoords(polygon.relLabelX, polygon.relLabelY);
+      polygon.labelBoxEl.style.left = labelPos.x + 'px';
+      polygon.labelBoxEl.style.top = labelPos.y + 'px';
+    });
+
+    // Update lines
+    lines.forEach(line => {
+      // Update points
+      line.points.forEach(point => {
+        const absPos = toAbsoluteCoords(point.relX, point.relY);
+        point.x = absPos.x;
+        point.y = absPos.y;
+        point.element.style.left = absPos.x + 'px';
+        point.element.style.top = absPos.y + 'px';
+      });
+
+      // Update polyline
+      const points = line.points.map(p => `${p.x},${p.y}`).join(' ');
+      line.polyline.setAttribute('points', points);
+      line.polyline.setAttribute('fill', 'none');
+      line.polyline.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+      line.polyline.setAttribute('stroke-width', '2');
+
+      // Update anchor point
+      const anchorPos = toAbsoluteCoords(line.relAnchorX, line.relAnchorY);
+      line.anchorX = anchorPos.x;
+      line.anchorY = anchorPos.y;
+      line.anchorPoint.style.left = anchorPos.x + 'px';
+      line.anchorPoint.style.top = anchorPos.y + 'px';
+
+      // Update label
+      const labelPos = toAbsoluteCoords(line.relLabelX, line.relLabelY);
+      line.labelBoxEl.style.left = labelPos.x + 'px';
+      line.labelBoxEl.style.top = labelPos.y + 'px';
+    });
+
+    updateLeaderLines();
+  }
+
+  // Add window resize handler
+  window.addEventListener('resize', () => {
+    requestAnimationFrame(() => {
+      updateAllPositions();
+      updateLeaderLines();
+    });
+  });
 </script>
 </body>
 </html>
