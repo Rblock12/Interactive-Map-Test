@@ -84,6 +84,27 @@
     box-shadow: 0 2px 4px rgba(33,150,243,0.2);
   }
 
+  .menu button.test-active {
+    background-color: #ff9800;
+    color: white;
+    border-color: #f57c00;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(255,152,0,0.2);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  #stopTestBtn {
+    background-color: #f44336 !important;
+    color: white !important;
+    border-color: #d32f2f !important;
+    font-weight: 500;
+  }
+
+  #stopTestBtn:hover {
+    background-color: #d32f2f !important;
+    transform: translateY(-1px);
+  }
+
   .menu .edit-tools {
     display: none;
     width: 100%;
@@ -368,6 +389,203 @@
     border-color: #f44336;
     background: rgba(244,67,54,0.1);
   }
+
+  /* Testing mode styles */
+  .highlight-test {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .ref-point.highlight-test {
+    background: #ff9800;
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    z-index: 100;
+  }
+  .ref-point.highlight-test::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(255, 152, 0, 0.3);
+    animation: ripple 1.5s ease-in-out infinite;
+  }
+  .polygon-path.highlight-test {
+    stroke: #ff9800;
+    stroke-width: 4;
+    fill: rgba(255, 152, 0, 0.3);
+    filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.7));
+  }
+  .line-path.highlight-test {
+    stroke: #ff9800;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.7));
+  }
+  .label-box.highlight-test {
+    border: 2px solid #ff9800;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    z-index: 100;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+      filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0.7));
+    }
+    50% {
+      box-shadow: 0 0 20px 10px rgba(255, 152, 0, 0);
+      filter: drop-shadow(0 0 15px rgba(255, 152, 0, 0.7));
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+      filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0));
+    }
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(2);
+      opacity: 0;
+    }
+  }
+
+  @keyframes svgPulse {
+    0% {
+      stroke: #ff9800;
+      stroke-width: 2;
+      filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0.7));
+    }
+    50% {
+      stroke: #ff9800;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.7));
+    }
+    100% {
+      stroke: #ff9800;
+      stroke-width: 2;
+      filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0.7));
+    }
+  }
+
+  .leader-line.highlight-test {
+    stroke: #ff9800;
+    stroke-width: 2;
+    stroke-dasharray: none;
+    animation: svgPulse 1.5s ease-in-out infinite;
+  }
+
+  .polygon-path.highlight-test,
+  .line-path.highlight-test {
+    stroke: #ff9800;
+    stroke-width: 2;
+    animation: svgPulse 1.5s ease-in-out infinite;
+  }
+
+  .polygon-path.highlight-test {
+    fill: rgba(255, 152, 0, 0.15);
+  }
+
+  .ref-point.highlight-test {
+    background: #ff9800;
+    border-color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  /* Test Interface Styles */
+  #testInterface {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 300px;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  #testInterface input {
+    width: calc(100% - 24px);
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  #testInterface input:focus {
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33,150,243,0.2);
+  }
+
+  #testInterface .feedback {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 10px 0;
+    min-height: 24px;
+  }
+
+  #testInterface .feedback.correct {
+    color: #4caf50;
+    animation: fadeInOut 1.5s ease-in-out;
+  }
+
+  #testInterface .feedback.incorrect {
+    color: #f44336;
+    animation: shake 0.5s ease-in-out;
+  }
+
+  #testInterface .progress {
+    font-size: 14px;
+    color: #666;
+    margin-top: 15px;
+  }
+
+  #testInterface .test-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    gap: 10px;
+  }
+
+  #testInterface #stopTestBtn {
+    padding: 8px 16px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #testInterface #stopTestBtn:hover {
+    background-color: #d32f2f;
+    transform: translateY(-1px);
+  }
+
+  #testInterface #stopTestBtn:active {
+    transform: translateY(0);
+  }
+
   #leaderLines {
     position: absolute;
     top: 0;
@@ -432,6 +650,59 @@
     stroke: rgba(0, 0, 0, 0.6);
     stroke-width: 1.5;
   }
+
+  /* Floating Finish Button Styles */
+  #finishDrawingInterface {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    text-align: center;
+    box-sizing: border-box;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  #finishDrawingBtn {
+    padding: 8px 24px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #finishDrawingBtn:hover {
+    background-color: #43a047;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(76,175,80,0.2);
+  }
+
+  #finishDrawingBtn:active {
+    transform: translateY(0);
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translate(-50%, 100%);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+  }
 </style>
 </head>
 <body>
@@ -442,23 +713,24 @@
   <label for="mapFileInput" id="loadMapLabel">
     <i class="fas fa-upload"></i> Load Map Image
     </label>
-  <button id="saveLabelsBtn" onclick="saveLabels()">
+  <button id="saveLabelsBtn" onclick="saveLabels()" style="display: none;">
     <i class="fas fa-save"></i> Save Labels
   </button>
-  <button id="loadLabelsBtn" onclick="loadLabels()">
+  <button id="loadLabelsBtn" onclick="loadLabels()" style="display: none;">
     <i class="fas fa-folder-open"></i> Load Labels
   </button>
   <input type="file" id="labelsFileInput" accept=".json" style="display: none;" />
+  <input type="file" id="saveLabelsFileInput" nwsaveas="map_labels.json" accept=".json" style="display: none;" />
   <div id="errorMessage"><i class="fas fa-exclamation-circle"></i> <span></span></div>
 </div>
 
 <div id="mainMenu">
   <div class="menu" role="toolbar" aria-label="Map interaction controls">
     <div class="menu-row">
-      <button id="identPointBtn" onclick="setMode('ident')" title="Identify the points">
+        <button id="identPointBtn" title="Identify the points">
         <i class="fas fa-map-pin"></i> Identify Points
       </button>
-      <button id="findPointBtn" onclick="setMode('find')" title="Find the points">
+        <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the points">
         <i class="fas fa-search"></i> Find Points
       </button>
     </div>
@@ -496,10 +768,27 @@
   </div>
 </div>
 
-<div id="mapContainer" tabindex="0" aria-label="Map with labels and leader lines" style="outline:none;">
+  <div id="mapContainer" tabindex="0" aria-label="Map with labels and leader lines" style="outline:none;">
     <img id="mapImage" alt="Map" />
     <svg id="shapesLayer" aria-hidden="true"></svg>
-  <svg id="leaderLines" aria-hidden="true"></svg>
+    <svg id="leaderLines" aria-hidden="true"></svg>
+  </div>
+
+  <div id="testInterface">
+    <div class="feedback"></div>
+    <input type="text" id="testInput" placeholder="Enter the name of the highlighted item..." />
+    <div class="progress"></div>
+    <div class="test-controls">
+          <button id="stopTestBtn" onclick="stopTest()" title="Stop the test">
+      <i class="fas fa-stop"></i> Stop Test
+    </button>
+    </div>
+  </div>
+
+  <div id="finishDrawingInterface">
+    <button id="finishDrawingBtn">
+      <i class="fas fa-check"></i> Finish Drawing
+    </button>
   </div>
 </div>
 
@@ -516,6 +805,12 @@
   let currentMode = null;
   let currentShape = null;
   let currentShapePoints = [];
+  
+  // Testing mode variables
+  let testItems = [];
+  let currentTestItem = null;
+  let remainingTestItems = [];
+  let testingMode = false;
 
   let draggingLabel = null;
   let draggingRefPoint = null;
@@ -561,6 +856,25 @@
 
     // Initialize leader lines
     updateLeaderLines();
+
+    // Add event listener for identify mode button
+
+
+    // Add window resize handler
+    window.addEventListener('resize', () => {
+      requestAnimationFrame(() => {
+        updateAllPositions();
+        updateLeaderLines();
+      });
+    });
+
+    // Add event listener for finish drawing button
+    document.getElementById('finishDrawingBtn').addEventListener('click', () => {
+      if (currentMode === 'polygon' || currentMode === 'line') {
+        finishCurrentShape();
+        document.getElementById('finishDrawingInterface').style.display = 'none';
+      }
+    });
   });
 
   // Toggle Add submenu
@@ -613,7 +927,162 @@
     }
   }
 
-  // Toggle edit mode
+  // Helper function to update cursor styles based on current mode
+  function updateCursorStyles(mode) {
+    const mapContainer = document.getElementById('mapContainer');
+    
+    // Reset all cursor-related classes first
+    mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
+    mapContainer.style.cursor = 'default';
+    
+    // Reset all element cursor styles
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+      element.style.cursor = 'default';
+      element.classList.remove('movable', 'deletable', 'editable');
+    });
+
+    // Set appropriate cursor and classes based on mode
+    if (!editEnabled && !testingMode) {
+      // Default state - no edit mode or test mode
+      return;
+    }
+
+    if (testingMode) {
+      // Test mode cursor styles
+      mapContainer.style.cursor = 'default';
+      document.querySelectorAll('.label-box').forEach(label => {
+        label.style.cursor = 'default';
+      });
+      return;
+    }
+
+    switch (mode) {
+      case 'add':
+      case 'polygon':
+      case 'line':
+        mapContainer.classList.add(`${mode}-mode`);
+        mapContainer.style.cursor = 'crosshair';
+        break;
+      case 'move':
+        mapContainer.style.cursor = 'default';
+        document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+          element.classList.add('movable');
+          element.style.cursor = 'move';
+        });
+        break;
+      case 'delete':
+        mapContainer.style.cursor = 'default';
+        document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+          element.classList.add('deletable');
+          element.style.cursor = 'no-drop';
+        });
+        break;
+      case 'editLabel':
+        mapContainer.style.cursor = 'default';
+        document.querySelectorAll('.label-box').forEach(element => {
+          element.classList.add('editable');
+          element.style.cursor = 'text';
+        });
+        break;
+      default:
+        // No specific mode or null mode
+        mapContainer.style.cursor = 'default';
+        break;
+    }
+  }
+
+  // Update setMode function to use the new cursor style helper
+  function setMode(mode) {
+    if (!editEnabled) return;
+    
+    // Deactivate the current mode's button first
+    if (currentMode) {
+      const currentBtn = document.getElementById(`${currentMode}Btn`);
+      if (currentBtn) {
+        currentBtn.classList.remove('active');
+        currentBtn.setAttribute('aria-pressed', 'false');
+      }
+    }
+    
+    // Set the new mode before updating UI
+    const previousMode = currentMode;
+    currentMode = mode;
+
+    // Update cursor styles for the new mode
+    updateCursorStyles(mode);
+
+    if (mode === 'add') {
+      mapContainer.classList.add('add-mode');
+    } else if (mode === 'polygon') {
+      mapContainer.classList.add('polygon-mode');
+    } else if (mode === 'line') {
+      mapContainer.classList.add('line-mode');
+    }
+
+    // Handle drawing mode transitions
+    const finishDrawingInterface = document.getElementById('finishDrawingInterface');
+    
+    // If entering a drawing mode
+    if (mode === 'polygon' || mode === 'line') {
+      finishDrawingInterface.style.display = 'none'; // Start hidden, will show when enough points are added
+    } 
+    // If leaving a drawing mode
+    else if ((previousMode === 'polygon' || previousMode === 'line') && mode !== 'polygon' && mode !== 'line') {
+      finishDrawingInterface.style.display = 'none';
+      
+      // If we have points, finish the current shape
+      if (currentShapePoints.length > 0) {
+        finishCurrentShape();
+      }
+      
+      // Clear any remaining points and reset state
+      currentShape = null;
+      currentShapePoints.forEach(point => {
+        if (point.element && point.element.parentNode) {
+          point.element.remove();
+        }
+      });
+      currentShapePoints = [];
+      
+      // Remove preview line if it exists
+      const previewLine = document.getElementById('previewLine');
+      if (previewLine) previewLine.remove();
+    }
+
+    // Handle Add submenu and button state
+    const addSubMenu = document.getElementById('addSubMenu');
+    const addBtn = document.getElementById('addBtn');
+    
+    // Only hide Add submenu if explicitly switching to a non-Add mode
+    // Keep it open when finishing shapes/lines
+    if (mode !== null && mode !== 'add' && mode !== 'polygon' && mode !== 'line') {
+      addSubMenu.style.display = 'none';
+      addBtn.setAttribute('aria-pressed', 'false');
+      addBtn.classList.remove('active');
+    }
+    
+    // If switching to Add mode, show Add submenu and activate Add button
+    if (mode === 'add') {
+      addSubMenu.style.display = 'flex';
+      addBtn.setAttribute('aria-pressed', 'true');
+      addBtn.classList.add('active');
+    }
+
+    // If clicking the same mode button again, deactivate the mode
+    if (mode === previousMode) {
+      currentMode = null;
+      updateCursorStyles(null);
+      // Hide finish drawing interface when deactivating drawing mode
+      if (previousMode === 'polygon' || previousMode === 'line') {
+        finishDrawingInterface.style.display = 'none';
+      }
+    }
+
+    // Update all button states
+    updateButtons();
+  }
+
+  // Update toggleEditMode to use the new cursor style helper
   function toggleEditMode() {
     editEnabled = !editEnabled;
     document.getElementById('editToggle').setAttribute('aria-pressed', editEnabled);
@@ -637,6 +1106,9 @@
       // Reset current mode when exiting edit mode
       currentMode = null;
       currentShape = null;
+      
+      // Hide finish drawing interface
+      document.getElementById('finishDrawingInterface').style.display = 'none';
       
       // Clear any in-progress shape points
       if (currentShapePoints.length > 0) {
@@ -669,25 +1141,10 @@
       const addBtn = document.getElementById('addBtn');
       addBtn.setAttribute('aria-pressed', 'false');
       addBtn.classList.remove('active');
-
-      // Reset polygon and line button text
-      const polygonBtn = document.getElementById('polygonBtn');
-      const lineBtn = document.getElementById('lineBtn');
-      polygonBtn.textContent = 'Shape';
-      polygonBtn.title = 'Draw shape';
-      lineBtn.textContent = 'Line';
-      lineBtn.title = 'Draw line';
-
-      // Reset cursor and all cursor-related styles
-      mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
-      mapContainer.style.cursor = 'default';
-      
-      // Reset cursor styles on all elements
-      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
-        element.classList.remove('movable', 'deletable', 'editable');
-        element.style.cursor = 'default';
-      });
     }
+
+    // Update cursor styles based on edit mode state
+    updateCursorStyles(currentMode);
 
     // Toggle visibility of points and anchor points
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
@@ -703,15 +1160,6 @@
     // Toggle visibility of line strokes
     document.querySelectorAll('.line-path').forEach(line => {
       line.setAttribute('stroke', editEnabled ? 'blue' : 'none');
-    });
-
-    // Update movable state of labels
-    document.querySelectorAll('.label-box').forEach(label => {
-      if (editEnabled && currentMode === 'move') {
-        label.classList.add('movable');
-      } else {
-        label.classList.remove('movable');
-      }
     });
   }
 
@@ -789,10 +1237,22 @@
       leaderLine.setAttribute('class', 'leader-line');
       leaderLinesSVG.appendChild(leaderLine);
     });
+
+    // Update save button state
+    updateSaveButtonState();
+  }
+
+  // Function to update save button state
+  function updateSaveButtonState() {
+    const saveButton = document.getElementById('saveLabelsBtn');
+    const hasData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
+    saveButton.disabled = !hasData;
+    saveButton.style.opacity = hasData ? '1' : '0.5';
+    saveButton.style.cursor = hasData ? 'pointer' : 'not-allowed';
   }
 
   // Add label at ref point with label offset
-  function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = true, shouldFocus = true) {
+  function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = true, shouldFocus = true, isNewFix = false) {
     let refPointEl = null;
     if (createRefPoint) {
       refPointEl = document.createElement('div');
@@ -817,16 +1277,16 @@
     labelBoxEl.setAttribute('tabindex', '0');
     labelBoxEl.setAttribute('role', 'textbox');
     labelBoxEl.setAttribute('aria-label', 'Label text');
-    labelBoxEl.contentEditable = shouldFocus ? 'true' : 'false';
+    labelBoxEl.contentEditable = (shouldFocus || isNewFix) ? 'true' : 'false';
     mapContainer.appendChild(labelBoxEl);
     // Trigger the creation animation
     requestAnimationFrame(() => labelBoxEl.classList.add('visible'));
 
-    // Only focus and set up editing if shouldFocus is true
-    if (shouldFocus) {
+    // Focus and set up editing if it's a new fix or shouldFocus is true
+    if (shouldFocus || isNewFix) {
       requestAnimationFrame(() => {
-	labelBoxEl.contentEditable = 'true';
-	labelBoxEl.focus();
+        labelBoxEl.contentEditable = 'true';
+        labelBoxEl.focus();
         // Place cursor at the end of any existing text
         const range = document.createRange();
         const sel = window.getSelection();
@@ -861,7 +1321,7 @@
     const labelX = x + 20;
     const labelY = y + 20;
 
-    const { refPointEl, labelBoxEl } = createLabel(refX, refY, labelX, labelY);
+    const { refPointEl, labelBoxEl } = createLabel(refX, refY, labelX, labelY, '', true, false, true);
 
     // Convert to relative coordinates
     const relCoords = toRelativeCoords(refX, refY);
@@ -891,6 +1351,7 @@
 
     updateLabelEditable();
     updateLeaderLines();
+    updateSaveButtonState();
   }
 
   // Helper function to delete a line
@@ -956,6 +1417,7 @@
         labelBoxEl.remove();
         labels.splice(i, 1);
         updateLeaderLines();
+          updateSaveButtonState();
         }, 300); // Match the animation duration
         return true;
       }
@@ -977,6 +1439,7 @@
         const rect = point.element.getBoundingClientRect();
         if (isPointInRect(x, y, rect, offsetX, offsetY)) {
           deletePolygon(polygon, i);
+          updateSaveButtonState();
         return true;
       }
     }
@@ -985,6 +1448,7 @@
       if (isPointInRect(x, y, labelRect, offsetX, offsetY) ||
           isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
         deletePolygon(polygon, i);
+        updateSaveButtonState();
         return true;
       }
     }
@@ -1005,6 +1469,7 @@
         const rect = point.element.getBoundingClientRect();
         if (isPointInRect(x, y, rect, offsetX, offsetY)) {
           deleteLine(line, i);
+          updateSaveButtonState();
           return true;
         }
       }
@@ -1013,6 +1478,7 @@
       if (isPointInRect(x, y, labelRect, offsetX, offsetY) ||
           isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
         deleteLine(line, i);
+        updateSaveButtonState();
         return true;
       }
     }
@@ -1501,6 +1967,7 @@
 
     updateLeaderLines();
     updateButtons();
+    updateSaveButtonState();
   }
 
   function getPolygonCentroid(points) {
@@ -1571,20 +2038,12 @@
       currentShapePoints.push({ x, y, element: point });
       currentShape = currentMode;
 
-      // Update polygon button text if we're drawing a polygon
-      if (currentMode === 'polygon') {
-        const polygonBtn = document.getElementById('polygonBtn');
-        polygonBtn.textContent = 'Finish Shape';
-        polygonBtn.title = 'Finish current shape';
-      }
+      // Show/hide finish button based on number of points
+      const finishDrawingInterface = document.getElementById('finishDrawingInterface');
+      finishDrawingInterface.style.display = hasEnoughPointsForShape() ? 'block' : 'none';
 
-      // Update line button text if we're drawing a line
+      // Draw or update the preview polyline if we're drawing a line
       if (currentMode === 'line') {
-        const lineBtn = document.getElementById('lineBtn');
-        lineBtn.textContent = 'Finish Line';
-        lineBtn.title = 'Finish current line';
-
-        // Draw or update the preview polyline
         if (currentShapePoints.length > 1) {
           // Remove old preview if it exists
           const oldPreview = document.getElementById('previewLine');
@@ -1600,15 +2059,6 @@
           preview.setAttribute('stroke-width', '2');
           shapesLayer.appendChild(preview);
         }
-      }
-
-      // Update button text to show Finish option
-      if (currentMode === 'polygon') {
-        const polygonBtn = document.getElementById('polygonBtn');
-        polygonBtn.textContent = currentShapePoints.length >= 3 ? 'Finish Shape' : 'Shape';
-      } else if (currentMode === 'line') {
-        const lineBtn = document.getElementById('lineBtn');
-        lineBtn.textContent = currentShapePoints.length >= 2 ? 'Finish Line' : 'Line';
       }
 
       // Update leader lines after adding a point
@@ -1648,86 +2098,55 @@
   function setMode(mode) {
     if (!editEnabled) return;
     
-    // Update map container cursor based on mode
-    const mapContainer = document.getElementById('mapContainer');
-    mapContainer.classList.remove('add-mode', 'polygon-mode', 'line-mode');
-    mapContainer.style.cursor = 'default'; // Reset cursor to default
+    // Deactivate the current mode's button first
+    if (currentMode) {
+      const currentBtn = document.getElementById(`${currentMode}Btn`);
+      if (currentBtn) {
+        currentBtn.classList.remove('active');
+        currentBtn.setAttribute('aria-pressed', 'false');
+      }
+    }
     
-    // Reset all cursor-related classes first
-    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
-      element.classList.remove('movable', 'deletable', 'editable');
-      element.style.cursor = 'default';
-    });
+    // Set the new mode before updating UI
+    const previousMode = currentMode;
+    currentMode = mode;
+
+    // Update cursor styles for the new mode
+    updateCursorStyles(mode);
 
     if (mode === 'add') {
       mapContainer.classList.add('add-mode');
-      mapContainer.style.cursor = 'crosshair';
     } else if (mode === 'polygon') {
       mapContainer.classList.add('polygon-mode');
-      mapContainer.style.cursor = 'crosshair';
     } else if (mode === 'line') {
       mapContainer.classList.add('line-mode');
-      mapContainer.style.cursor = 'crosshair';
-    } else if (mode === 'move') {
-      mapContainer.style.cursor = 'default';
-      // Apply move cursor styles
-      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
-        element.classList.add('movable');
-        element.style.cursor = 'move';
-      });
-    } else if (mode === 'delete') {
-      mapContainer.style.cursor = 'default';
-      // Apply delete cursor styles
-      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
-        element.classList.add('deletable');
-        element.style.cursor = 'no-drop';
-      });
-    } else if (mode === 'editLabel') {
-      mapContainer.style.cursor = 'default';
-      // Apply edit cursor styles
-      document.querySelectorAll('.label-box').forEach(element => {
-        element.classList.add('editable');
-        element.style.cursor = 'text';
-      });
-    } else if (mode === null) {
-      mapContainer.style.cursor = 'default';
     }
+
+    // Handle drawing mode transitions
+    const finishDrawingInterface = document.getElementById('finishDrawingInterface');
     
-    // If we're switching away from a drawing mode to a different mode, finish the current shape
-    if ((currentMode === 'polygon' || currentMode === 'line') && 
-        mode !== currentMode && mode !== 'polygon' && mode !== 'line' && 
-        currentShapePoints.length > 0) {
-      finishCurrentShape();
-    }
-
-    // Reset polygon button only if switching away from polygon mode to a non-drawing mode
-    if (currentMode === 'polygon' && mode !== 'polygon' && mode !== 'line') {
-      const polygonBtn = document.getElementById('polygonBtn');
-      polygonBtn.textContent = 'Shape';
-      polygonBtn.title = 'Draw shape';
+    // If entering a drawing mode
+    if (mode === 'polygon' || mode === 'line') {
+      finishDrawingInterface.style.display = 'none'; // Start hidden, will show when enough points are added
+    } 
+    // If leaving a drawing mode
+    else if ((previousMode === 'polygon' || previousMode === 'line') && mode !== 'polygon' && mode !== 'line') {
+      finishDrawingInterface.style.display = 'none';
+      
+      // If we have points, finish the current shape
+      if (currentShapePoints.length > 0) {
+        finishCurrentShape();
+      }
+      
+      // Clear any remaining points and reset state
       currentShape = null;
-      // Clear any remaining points
       currentShapePoints.forEach(point => {
         if (point.element && point.element.parentNode) {
           point.element.remove();
         }
       });
       currentShapePoints = [];
-    }
-
-    // Reset line button if switching away from line mode
-    if (currentMode === 'line' && mode !== 'line') {
-      const lineBtn = document.getElementById('lineBtn');
-      lineBtn.textContent = 'Line';
-      lineBtn.title = 'Draw line';
-      currentShape = null;
-      // Clear any remaining points
-      currentShapePoints.forEach(point => {
-        if (point.element && point.element.parentNode) {
-          point.element.remove();
-        }
-      });
-      currentShapePoints = [];
+      
       // Remove preview line if it exists
       const previewLine = document.getElementById('previewLine');
       if (previewLine) previewLine.remove();
@@ -1752,112 +2171,25 @@
       addBtn.classList.add('active');
     }
 
-    // Update cursor styles based on mode
-    const isMovable = mode === 'move';
-    const isDeletable = mode === 'delete';
-    const isEditable = mode === 'editLabel';
-
-    // Helper function to update element classes
-    const updateElementClasses = (element) => {
-      element.classList.toggle('movable', isMovable);
-      element.classList.toggle('deletable', isDeletable);
-      element.classList.toggle('editable', isEditable);
-    };
-
-    // Update regular labels
-    labels.forEach(label => {
-      updateElementClasses(label.refPointEl);
-      updateElementClasses(label.labelBoxEl);
-    });
-
-    // Update polygons
-    polygons.forEach(polygon => {
-      updateElementClasses(polygon.labelBoxEl);
-      updateElementClasses(polygon.anchorPoint.element);
-      polygon.points.forEach(point => {
-        updateElementClasses(point.element);
-      });
-    });
-
-    // Update lines
-    lines.forEach(line => {
-      updateElementClasses(line.labelBoxEl);
-      updateElementClasses(line.anchorPoint);
-      if (line.points) {
-        line.points.forEach(point => {
-          if (point.element) {
-            updateElementClasses(point.element);
-          }
-        });
-      }
-    });
-
-    // Restore polygon and line styling
-    polygons.forEach(polygon => {
-      polygon.svgPath.setAttribute('fill', 'rgba(0, 0, 255, 0.2)');
-      polygon.svgPath.setAttribute('stroke', 'blue');
-      polygon.svgPath.setAttribute('stroke-width', '2');
-    });
-    lines.forEach(line => {
-      line.polyline.setAttribute('stroke', 'blue');
-      line.polyline.setAttribute('stroke-width', '2');
-    });
-
-    if (mode === currentMode) {
-      // If we're toggling off the current mode, ensure we remove all mode classes
-      if (mode === 'move' || mode === 'delete' || mode === 'editLabel') {
-        const removeClasses = (element) => {
-          element.classList.remove('movable', 'deletable', 'editable');
-        };
-
-        labels.forEach(label => {
-          removeClasses(label.refPointEl);
-          removeClasses(label.labelBoxEl);
-        });
-        polygons.forEach(polygon => {
-          removeClasses(polygon.labelBoxEl);
-          removeClasses(polygon.anchorPoint.element);
-          polygon.points.forEach(point => {
-            removeClasses(point.element);
-          });
-        });
-        lines.forEach(line => {
-          removeClasses(line.labelBoxEl);
-          removeClasses(line.anchorPoint);
-          if (line.points) {
-            line.points.forEach(point => {
-              if (point.element) {
-                removeClasses(point.element);
-              }
-            });
-          }
-        });
-      }
+    // If clicking the same mode button again, deactivate the mode
+    if (mode === previousMode) {
       currentMode = null;
-      mapContainer.style.cursor = 'default'; // Reset cursor when toggling off a mode
-    } else {
-      currentMode = mode;
+      updateCursorStyles(null);
+      // Hide finish drawing interface when deactivating drawing mode
+      if (previousMode === 'polygon' || previousMode === 'line') {
+        finishDrawingInterface.style.display = 'none';
+      }
     }
+
+    // Update all button states
     updateButtons();
-    updateLabelEditable();
-    updateLeaderLines();
   }
 
   function togglePolygonMode() {
     if (!editEnabled) return;
     
     if (currentMode === 'polygon') {
-      // If we have enough points, finish the polygon
-      if (currentShapePoints.length >= 3) {
-        finishCurrentShape();
-        // Reset button text but stay in polygon mode
-        const polygonBtn = document.getElementById('polygonBtn');
-        polygonBtn.textContent = 'Shape';
-        polygonBtn.title = 'Draw shape';
-        // Reset cursor
-        mapContainer.style.cursor = 'default';
-      } else {
-        // Not enough points, cancel the current shape
+      // Cancel the current shape
         currentShapePoints.forEach(point => {
           point.element.classList.add('removing');
           setTimeout(() => point.element.remove(), 300);
@@ -1866,14 +2198,8 @@
         currentShape = null;
         // Exit polygon mode
         setMode(null);
-        const polygonBtn = document.getElementById('polygonBtn');
-        polygonBtn.textContent = 'Shape';
-        polygonBtn.title = 'Draw shape';
-        polygonBtn.classList.remove('active');
-        polygonBtn.setAttribute('aria-pressed', 'false');
         // Reset cursor
         mapContainer.style.cursor = 'default';
-      }
     } else {
       // Start polygon mode
       setMode('polygon');
@@ -1884,17 +2210,7 @@
     if (!editEnabled) return;
     
     if (currentMode === 'line') {
-      // If we have enough points, finish the line
-      if (currentShapePoints.length >= 2) {
-        finishCurrentShape();
-        // Reset button text but stay in line mode
-        const lineBtn = document.getElementById('lineBtn');
-        lineBtn.textContent = 'Line';
-        lineBtn.title = 'Draw line';
-        // Reset cursor
-        mapContainer.style.cursor = 'default';
-      } else {
-        // Not enough points, cancel the current line
+      // Cancel the current line
         currentShapePoints.forEach(point => {
           point.element.classList.add('removing');
           setTimeout(() => point.element.remove(), 300);
@@ -1906,14 +2222,8 @@
         if (previewLine) previewLine.remove();
         // Exit line mode
         setMode(null);
-        const lineBtn = document.getElementById('lineBtn');
-        lineBtn.textContent = 'Line';
-        lineBtn.title = 'Draw line';
-        lineBtn.classList.remove('active');
-        lineBtn.setAttribute('aria-pressed', 'false');
         // Reset cursor
         mapContainer.style.cursor = 'default';
-      }
     } else {
       // Start line mode
       setMode('line');
@@ -1978,6 +2288,13 @@
         loadMapLabel.textContent = 'Loading...';
         errorMessage.style.display = 'none';
 
+        // Reset all UI states
+        resetUIState();
+
+        // Hide save/load buttons while loading
+        document.getElementById('saveLabelsBtn').style.display = 'none';
+        document.getElementById('loadLabelsBtn').style.display = 'none';
+
         const reader = new FileReader();
         
         reader.onload = (e) => {
@@ -1987,8 +2304,8 @@
             console.log('Image loaded successfully:', img.width, 'x', img.height);
             mapImage.src = img.src;
             mainMenu.style.display = 'block';
-            document.getElementById('saveLabelsBtn').style.display = 'block';
-            document.getElementById('loadLabelsBtn').style.display = 'block';
+            document.getElementById('saveLabelsBtn').style.display = 'inline-block';
+            document.getElementById('loadLabelsBtn').style.display = 'inline-block';
             loadMapLabel.classList.remove('loading');
             loadMapLabel.textContent = 'Load New Map Image';
             
@@ -2031,6 +2348,8 @@
               leaderLinesSVG.setAttribute('height', containerRect.height);
               // Reset file input to allow selecting the same file again
               mapFileInput.value = '';
+              // Update save button state after clearing data
+              updateSaveButtonState();
               resolve();
             });
           };
@@ -2043,6 +2362,9 @@
             loadMapLabel.classList.add('error');
             setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
             loadMapLabel.textContent = 'Load Map Image';
+            // Keep save/load buttons hidden
+            document.getElementById('saveLabelsBtn').style.display = 'none';
+            document.getElementById('loadLabelsBtn').style.display = 'none';
             // Reset file input to allow selecting the same file again
             mapFileInput.value = '';
             reject(new Error('Failed to load image'));
@@ -2060,6 +2382,9 @@
           loadMapLabel.classList.add('error');
                       setTimeout(() => loadMapLabel.classList.remove('error'), 2000);
             loadMapLabel.textContent = 'Load Map Image';
+          // Keep save/load buttons hidden
+          document.getElementById('saveLabelsBtn').style.display = 'none';
+          document.getElementById('loadLabelsBtn').style.display = 'none';
             // Reset file input to allow selecting the same file again
             mapFileInput.value = '';
             reject(new Error('Failed to read file'));
@@ -2112,7 +2437,18 @@
       
       // Handle dialog buttons
       document.getElementById('saveAndContinue').onclick = async () => {
+        // Save current labels first
+        await new Promise(resolve => {
         saveLabels();
+          // Give time for the save dialog to complete
+          const checkInterval = setInterval(() => {
+            const saveDialog = document.querySelector('input[type="file"][nwsaveas]');
+            if (!saveDialog) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 100);
+        });
         dialog.remove();
         overlay.remove();
         try {
@@ -2191,22 +2527,30 @@
       }))
     };
 
+    // Create a Blob containing the JSON data
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary anchor element for downloading
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'map_labels.json';
-    document.body.appendChild(a);
+    a.href = URL.createObjectURL(blob);
+    a.download = 'map_labels.json'; // Suggested filename
+    
+    // Trigger the save dialog
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    
+    // Clean up
+    URL.revokeObjectURL(a.href);
   }
 
   // Load labels from JSON file
   function loadLabels() {
     const input = document.getElementById('labelsFileInput');
-    input.click();
 
+    // Check if there are any existing labels, polygons, or lines
+    const hasExistingData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
+
+    const processLabelsFile = () => {
+      input.click();
     input.onchange = function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -2214,6 +2558,8 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const data = JSON.parse(e.target.result);
+          // Reset the file input so the same file can be loaded again
+          input.value = '';
 
         // Clear existing labels
         labels.forEach(label => {
@@ -2485,6 +2831,70 @@
       };
       reader.readAsText(file);
     };
+    };
+
+    if (hasExistingData) {
+      // Create and show the confirmation dialog
+      const dialog = document.createElement('div');
+      dialog.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 1000;
+        min-width: 300px;
+        text-align: center;
+      `;
+      
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+      `;
+      
+      dialog.innerHTML = `
+        <h3 style="margin-top: 0; color: #f44336;">Warning</h3>
+        <p>Loading a labels file will overwrite any existing labels. Would you like to:</p>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+          <button id="saveAndContinue" style="padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Current & Continue</button>
+          <button id="continueWithoutSaving" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Continue Without Saving</button>
+          <button id="cancelLoad" style="padding: 8px 16px; background: #9e9e9e; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      document.body.appendChild(dialog);
+      
+      // Handle dialog buttons
+      document.getElementById('saveAndContinue').onclick = () => {
+        saveLabels();
+        dialog.remove();
+        overlay.remove();
+        processLabelsFile();
+      };
+      
+      document.getElementById('continueWithoutSaving').onclick = () => {
+        dialog.remove();
+        overlay.remove();
+        processLabelsFile();
+      };
+      
+      document.getElementById('cancelLoad').onclick = () => {
+        dialog.remove();
+        overlay.remove();
+      };
+    } else {
+      processLabelsFile();
+    }
   }
 
   // Convert absolute pixel coordinates to relative percentages
@@ -2588,6 +2998,331 @@
     updateLeaderLines();
   }
 
+  // Testing mode functions
+  function startIdentifyTest() {
+    // Hide all movable points except the current test item
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+      point.style.display = 'none';
+    });
+
+    // Hide all label text and ensure reference points are visible for testing
+    document.querySelectorAll('.label-box').forEach(label => {
+      label.dataset.correctAnswer = label.textContent;
+      label.textContent = '???';
+    });
+
+    // Prepare test items
+    testItems = [
+      ...labels.map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
+      ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
+      ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
+    ];
+    
+    remainingTestItems = [...testItems];
+    selectNextTestItem();
+
+    // Show test interface
+    const testInterface = document.getElementById('testInterface');
+    testInterface.style.display = 'block';
+    const testInput = document.getElementById('testInput');
+    testInput.value = '';
+    testInput.focus();
+    return true;
+  }
+
+  function selectNextTestItem() {
+    // Remove highlight from previous item and its label if exists
+    if (currentTestItem) {
+      currentTestItem.element.classList.remove('highlight-test');
+      currentTestItem.label.classList.remove('highlight-test');
+      
+      // Remove highlight from leader line if it exists
+      const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
+      if (leaderLine) {
+        leaderLine.classList.remove('highlight-test');
+      }
+      
+      // Hide the previous test item's point if it's a label type
+      if (currentTestItem.type === 'label') {
+        currentTestItem.element.style.display = 'none';
+      }
+    }
+
+    // Log remaining items for debugging
+    console.log(`Remaining items: ${remainingTestItems.length}`);
+
+    if (remainingTestItems.length === 0) {
+      endTest(true); // true indicates this is a natural completion
+      return;
+    }
+
+    // Take the next item from the front of the array (they're already shuffled)
+    currentTestItem = remainingTestItems[0];
+    console.log(`Selected item at index 0. Current length: ${remainingTestItems.length}`);
+    
+    // Show and highlight both the item and its label
+    currentTestItem.element.classList.add('highlight-test');
+    currentTestItem.label.classList.add('highlight-test');
+
+    // Highlight the leader line
+    const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
+    if (leaderLine) {
+      leaderLine.classList.add('highlight-test');
+    }
+
+    // If it's a label type, make sure its point is visible
+    if (currentTestItem.type === 'label') {
+      currentTestItem.element.style.display = 'block';
+    }
+
+    // Scroll the element into view with a smooth animation
+    // Use the element's bounding rect to determine its position
+    const elementRect = currentTestItem.element.getBoundingClientRect();
+    const labelRect = currentTestItem.label.getBoundingClientRect();
+    
+    // Calculate the midpoint between the element and its label
+    const midpointY = (elementRect.top + labelRect.top) / 2;
+    
+    // Get the viewport height
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate the ideal scroll position that centers the midpoint
+    const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
+    
+    // Scroll smoothly to the calculated position
+    window.scrollTo({
+      top: idealScrollTop,
+      behavior: 'smooth'
+    });
+  }
+
+  function checkAnswer(answer) {
+    const correctAnswer = currentTestItem.label.dataset.correctAnswer.trim().toLowerCase();
+    const userAnswer = answer.trim().toLowerCase();
+    const feedback = document.querySelector('#testInterface .feedback');
+    const testInput = document.getElementById('testInput');
+
+    if (userAnswer === correctAnswer) {
+      // Correct answer
+      feedback.textContent = 'Correct!';
+      feedback.className = 'feedback correct';
+      
+      // Remove current item from remaining items
+      remainingTestItems.shift();  // Remove the first item since we know it's the current one
+      console.log(`After removal, remaining items: ${remainingTestItems.length}`);
+      
+      // Update progress first
+      updateTestProgress();
+      
+      // Clear input and select next item
+      setTimeout(() => {
+        testInput.value = '';
+        feedback.textContent = '';
+        feedback.className = 'feedback';
+        selectNextTestItem();
+      }, 1500);
+    } else {
+      // Incorrect answer
+      feedback.textContent = 'Try again!';
+      feedback.className = 'feedback incorrect';
+      testInput.value = '';
+      testInput.focus();
+    }
+  }
+
+  function updateTestProgress() {
+    const progress = document.querySelector('#testInterface .progress');
+    const completed = testItems.length - remainingTestItems.length;
+    progress.textContent = `Progress: ${completed}/${testItems.length}`;
+  }
+
+  function endTest(isNaturalCompletion = false) {
+    testingMode = false;
+    currentTestMode = null;
+    
+    // Only show completion message if this is a natural end (not a stop)
+    if (isNaturalCompletion) {
+      alert('Congratulations! You\'ve completed the test!');
+    }
+    
+    // Show all correct answers and reset styles
+    document.querySelectorAll('.label-box').forEach(label => {
+      if (label.dataset.correctAnswer) {
+      label.textContent = label.dataset.correctAnswer;
+      delete label.dataset.correctAnswer;
+      }
+      // Reset any test-related styles
+      label.classList.remove('highlight-test');
+      label.style.animation = 'none';
+      label.style.backgroundColor = '';
+      label.style.color = '';
+      label.style.borderColor = '';
+      label.style.boxShadow = '';
+      label.style.filter = '';
+    });
+
+    // Reset reference point visibility to non-edit mode state
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+      point.style.display = 'none';
+      point.classList.remove('highlight-test');
+      point.style.animation = 'none';
+      point.style.backgroundColor = '';
+      point.style.borderColor = '';
+      point.style.transform = 'translate(-50%, -50%) scale(1)';
+      point.style.boxShadow = '';
+      point.style.filter = '';
+    });
+
+    // Hide test interface
+    document.getElementById('testInterface').style.display = 'none';
+
+    // Reset button states
+    const identBtn = document.getElementById('identPointBtn');
+    const findBtn = document.getElementById('findPointBtn');
+    const editToggle = document.getElementById('editToggle');
+    const stopTestBtn = document.getElementById('stopTestBtn');
+
+    // Re-enable and reset all test mode buttons
+    identBtn.classList.remove('test-active');
+    findBtn.classList.remove('test-active');
+    identBtn.disabled = false;
+    findBtn.disabled = false;
+    identBtn.style.opacity = '1';
+    findBtn.style.opacity = '1';
+    identBtn.style.cursor = 'pointer';
+    findBtn.style.cursor = 'pointer';
+    
+    // Hide and disable stop button
+    stopTestBtn.style.display = 'none';
+    stopTestBtn.disabled = true;
+
+    // Re-enable edit toggle
+    editToggle.disabled = false;
+    editToggle.style.opacity = '1';
+    editToggle.style.cursor = 'pointer';
+
+    // Clear test items
+    testItems = [];
+    remainingTestItems = [];
+    currentTestItem = null;
+  }
+
+  function stopTest() {
+    const identBtn = document.getElementById('identPointBtn');
+    const findBtn = document.getElementById('findPointBtn');
+    const editToggle = document.getElementById('editToggle');
+    const stopTestBtn = document.getElementById('stopTestBtn');
+    const testInterface = document.getElementById('testInterface');
+
+    // Reset test mode states
+    testingMode = false;
+    currentTestMode = null;
+
+    // Hide test interface
+    testInterface.style.display = 'none';
+
+    // Reset button states
+    identBtn.classList.remove('test-active');
+    findBtn.classList.remove('test-active');
+    identBtn.disabled = false;
+    findBtn.disabled = false;
+    identBtn.style.opacity = '1';
+    findBtn.style.opacity = '1';
+    identBtn.style.cursor = 'pointer';
+    findBtn.style.cursor = 'pointer';
+    
+    // Hide and disable stop button
+    stopTestBtn.style.display = 'none';
+    stopTestBtn.disabled = true;
+
+    // Re-enable edit toggle
+    editToggle.disabled = false;
+    editToggle.style.opacity = '1';
+    editToggle.style.cursor = 'pointer';
+
+    // Show all label text and reset point visibility
+    document.querySelectorAll('.label-box').forEach(label => {
+      if (label.dataset.correctAnswer) {
+        label.textContent = label.dataset.correctAnswer;
+        delete label.dataset.correctAnswer;
+      }
+      // Reset any test-related styles
+      label.classList.remove('highlight-test');
+      label.style.animation = 'none';
+      label.style.backgroundColor = '';
+      label.style.color = '';
+      label.style.borderColor = '';
+      label.style.boxShadow = '';
+      label.style.filter = '';
+    });
+
+    // Reset reference point visibility and styles
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+      point.style.display = 'none';
+      point.classList.remove('highlight-test');
+      point.style.animation = 'none';
+      point.style.backgroundColor = '';
+      point.style.borderColor = '';
+      point.style.transform = 'translate(-50%, -50%) scale(1)';
+      point.style.boxShadow = '';
+      point.style.filter = '';
+    });
+
+    // Reset any highlighted shapes (polygons and lines)
+    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
+      shape.classList.remove('highlight-test');
+      shape.style.animation = 'none';
+      shape.setAttribute('stroke', 'none');
+      shape.setAttribute('stroke-width', '2');
+      shape.style.filter = '';
+      if (shape.classList.contains('polygon-path')) {
+        shape.setAttribute('fill', 'none');
+      }
+    });
+
+    // Reset leader lines
+    document.querySelectorAll('.leader-line').forEach(line => {
+      line.classList.remove('highlight-test');
+      line.style.animation = 'none';
+      line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '4,3');
+      line.style.filter = '';
+    });
+
+    // Force a reflow to ensure animations are properly reset
+    void document.documentElement.offsetHeight;
+
+    // Remove animation: none after reflow to allow future animations
+    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
+      element.style.animation = '';
+    });
+
+    // Clear any remaining test items
+    testItems = [];
+    remainingTestItems = [];
+    currentTestItem = null;
+  }
+
+  // Add event listener for test input
+  document.getElementById('testInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && testingMode) {
+      checkAnswer(e.target.value);
+    }
+  });
+
+  // Add event listener for identify mode button
+  document.getElementById('identPointBtn').addEventListener('click', () => {
+    if (!testingMode) {
+      toggleTestMode('ident');
+    }
+  });
+
+  // Add event listener for stop test button
+      document.getElementById('stopTestBtn').addEventListener('click', () => {
+      endTest(false); // false indicates this is not a natural completion
+  });
+
   // Add window resize handler
   window.addEventListener('resize', () => {
     requestAnimationFrame(() => {
@@ -2595,6 +3330,303 @@
       updateLeaderLines();
     });
   });
+
+  function toggleTestMode(mode) {
+    const identBtn = document.getElementById('identPointBtn');
+    const findBtn = document.getElementById('findPointBtn');
+    const editToggle = document.getElementById('editToggle');
+    const stopTestBtn = document.getElementById('stopTestBtn');
+    const editTools = document.querySelector('.edit-tools');
+    const addSubMenu = document.getElementById('addSubMenu');
+
+    // If we're already in test mode and clicking the same button, do nothing
+    if (testingMode && currentTestMode === mode) return;
+
+    // Check if there are any labels before proceeding
+    if (labels.length === 0 && polygons.length === 0 && lines.length === 0) {
+      alert('Please add some labels in edit mode first!');
+      return;
+    }
+
+    // If we're in a different test mode, stop it first
+    if (testingMode) {
+      endTest(false); // false indicates this is not a natural completion
+    }
+
+    // If we're in edit mode, disable it
+    if (editEnabled) {
+      editEnabled = false;
+      editToggle.setAttribute('aria-pressed', 'false');
+      editToggle.classList.remove('active');
+      editTools.classList.remove('visible');
+      addSubMenu.style.display = 'none';
+      
+      // Reset all edit-related states
+      currentMode = null;
+      currentShape = null;
+      
+      // Hide finish drawing interface
+      document.getElementById('finishDrawingInterface').style.display = 'none';
+      
+      if (currentShapePoints.length > 0) {
+        currentShapePoints.forEach(point => {
+          if (point.element && point.element.parentNode) {
+            point.element.remove();
+          }
+        });
+        currentShapePoints = [];
+      }
+      const previewLine = document.getElementById('previewLine');
+      if (previewLine) previewLine.remove();
+    }
+
+    // Start the test mode
+    testingMode = true;
+    currentTestMode = mode;
+
+    // Update cursor styles for test mode
+    updateCursorStyles(null);
+
+    if (mode === 'ident') {
+      // Initialize test mode without the label check since we did it above
+      // Hide all movable points except the current test item
+      document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+        point.style.display = 'none';
+      });
+
+      // Store correct answers and hide label text
+      document.querySelectorAll('.label-box').forEach(label => {
+        // Only store the correct answer if we don't already have it
+        if (!label.dataset.correctAnswer) {
+          label.dataset.correctAnswer = label.textContent;
+        }
+        label.textContent = '???';
+      });
+
+      // Prepare test items
+      testItems = [
+        ...labels.map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
+        ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
+        ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
+      ].filter(item => item.element && item.label); // Filter out any invalid items
+      
+      // Shuffle the test items array for random order
+      for (let i = testItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [testItems[i], testItems[j]] = [testItems[j], testItems[i]];
+      }
+      
+      remainingTestItems = [...testItems];
+      
+      // Log the number of test items for debugging
+      console.log(`Starting test with ${testItems.length} items`);
+
+      // Show test interface and stop button
+      const testInterface = document.getElementById('testInterface');
+      testInterface.style.display = 'block';
+      const testInput = document.getElementById('testInput');
+      testInput.value = '';
+      testInput.focus();
+
+      // Show and enable stop button
+      stopTestBtn.style.display = 'block';
+      stopTestBtn.disabled = false;
+
+      // Initialize progress counter
+      const progress = document.querySelector('#testInterface .progress');
+      progress.textContent = `Progress: 0/${testItems.length}`;
+      
+      // Select the first test item after UI is ready
+      selectNextTestItem();
+    } else if (mode === 'find') {
+      // Implement find mode later
+      alert('Find mode not implemented yet');
+      testingMode = false;
+      currentTestMode = null;
+      return;
+    }
+
+    // Disable edit toggle during test
+    editToggle.disabled = true;
+    editToggle.style.opacity = '0.5';
+    editToggle.style.cursor = 'not-allowed';
+
+    // Update button states
+    identBtn.classList.toggle('test-active', mode === 'ident');
+    findBtn.classList.toggle('test-active', mode === 'find');
+    
+    // Disable other test mode buttons
+    identBtn.disabled = mode === 'find';  // Disable identify button only if in find mode
+    findBtn.disabled = mode === 'ident';  // Disable find button only if in identify mode
+  }
+
+  // Also update stopTest to properly reset button states
+  function stopTest() {
+    const identBtn = document.getElementById('identPointBtn');
+    const findBtn = document.getElementById('findPointBtn');
+    const editToggle = document.getElementById('editToggle');
+    const stopTestBtn = document.getElementById('stopTestBtn');
+    const testInterface = document.getElementById('testInterface');
+
+    // Reset test mode states
+    testingMode = false;
+    currentTestMode = null;
+
+    // Hide test interface
+    testInterface.style.display = 'none';
+
+    // Reset button states
+    identBtn.classList.remove('test-active');
+    findBtn.classList.remove('test-active');
+    identBtn.disabled = false;
+    findBtn.disabled = false;
+    identBtn.style.opacity = '1';
+    findBtn.style.opacity = '1';
+    identBtn.style.cursor = 'pointer';
+    findBtn.style.cursor = 'pointer';
+    
+    // Hide and disable stop button
+    stopTestBtn.style.display = 'none';
+    stopTestBtn.disabled = true;
+
+    // Re-enable edit toggle
+    editToggle.disabled = false;
+    editToggle.style.opacity = '1';
+    editToggle.style.cursor = 'pointer';
+
+    // Show all label text and reset point visibility
+    document.querySelectorAll('.label-box').forEach(label => {
+      if (label.dataset.correctAnswer) {
+        label.textContent = label.dataset.correctAnswer;
+        delete label.dataset.correctAnswer;
+      }
+      // Reset any test-related styles
+      label.classList.remove('highlight-test');
+      label.style.animation = 'none';
+      label.style.backgroundColor = '';
+      label.style.color = '';
+      label.style.borderColor = '';
+      label.style.boxShadow = '';
+      label.style.filter = '';
+    });
+
+    // Reset reference point visibility and styles
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+      point.style.display = 'none';
+      point.classList.remove('highlight-test');
+      point.style.animation = 'none';
+      point.style.backgroundColor = '';
+      point.style.borderColor = '';
+      point.style.transform = 'translate(-50%, -50%) scale(1)';
+      point.style.boxShadow = '';
+      point.style.filter = '';
+    });
+
+    // Reset any highlighted shapes (polygons and lines)
+    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
+      shape.classList.remove('highlight-test');
+      shape.style.animation = 'none';
+      shape.setAttribute('stroke', 'none');
+      shape.setAttribute('stroke-width', '2');
+      shape.style.filter = '';
+      if (shape.classList.contains('polygon-path')) {
+        shape.setAttribute('fill', 'none');
+      }
+    });
+
+    // Reset leader lines
+    document.querySelectorAll('.leader-line').forEach(line => {
+      line.classList.remove('highlight-test');
+      line.style.animation = 'none';
+      line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '4,3');
+      line.style.filter = '';
+    });
+
+    // Force a reflow to ensure animations are properly reset
+    void document.documentElement.offsetHeight;
+
+    // Remove animation: none after reflow to allow future animations
+    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
+      element.style.animation = '';
+    });
+
+    // Clear any remaining test items
+    testItems = [];
+    remainingTestItems = [];
+    currentTestItem = null;
+  }
+
+  let currentTestMode = null;
+
+  // Helper function to check if we have enough points for the current shape type
+  function hasEnoughPointsForShape() {
+    if (!editEnabled || !currentMode || !currentShapePoints || currentShapePoints.length === 0) return false;
+    if (currentMode === 'polygon') return currentShapePoints.length >= 3;
+    if (currentMode === 'line') return currentShapePoints.length >= 2;
+    return false;
+  }
+
+  // Function to reset all UI states
+  function resetUIState() {
+    // Exit test mode if active
+    if (testingMode) {
+      stopTest();
+    }
+
+    // Exit edit mode if active
+    if (editEnabled) {
+      editEnabled = false;
+      const editToggle = document.getElementById('editToggle');
+      editToggle.setAttribute('aria-pressed', 'false');
+      editToggle.classList.remove('active');
+      const editTools = document.querySelector('.edit-tools');
+      editTools.classList.remove('visible');
+    }
+
+    // Reset all buttons to inactive state
+    document.querySelectorAll('.menu button').forEach(btn => {
+      btn.setAttribute('aria-pressed', 'false');
+      btn.classList.remove('active');
+      // Disable edit tool buttons except for editToggle and quiz mode buttons
+      if (btn.id !== 'editToggle' && btn.id !== 'identPointBtn' && btn.id !== 'findPointBtn') {
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+      }
+    });
+
+    // Hide Add submenu
+    const addSubMenu = document.getElementById('addSubMenu');
+    addSubMenu.style.display = 'none';
+    const addBtn = document.getElementById('addBtn');
+    addBtn.setAttribute('aria-pressed', 'false');
+    addBtn.classList.remove('active');
+
+    // Reset current mode and shape
+    currentMode = null;
+    currentShape = null;
+
+    // Clear any in-progress shape points
+    if (currentShapePoints.length > 0) {
+      currentShapePoints.forEach(point => {
+        if (point.element && point.element.parentNode) {
+          point.element.remove();
+        }
+      });
+      currentShapePoints = [];
+    }
+
+    // Hide finish drawing interface
+    document.getElementById('finishDrawingInterface').style.display = 'none';
+
+    // Remove preview line if it exists
+    const previewLine = document.getElementById('previewLine');
+    if (previewLine) previewLine.remove();
+
+    // Reset cursor styles
+    updateCursorStyles(null);
+  }
 </script>
 </body>
 </html>
