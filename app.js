@@ -31,7 +31,7 @@ let dragOffsetX = 0;
 let dragOffsetY = 0;
 
 // label structure: { refPointEl, labelBoxEl, refX, refY, labelX, labelY, correctText, userGuess }
-const labels = [];
+const points = [];
 // polygon structure: { points: [{x, y, element}], labelBoxEl, svgPath }
 const polygons = [];
 // line structure: { points: [{x, y, element}], labelBoxEl, polyline, anchorPoint, anchorX, anchorY }
@@ -480,9 +480,8 @@ function updateLeaderLines() {
 
     // Update SVG size to match container
     updateSVGDimensions();
-
     // Draw leader lines for regular labels
-    labels.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
+    points.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
     const x1 = refX;
     const y1 = refY;
     const x2 = labelX;
@@ -544,7 +543,7 @@ function updateLeaderLines() {
 // Function to update save button state
 function updateSaveButtonState() {
     const saveButton = document.getElementById('saveElementsBtn');
-    const hasData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
+    const hasData = points.length > 0 || polygons.length > 0 || lines.length > 0;
     saveButton.disabled = !hasData;
     saveButton.style.opacity = hasData ? '1' : '0.5';
     saveButton.style.cursor = hasData ? 'pointer' : 'not-allowed';
@@ -639,7 +638,7 @@ function addLabel(x, y) {
     type: currentType || tags[0] || ''
     };
 
-    labels.push(labelObj);
+    points.push(labelObj);
     updateLeaderLines();
     labelObj.labelBoxEl.focus();
 
@@ -694,8 +693,8 @@ function removeLabelAtPoint(x, y) {
     if (!editEnabled || currentMode !== 'delete') return;
 
     // Check regular labels first
-    for (let i = labels.length - 1; i >= 0; i--) {
-    const { refPointEl, labelBoxEl } = labels[i];
+    for (let i = points.length - 1; i >= 0; i--) {
+    const { refPointEl, labelBoxEl } = points[i];
     const rectRef = refPointEl.getBoundingClientRect();
     const rectLabel = labelBoxEl.getBoundingClientRect();
     const containerRect = mapContainer.getBoundingClientRect();
@@ -714,7 +713,7 @@ function removeLabelAtPoint(x, y) {
         setTimeout(() => {
         refPointEl.remove();
         labelBoxEl.remove();
-        labels.splice(i, 1);
+        points.splice(i, 1);
         updateLeaderLines();
         updateSaveButtonState();
         }, 300); // Match the animation duration
@@ -801,24 +800,24 @@ function onPointerDown(e) {
     const y = e.clientY - rect.top;
 
     // Check regular labels
-    for (const label of labels) {
-    const refRect = label.refPointEl.getBoundingClientRect();
-    const labelRect = label.labelBoxEl.getBoundingClientRect();
+    for (const point of points) {
+    const refRect = point.refPointEl.getBoundingClientRect();
+    const labelRect = point.labelBoxEl.getBoundingClientRect();
     const offsetX = rect.left;
     const offsetY = rect.top;
 
     if (isPointInRect(x, y, refRect, offsetX, offsetY)) {
-        draggingRefPoint = label;
-        dragOffsetX = x - parseInt(label.refPointEl.style.left);
-        dragOffsetY = y - parseInt(label.refPointEl.style.top);
+        draggingRefPoint = point;
+        dragOffsetX = x - parseInt(point.refPointEl.style.left);
+        dragOffsetY = y - parseInt(point.refPointEl.style.top);
         e.preventDefault();
         return;
     }
 
     if (isPointInRect(x, y, labelRect, offsetX, offsetY)) {
-        draggingPointLabel = label;
-        dragOffsetX = x - parseInt(label.labelBoxEl.style.left);
-        dragOffsetY = y - parseInt(label.labelBoxEl.style.top);
+        draggingPointLabel = point;
+        dragOffsetX = x - parseInt(point.labelBoxEl.style.left);
+        dragOffsetY = y - parseInt(point.labelBoxEl.style.top);
         e.preventDefault();
         return;
     }
@@ -1334,11 +1333,11 @@ mapContainer.addEventListener('click', (e) => {
     removeLabelAtPoint(x, y);
     } else if (currentMode === 'editLabelText') {
     // Check regular labels
-    for (const label of labels) {
-        const labelRect = label.labelBoxEl.getBoundingClientRect();
+    for (const point of points) {
+        const labelRect = point.labelBoxEl.getBoundingClientRect();
         if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
-        label.labelBoxEl.contentEditable = 'true';
-        label.labelBoxEl.focus();
+        point.labelBoxEl.contentEditable = 'true';
+        point.labelBoxEl.focus();
         return;
         }
     }
@@ -1417,8 +1416,8 @@ toggleEditMode();
 function updateLabelEditable() {
     const makeLabelsNonEditable = () => {
     // Make all labels non-editable
-    labels.forEach(label => {
-        label.labelBoxEl.contentEditable = 'false';
+    points.forEach(point => {
+        point.labelBoxEl.contentEditable = 'false';
     });
     polygons.forEach(polygon => {
         polygon.labelBoxEl.contentEditable = 'false';
@@ -1534,7 +1533,7 @@ mapFileInput.addEventListener('change', async (e) => {
     }
 
     // Check if there are any existing labels, polygons, or lines
-    const hasExistingData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
+    const hasExistingData = points.length > 0 || polygons.length > 0 || lines.length > 0;
 
     const loadNewMap = () => {
     return new Promise((resolve, reject) => {
@@ -1561,11 +1560,11 @@ mapFileInput.addEventListener('change', async (e) => {
             document.querySelector('.top-buttons').style.visibility = 'visible';
 
             // Clear all existing data
-            labels.forEach(label => {
-            if (label.refPointEl) label.refPointEl.remove();
-            if (label.labelBoxEl) label.labelBoxEl.remove();
+            points.forEach(point => {
+            if (point.refPointEl) point.refPointEl.remove();
+            if (point.labelBoxEl) point.labelBoxEl.remove();
             });
-            labels.length = 0;
+            points.length = 0;
 
             polygons.forEach(polygon => {
             polygon.points.forEach(p => p.element.remove());
@@ -1735,13 +1734,13 @@ mapImage.addEventListener('error', (e) => {
 // Save labels to JSON file
 function saveElements() {
     const exportData = {
-    labels: labels.map(label => ({
-        refX: label.relRefX,
-        refY: label.relRefY,
-        labelX: label.relLabelX,
-        labelY: label.relLabelY,
-        text: label.labelBoxEl.textContent,
-        type: label.type || 'default'
+    points: points.map(point => ({
+        refX: point.relRefX,
+        refY: point.relRefY,
+        labelX: point.relLabelX,
+        labelY: point.relLabelY,
+        text: point.labelBoxEl.textContent,
+        type: point.type || 'default'
     })),
     polygons: polygons.map(polygon => ({
         points: polygon.points.map(p => ({ x: p.relX, y: p.relY })),
@@ -1783,7 +1782,7 @@ function loadElements() {
     const input = document.getElementById('elementsFileInput');
 
     // Check if there are any existing labels, polygons, or lines
-    const hasExistingData = labels.length > 0 || polygons.length > 0 || lines.length > 0;
+    const hasExistingData = points.length > 0 || polygons.length > 0 || lines.length > 0;
 
     const processLabelsFile = () => {
     input.click();
@@ -1799,7 +1798,7 @@ function loadElements() {
 
         // Collect all tag types from the file
         const foundTags = new Set();
-        (data.labels || []).forEach(label => { if (label.type) foundTags.add(label.type); });
+        (data.points || []).forEach(point => { if (point.type) foundTags.add(point.type); });
         (data.polygons || []).forEach(polygon => { if (polygon.type) foundTags.add(polygon.type); });
         (data.lines || []).forEach(line => { if (line.type) foundTags.add(line.type); });
         tags = Array.from(foundTags);
@@ -1817,11 +1816,11 @@ function loadElements() {
         renderTagPanel();
 
         // Clear existing labels
-        labels.forEach(label => {
-            if (label.refPointEl) label.refPointEl.remove();
-            if (label.labelBoxEl) label.labelBoxEl.remove();
+        points.forEach(point => {
+            if (point.refPointEl) point.refPointEl.remove();
+            if (point.labelBoxEl) point.labelBoxEl.remove();
         });
-        labels.length = 0;
+        points.length = 0;
 
         // Clear existing polygons
         polygons.forEach(polygon => {
@@ -1850,15 +1849,15 @@ function loadElements() {
         }
 
         // Recreate labels
-        data.labels?.forEach(label => {
-            const absPos = toAbsoluteCoords(label.refX, label.refY);
-            const absLabelPos = toAbsoluteCoords(label.labelX, label.labelY);
+        data.points?.forEach(point => {
+            const absPos = toAbsoluteCoords(point.refX, point.refY);
+            const absLabelPos = toAbsoluteCoords(point.labelX, point.labelY);
             const { refPointEl, labelBoxEl } = createLabel(
             absPos.x,
             absPos.y,
             absLabelPos.x,
             absLabelPos.y,
-            label.text,
+            point.text,
             true,  // createRefPoint
             false  // shouldFocus
             );
@@ -1878,18 +1877,18 @@ function loadElements() {
             labelBoxEl.classList.add('editable');
             }
 
-            labels.push({
+            points.push({
             refPointEl,
             labelBoxEl,
             refX: absPos.x,
             refY: absPos.y,
             labelX: absLabelPos.x,
             labelY: absLabelPos.y,
-            relRefX: label.refX,
-            relRefY: label.refY,
-            relLabelX: label.labelX,
-            relLabelY: label.labelY,
-            type: label.type || 'default'
+            relRefX: point.refX,
+            relRefY: point.refY,
+            relLabelX: point.labelX,
+            relLabelY: point.labelY,
+            type: point.type || 'default'
             });
         });
 
@@ -2192,17 +2191,17 @@ function toAbsoluteCoords(relX, relY) {
 // Update all element positions based on relative coordinates
 function updateAllPositions() {
     // Update regular labels
-    labels.forEach(label => {
-    const absPos = toAbsoluteCoords(label.relRefX, label.relRefY);
-    const absLabelPos = toAbsoluteCoords(label.relLabelX, label.relLabelY);
-    label.refPointEl.style.left = absPos.x + 'px';
-    label.refPointEl.style.top = absPos.y + 'px';
-    label.labelBoxEl.style.left = absLabelPos.x + 'px';
-    label.labelBoxEl.style.top = absLabelPos.y + 'px';
-    label.refX = absPos.x;
-    label.refY = absPos.y;
-    label.labelX = absLabelPos.x;
-    label.labelY = absLabelPos.y;
+    points.forEach(point => {
+    const absPos = toAbsoluteCoords(point.relRefX, point.relRefY);
+    const absLabelPos = toAbsoluteCoords(point.relLabelX, point.relLabelY);
+    point.refPointEl.style.left = absPos.x + 'px';
+    point.refPointEl.style.top = absPos.y + 'px';
+    point.labelBoxEl.style.left = absLabelPos.x + 'px';
+    point.labelBoxEl.style.top = absLabelPos.y + 'px';
+    point.refX = absPos.x;
+    point.refY = absPos.y;
+    point.labelX = absLabelPos.x;
+    point.labelY = absLabelPos.y;
     });
 
     // Update polygons
@@ -2285,7 +2284,7 @@ function startIdentifyTest() {
 
     // Prepare test items
     testItems = [
-    ...labels.map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
+    ...points.map(point => ({ type: 'point', element: point.refPointEl, label: point.labelBoxEl })),
     ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
     ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
     ].filter(item => item.element && item.label);
@@ -2315,7 +2314,7 @@ function selectNextTestItem() {
     }
 
     // Hide the previous test item's point if it's a label type
-    if (currentTestItem.type === 'label') {
+    if (currentTestItem.type === 'point') {
         currentTestItem.element.style.display = 'none';
     }
     }
@@ -2343,7 +2342,7 @@ function selectNextTestItem() {
     }
 
     // If it's a label type, make sure its point is visible
-    if (currentTestItem.type === 'label') {
+    if (currentTestItem.type === 'point') {
     currentTestItem.element.style.display = 'block';
     }
 
@@ -2789,7 +2788,7 @@ function toggleTestMode(mode) {
     showTestTagTypeModal(mode, function (selectedTags) {
     // Check if there are any elements in the selected subset
     const hasAny =
-        labels.some(label => selectedTags.includes(label.type)) ||
+        points.some(point => selectedTags.includes(point.type)) ||
         polygons.some(polygon => selectedTags.includes(polygon.type)) ||
         lines.some(line => selectedTags.includes(line.type));
     if (!hasAny) {
@@ -2814,7 +2813,7 @@ function _toggleTestModeInternal(mode, selectedTags) {
     if (testingMode && currentTestMode === mode) return;
 
     // Check if there are any labels before proceeding
-    if (labels.length === 0 && polygons.length === 0 && lines.length === 0) {
+    if (points.length === 0 && polygons.length === 0 && lines.length === 0) {
     alert('Please add some labels in edit mode first!');
     return;
     }
@@ -2873,7 +2872,7 @@ function _toggleTestModeInternal(mode, selectedTags) {
 
     // Prepare test items (filter by selected tag types)
     testItems = [
-    ...labels.filter(label => selectedTags.includes(label.type)).map(label => ({ type: 'label', element: label.refPointEl, label: label.labelBoxEl })),
+    ...points.filter(point => selectedTags.includes(point.type)).map(point => ({ type: 'point', element: point.refPointEl, label: point.labelBoxEl })),
     ...polygons.filter(polygon => selectedTags.includes(polygon.type)).map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
     ...lines.filter(line => selectedTags.includes(line.type)).map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
     ].filter(item => item.element && item.label);
@@ -3002,7 +3001,7 @@ function _toggleTestModeInternal(mode, selectedTags) {
     // In Identify Elements mode, temporarily show/hide only the elements being tested
     if (mode === 'ident') {
     setIdentifyTestVisibility(testItems);
-    if (currentTestItem.type === 'label') {
+    if (currentTestItem.type === 'point') {
         currentTestItem.element.style.display = 'block';
     }
     }
@@ -3194,7 +3193,7 @@ function handleFindModeClick(e) {
     // Check if we clicked on the correct element with buffer zone
     let isCorrect = false;
     if (currentTestItem) {
-    if (currentTestItem.type === 'label') {
+    if (currentTestItem.type === 'point') {
         // For points, temporarily make the element visible to get its position
         const refPoint = currentTestItem.element;
         const originalVisibility = refPoint.style.visibility;
@@ -3303,7 +3302,7 @@ function selectNextTestItem() {
     }
 
     // Hide the previous test item's point if it's a label type
-    if (currentTestItem.type === 'label') {
+    if (currentTestItem.type === 'point') {
         currentTestItem.element.style.display = 'none';
     }
     }
@@ -3332,7 +3331,7 @@ function selectNextTestItem() {
     }
 
     // If it's a label type, make sure its point is visible
-    if (currentTestItem.type === 'label') {
+    if (currentTestItem.type === 'point') {
         currentTestItem.element.style.display = 'block';
     }
     } else {
@@ -3860,7 +3859,7 @@ function renderTagPanel() {
             tagToDelete = tag;
             // Check if any elements use this tag
             const usedBy = [
-            ...labels.filter(l => l.type === tag),
+            ...points.filter(l => l.type === tag),
             ...polygons.filter(p => p.type === tag),
             ...lines.filter(l => l.type === tag)
             ];
@@ -4036,7 +4035,7 @@ function saveEditTag() {
     const idx = tags.indexOf(tagToEdit);
     if (idx !== -1) tags[idx] = newName;
     // Update all elements using this tag
-    labels.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
+    points.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
     polygons.forEach(p => { if (p.type === tagToEdit) p.type = newName; });
     lines.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
     // Update currentType if needed
@@ -4062,7 +4061,7 @@ function confirmDeleteTag() {
     fallback = dropdown.value;
     }
     // Update all elements using this tag to the selected fallback
-    labels.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
+    points.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
     polygons.forEach(p => { if (p.type === tagToDelete) p.type = fallback; });
     lines.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
     // Update currentType if needed
@@ -4100,7 +4099,7 @@ function addLabel(x, y) {
     userGuess: '',
     type: currentType || tags[0] || ''
     };
-    labels.push(labelObj);
+    points.push(labelObj);
     updateLeaderLines();
     // Always make label editable and focus after a short delay to ensure keyboard opens
     labelBoxEl.contentEditable = 'true';
@@ -4252,27 +4251,27 @@ mapContainer.addEventListener('click', function (e) {
     let changed = false;
     let changedLabelBox = null;
     // Check regular labels
-    for (const label of labels) {
-    const refRect = label.refPointEl.getBoundingClientRect();
-    const labelRect = label.labelBoxEl.getBoundingClientRect();
+    for (const point of points) {
+    const refRect = point.refPointEl.getBoundingClientRect();
+    const labelRect = point.labelBoxEl.getBoundingClientRect();
     const offsetX = rect.left;
     const offsetY = rect.top;
     if (
         x >= refRect.left - offsetX && x <= refRect.right - offsetX &&
         y >= refRect.top - offsetY && y <= refRect.bottom - offsetY
     ) {
-        label.type = currentType;
+        point.type = currentType;
         changed = true;
-        changedLabelBox = label.labelBoxEl;
+        changedLabelBox = point.labelBoxEl;
         break;
     }
     if (
         x >= labelRect.left - offsetX && x <= labelRect.right - offsetX &&
         y >= labelRect.top - offsetY && y <= labelRect.bottom - offsetY
     ) {
-        label.type = currentType;
+        point.type = currentType;
         changed = true;
-        changedLabelBox = label.labelBoxEl;
+        changedLabelBox = point.labelBoxEl;
         break;
     }
     }
@@ -4373,7 +4372,7 @@ function setTagVisibility(tag, visible) {
 }
 function updateTagVisibilityOnMap() {
     // Labels
-    labels.forEach(l => {
+    points.forEach(l => {
     l.labelBoxEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
     if (l.refPointEl) l.refPointEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
     });
