@@ -61,18 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize leader lines
     updateLeaderLines();
 
-    // Add event listener for identify mode button
-
-
-    // Add window resize handler
-    window.addEventListener('resize', () => {
-    requestAnimationFrame(() => {
-        updateSVGDimensions();
-        updateAllPositions();
-        updateLeaderLines();
-    });
-    });
-
     // Add event listener for finish drawing button
     document.getElementById('finishDrawingBtn').addEventListener('click', () => {
     if (currentMode === 'polygon' || currentMode === 'line') {
@@ -82,34 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Add MutationObserver to watch for layout changes
-    const observer = new MutationObserver((mutations) => {
-    let shouldUpdate = false;
-    mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && 
-        (mutation.target.id === 'testInterface' || 
-         mutation.target.id === 'finishDrawingInterface' ||
-         mutation.target.classList.contains('edit-tools'))) {
-        shouldUpdate = true;
-        }
-    });
-    
-    if (shouldUpdate) {
+    const observer = new ResizeObserver(entries => {
         requestAnimationFrame(() => {
-        updateSVGDimensions();
-        updateAllPositions();
-        updateLeaderLines();
+            updateSVGDimensions();
+            updateAllPositions();
+            updateLeaderLines();
+            updateInProgressShapePositions();
         });
-    }
     });
-
-    // Observe changes to the test interface and edit tools
-    const testInterface = document.getElementById('testInterface');
-    const finishDrawingInterface = document.getElementById('finishDrawingInterface');
-    const editToolsElement = document.querySelector('.edit-tools');
-    
-    if (testInterface) observer.observe(testInterface, { attributes: true });
-    if (finishDrawingInterface) observer.observe(finishDrawingInterface, { attributes: true });
-    if (editToolsElement) observer.observe(editToolsElement, { attributes: true });
+    observer.observe(document.querySelector('.map-viewport'));
 });
 
 // Function to update SVG dimensions to match container
@@ -170,13 +139,6 @@ function toggleAddMenu() {
     addBtn.setAttribute('aria-pressed', 'true');
     addBtn.classList.add('active');
     }
-
-    // Update SVG dimensions and positions after layout changes
-    requestAnimationFrame(() => {
-    updateSVGDimensions();
-    updateAllPositions();
-    updateLeaderLines();
-    });
 }
 
 // Helper function to update cursor styles based on current mode
@@ -449,13 +411,6 @@ function toggleEditMode() {
     // Toggle visibility of line strokes
     document.querySelectorAll('.line-path').forEach(line => {
     line.setAttribute('stroke', editEnabled ? 'blue' : 'none');
-    });
-
-    // Update SVG dimensions and positions after layout changes
-    requestAnimationFrame(() => {
-    updateSVGDimensions();
-    updateAllPositions();
-    updateLeaderLines();
     });
 }
 
@@ -2774,15 +2729,6 @@ document.getElementById('stopTestBtn').addEventListener('click', () => {
     endTest(false); // false indicates this is not a natural completion
 });
 
-// Add window resize handler
-window.addEventListener('resize', () => {
-    requestAnimationFrame(() => {
-    updateSVGDimensions();
-    updateAllPositions();
-    updateLeaderLines();
-    });
-});
-
 function toggleTestMode(mode) {
     // Show tag type selection modal before starting test
     showTestTagTypeModal(mode, function (selectedTags) {
@@ -4490,16 +4436,6 @@ function updateInProgressShapePositions() {
     previewLine.setAttribute('points', points);
     }
 }
-
-// Update window resize handler to update in-progress shapes
-window.addEventListener('resize', () => {
-    requestAnimationFrame(() => {
-    updateSVGDimensions();
-    updateAllPositions();
-    updateLeaderLines();
-    updateInProgressShapePositions();
-    });
-});
 
 // --- FLOATING INTERFACE KEYBOARD AVOIDANCE ---
 function updateFloatingInterfacesForKeyboard() {
