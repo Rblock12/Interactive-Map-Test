@@ -341,7 +341,7 @@ function toggleEditMode() {
         btn.setAttribute('aria-pressed', 'false');
         }
     });
-    showReferencePoints();
+    // Don't call showReferencePoints() here - let updateTagVisibilityOnMap() handle it
     } else {
     editTools.classList.remove('visible');
     // Reset current mode when exiting edit mode
@@ -397,10 +397,8 @@ function toggleEditMode() {
     // Update cursor styles based on edit mode state
     updateCursorStyles(currentMode);
 
-    // Toggle visibility of points and anchor points
-    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.display = editEnabled ? 'block' : 'none';
-    });
+    // Update tag visibility based on user preferences and edit mode
+    updateTagVisibilityOnMap();
 
     // Toggle visibility of shape strokes and fills
     document.querySelectorAll('.polygon-path').forEach(polygon => {
@@ -516,7 +514,7 @@ function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = tru
     refPointEl.setAttribute('aria-label', 'Reference point for label');
     refPointEl.setAttribute('role', 'button');
     refPointEl.style.userSelect = 'none';
-    refPointEl.style.display = editEnabled ? 'block' : 'none';
+    refPointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
     mapContainer.appendChild(refPointEl);
     // Trigger the creation animation
     requestAnimationFrame(() => refPointEl.classList.add('visible'));
@@ -1818,7 +1816,7 @@ function loadElements() {
             );
 
             // Set initial visibility based on edit mode
-            refPointEl.style.display = editEnabled ? 'block' : 'none';
+            refPointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
 
             // Add appropriate classes based on current mode
             if (currentMode === 'move') {
@@ -1866,7 +1864,7 @@ function loadElements() {
 
             pointEl.style.left = absPos.x + 'px';
             pointEl.style.top = absPos.y + 'px';
-            pointEl.style.display = editEnabled ? 'block' : 'none';
+            pointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
             mapContainer.appendChild(pointEl);
             return {
                 x: absPos.x,
@@ -1905,7 +1903,7 @@ function loadElements() {
 
             anchorPoint.style.left = absAnchorPos.x + 'px';
             anchorPoint.style.top = absAnchorPos.y + 'px';
-            anchorPoint.style.display = editEnabled ? 'block' : 'none';
+            anchorPoint.style.visibility = editEnabled ? 'visible' : 'hidden';
             mapContainer.appendChild(anchorPoint);
             anchorPoint.setAttribute('data-type', polygon.type || 'default');
 
@@ -1964,7 +1962,7 @@ function loadElements() {
 
             pointEl.style.left = absPos.x + 'px';
             pointEl.style.top = absPos.y + 'px';
-            pointEl.style.display = editEnabled ? 'block' : 'none';
+            pointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
             mapContainer.appendChild(pointEl);
             return {
                 x: absPos.x,
@@ -2003,7 +2001,7 @@ function loadElements() {
 
             anchorPoint.style.left = absAnchorPos.x + 'px';
             anchorPoint.style.top = absAnchorPos.y + 'px';
-            anchorPoint.style.display = editEnabled ? 'block' : 'none';
+            anchorPoint.style.visibility = editEnabled ? 'visible' : 'hidden';
             mapContainer.appendChild(anchorPoint);
             anchorPoint.setAttribute('data-type', line.type || 'default');
 
@@ -2228,7 +2226,7 @@ function updateAllPositions() {
 function startIdentifyTest() {
     // Hide all movable points except the current test item
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.display = 'none';
+    point.style.visibility = 'hidden';
     });
 
     // Hide all label text and ensure reference points are visible for testing
@@ -2270,7 +2268,7 @@ function selectNextTestItem() {
 
     // Hide the previous test item's point if it's a label type
     if (currentTestItem.type === 'point') {
-        currentTestItem.element.style.display = 'none';
+        currentTestItem.element.style.visibility = 'hidden';
     }
     }
 
@@ -2298,7 +2296,7 @@ function selectNextTestItem() {
 
     // If it's a label type, make sure its point is visible
     if (currentTestItem.type === 'point') {
-    currentTestItem.element.style.display = 'block';
+    currentTestItem.element.style.visibility = 'visible';
     }
 
     // Scroll the element into view with a smooth animation
@@ -2365,7 +2363,12 @@ function updateTestProgress() {
 function endTest(isNaturalCompletion = false) {
     // If in find mode, restore labels before ending
     if (currentTestMode === 'find') {
-    cleanupFindMode();
+    // Don't call cleanupFindMode() here when showing completion screen
+    // It will be called in endTestCleanup() when user clicks Continue
+    // Ensure reference points remain hidden for find mode completion screen
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+        point.style.visibility = 'hidden';
+    });
     }
 
     testingMode = false;
@@ -2428,9 +2431,6 @@ function endTest(isNaturalCompletion = false) {
 }
 
 function endTestCleanup() {
-
-
-
     // Re-enable all menu buttons and their submenus
     const menuButtons = {
     'loadImageBtn': true,
@@ -2541,7 +2541,7 @@ function endTestCleanup() {
 
     // Reset reference point visibility to non-edit mode state
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.display = 'none';
+    point.style.visibility = 'hidden';
     point.classList.remove('highlight-test');
     point.style.animation = 'none';
     point.style.backgroundColor = '';
@@ -2573,8 +2573,11 @@ function endTestCleanup() {
     line.style.filter = '';
     });
 
-    // Restore visibility of labels and leader lines
-    restoreVisibility();
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
+
+    // Restore find mode elements if needed
+    // cleanupFindMode(); // Commented out to prevent labels from showing during completion screen
 
     // Force a reflow to ensure animations are properly reset
     void document.documentElement.offsetHeight;
@@ -2592,10 +2595,13 @@ function endTestCleanup() {
     // Restore element visibility after Identify Elements mode
     restoreIdentifyTestVisibility();
 
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
+
     // After restoreIdentifyTestVisibility();
     if (!editEnabled) {
     document.querySelectorAll('.ref-point').forEach(point => {
-        point.style.display = 'none';
+        point.style.visibility = 'hidden';
     });
     }
 }
@@ -2664,7 +2670,7 @@ function stopTest() {
 
     // Reset reference point visibility and styles
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.display = 'none';
+    point.style.visibility = 'hidden';
     point.classList.remove('highlight-test');
     point.style.animation = 'none';
     point.style.backgroundColor = '';
@@ -2806,7 +2812,7 @@ function _toggleTestModeInternal(mode, selectedTags) {
 
     // Common initialization for both modes
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.display = 'none';
+    point.style.visibility = 'hidden';
     });
 
     // Store correct answers
@@ -2869,16 +2875,15 @@ function _toggleTestModeInternal(mode, selectedTags) {
 
     // Hide all reference points in find mode but keep them in the layout
     document.querySelectorAll('.ref-point').forEach(point => {
-        point.style.visibility = 'hidden';
-        point.style.display = 'block'; // Keep in layout for hit detection
+        point.style.visibility = 'hidden';  
     });
 
     // Hide labels and leader lines in find mode
     document.querySelectorAll('.label-box').forEach(label => {
-        label.style.display = 'none';
+        label.style.visibility = 'hidden';
     });
     document.querySelectorAll('.leader-line').forEach(line => {
-        line.style.display = 'none';
+        line.style.visibility = 'hidden';
     });
 
     // Show find interface
@@ -2948,7 +2953,7 @@ function _toggleTestModeInternal(mode, selectedTags) {
     if (mode === 'ident') {
     setIdentifyTestVisibility(testItems);
     if (currentTestItem.type === 'point') {
-        currentTestItem.element.style.display = 'block';
+        currentTestItem.element.style.visibility = 'visible';
     }
     }
 
@@ -3006,7 +3011,7 @@ function stopTest() {
 
     // Reset reference point visibility and styles
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.display = 'none';
+    point.style.visibility = 'hidden';
     point.classList.remove('highlight-test');
     point.style.animation = 'none';
     point.style.backgroundColor = '';
@@ -3050,6 +3055,9 @@ function stopTest() {
     testItems = [];
     remainingTestItems = [];
     currentTestItem = null;
+
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
 }
 
 let currentTestMode = null;
@@ -3143,11 +3151,9 @@ function handleFindModeClick(e) {
         // For points, temporarily make the element visible to get its position
         const refPoint = currentTestItem.element;
         const originalVisibility = refPoint.style.visibility;
-        const originalDisplay = refPoint.style.display;
 
         // Make it invisible but still take up space
         refPoint.style.visibility = 'hidden';
-        refPoint.style.display = 'block';
 
         // Get the position
         const pointRect = refPoint.getBoundingClientRect();
@@ -3156,7 +3162,6 @@ function handleFindModeClick(e) {
 
         // Restore original visibility
         refPoint.style.visibility = originalVisibility;
-        refPoint.style.display = originalDisplay;
 
         // Check distance
         const distance = Math.sqrt(Math.pow(clickX - pointX, 2) + Math.pow(clickY - pointY, 2));
@@ -3173,12 +3178,10 @@ function handleFindModeClick(e) {
         // For lines, temporarily make it visible to get coordinates
         const line = currentTestItem.element;
         const originalVisibility = line.style.visibility;
-        const originalDisplay = line.style.display;
         const originalStroke = line.getAttribute('stroke');
 
         // Make it invisible but still take up space
         line.style.visibility = 'hidden';
-        line.style.display = 'block';
         line.setAttribute('stroke', 'rgba(0,0,0,0.001)'); // Nearly invisible but still rendered
 
         // Get the points from the path
@@ -3186,7 +3189,6 @@ function handleFindModeClick(e) {
 
         // Restore original state
         line.style.visibility = originalVisibility;
-        line.style.display = originalDisplay;
         line.setAttribute('stroke', originalStroke);
 
         // Check distance
@@ -3249,7 +3251,7 @@ function selectNextTestItem() {
 
     // Hide the previous test item's point if it's a label type
     if (currentTestItem.type === 'point') {
-        currentTestItem.element.style.display = 'none';
+        currentTestItem.element.style.visibility = 'hidden';
     }
     }
 
@@ -3278,14 +3280,14 @@ function selectNextTestItem() {
 
     // If it's a label type, make sure its point is visible
     if (currentTestItem.type === 'point') {
-        currentTestItem.element.style.display = 'block';
+        currentTestItem.element.style.visibility = 'visible';
     }
     } else {
     // In find mode, only make shapes visible, not reference points
     if (currentTestItem.type === 'polygon') {
-        currentTestItem.element.style.display = 'block';
+        currentTestItem.element.style.visibility = 'visible';
     } else if (currentTestItem.type === 'line') {
-        currentTestItem.element.style.display = 'block';
+        currentTestItem.element.style.visibility = 'visible';
     }
     // Reference points (label type) stay hidden in find mode
     }
@@ -3375,7 +3377,7 @@ function stopTest() {
 
     // Reset reference point visibility and styles
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.display = 'none';
+    point.style.visibility = 'hidden';
     point.classList.remove('highlight-test');
     point.style.animation = 'none';
     point.style.backgroundColor = '';
@@ -3411,6 +3413,38 @@ function stopTest() {
     testItems = [];
     remainingTestItems = [];
     currentTestItem = null;
+
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
+
+    // Restore find mode elements if needed
+    cleanupFindMode();
+
+    // Force a reflow to ensure animations are properly reset
+    void document.documentElement.offsetHeight;
+
+    // Remove animation: none after reflow to allow future animations
+    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
+    element.style.animation = '';
+    });
+
+    // Clear any remaining test items
+    testItems = [];
+    remainingTestItems = [];
+    currentTestItem = null;
+
+    // Restore element visibility after Identify Elements mode
+    restoreIdentifyTestVisibility();
+
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
+
+    // After restoreIdentifyTestVisibility();
+    if (!editEnabled) {
+    document.querySelectorAll('.ref-point').forEach(point => {
+        point.style.visibility = 'hidden';
+    });
+    }
 }
 
 function isPointInOrNearPolygon(x, y, points, buffer) {
@@ -3444,16 +3478,20 @@ function isPointInPolygon(x, y, points) {
 function restoreVisibility() {
     // Restore label visibility
     document.querySelectorAll('.label-box').forEach(label => {
-    label.style.display = 'block';  // Explicitly set to block instead of empty string
     label.style.visibility = 'visible';
     label.style.opacity = '1';
     });
 
     // Restore leader line visibility
     document.querySelectorAll('.leader-line').forEach(line => {
-    line.style.display = 'block';  // Explicitly set to block instead of empty string
     line.style.visibility = 'visible';
     line.style.opacity = '1';
+    });
+
+    // Restore reference point visibility
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+    point.style.visibility = 'visible';
+    point.style.opacity = '1';
     });
 }
 
@@ -3522,16 +3560,17 @@ function getPointsFromPath(d) {
 function cleanupFindMode() {
     // Restore all labels and leader lines
     document.querySelectorAll('.label-box').forEach(label => {
-    label.style.display = 'block';
     label.style.visibility = 'visible';
     label.style.opacity = '1';
     });
 
     document.querySelectorAll('.leader-line').forEach(line => {
-    line.style.display = 'block';
     line.style.visibility = 'visible';
     line.style.opacity = '1';
     });
+
+    // Note: Reference points remain hidden in find mode
+    // They will be properly restored in endTestCleanup() when the test is fully ended
 }
 
 // Add a global counter for label IDs
@@ -3611,7 +3650,6 @@ function isPointOnLine(x, y, points, buffer) {
 // Add this helper near toggleEditMode
 function showReferencePoints() {
     document.querySelectorAll('.ref-point').forEach(point => {
-    point.style.display = 'block';
     point.style.visibility = 'visible';
     });
 }
@@ -4319,30 +4357,49 @@ function setTagVisibility(tag, visible) {
 function updateTagVisibilityOnMap() {
     // Labels
     points.forEach(l => {
-    l.labelBoxEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
-    if (l.refPointEl) l.refPointEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
+    l.labelBoxEl.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
+    // Reference points should be visible in edit mode only if the tag is not hidden
+    if (l.refPointEl) {
+        const shouldBeVisible = editEnabled && tagVisibility[l.type] !== false;
+        l.refPointEl.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+    }
     });
     // Polygons
     polygons.forEach(p => {
-    if (p.labelBoxEl) p.labelBoxEl.style.display = tagVisibility[p.type] !== false ? '' : 'none';
-    if (p.svgPath) p.svgPath.style.display = tagVisibility[p.type] !== false ? '' : 'none';
-    if (p.points) p.points.forEach(pt => { if (pt.element) pt.element.style.display = tagVisibility[p.type] !== false ? '' : 'none'; });
+    if (p.labelBoxEl) p.labelBoxEl.style.visibility = tagVisibility[p.type] !== false ? 'visible' : 'hidden';
+    if (p.svgPath) p.svgPath.style.visibility = tagVisibility[p.type] !== false ? 'visible' : 'hidden';
+    if (p.points) p.points.forEach(pt => { 
+        if (pt.element) {
+            const shouldBeVisible = editEnabled && tagVisibility[p.type] !== false;
+            pt.element.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+        }
+    });
     });
     // Lines
     lines.forEach(l => {
-    if (l.labelBoxEl) l.labelBoxEl.style.display = tagVisibility[l.type] !== false ? '' : 'none';
-    if (l.polyline) l.polyline.style.display = tagVisibility[l.type] !== false ? '' : 'none';
-    if (l.anchorPoint) l.anchorPoint.style.display = tagVisibility[l.type] !== false ? '' : 'none';
+    if (l.labelBoxEl) l.labelBoxEl.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
+    if (l.polyline) l.polyline.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
+    if (l.anchorPoint) {
+        const shouldBeVisible = editEnabled && tagVisibility[l.type] !== false;
+        l.anchorPoint.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+    }
     });
     // Leader lines
     document.querySelectorAll('.leader-line').forEach(line => {
     const type = line.getAttribute('data-type');
-    line.style.display = tagVisibility[type] !== false ? '' : 'none';
+    line.style.visibility = tagVisibility[type] !== false ? 'visible' : 'hidden';
     });
     // Polygon/line points, anchors, and paths
     document.querySelectorAll('.polygon-point, .polygon-anchor, .polygon-path, .line-path').forEach(el => {
     const type = el.getAttribute('data-type');
-    el.style.display = tagVisibility[type] !== false ? '' : 'none';
+    if (el.classList.contains('polygon-point') || el.classList.contains('polygon-anchor')) {
+        // Points and anchors should be visible in edit mode only if the tag is not hidden
+        const shouldBeVisible = editEnabled && tagVisibility[type] !== false;
+        el.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+    } else {
+        // Paths should be visible if the tag is not hidden
+        el.style.visibility = tagVisibility[type] !== false ? 'visible' : 'hidden';
+    }
     });
 }
 
@@ -4361,43 +4418,43 @@ function setIdentifyTestVisibility(testItems) {
 
     // LABELS
     document.querySelectorAll('.label-box').forEach(el => {
-    prevElementDisplayMap.set(el, el.style.display);
-    el.style.display = testLabelEls.has(el) ? 'block' : 'none';
+    prevElementDisplayMap.set(el, el.style.visibility);
+    el.style.visibility = testLabelEls.has(el) ? 'visible' : 'hidden';
     });
     // POLYGON SHAPES
     document.querySelectorAll('.polygon-path').forEach(el => {
-    prevElementDisplayMap.set(el, el.style.display);
-    el.style.display = testPolygonPaths.has(el) ? 'block' : 'none';
+    prevElementDisplayMap.set(el, el.style.visibility);
+    el.style.visibility = testPolygonPaths.has(el) ? 'visible' : 'hidden';
     });
     // LINE SHAPES
     document.querySelectorAll('.line-path').forEach(el => {
-    prevElementDisplayMap.set(el, el.style.display);
-    el.style.display = testLinePolylines.has(el) ? 'block' : 'none';
+    prevElementDisplayMap.set(el, el.style.visibility);
+    el.style.visibility = testLinePolylines.has(el) ? 'visible' : 'hidden';
     });
     // LEADER LINES
     document.querySelectorAll('.leader-line').forEach(el => {
     // Find the label this line is for
     const forId = el.getAttribute('data-for');
     const label = forId && document.getElementById(forId);
-    prevElementDisplayMap.set(el, el.style.display);
-    el.style.display = (label && testLabelEls.has(label)) ? 'block' : 'none';
+    prevElementDisplayMap.set(el, el.style.visibility);
+    el.style.visibility = (label && testLabelEls.has(label)) ? 'visible' : 'hidden';
     });
     // Hide all ref-points (red points)
     document.querySelectorAll('.ref-point').forEach(el => {
-    prevElementDisplayMap.set(el, el.style.display);
-    el.style.display = 'none';
+    prevElementDisplayMap.set(el, el.style.visibility);
+    el.style.visibility = 'hidden';
     });
     // Hide all polygon/line points and anchors
     document.querySelectorAll('.polygon-point, .polygon-anchor').forEach(el => {
-    prevElementDisplayMap.set(el, el.style.display);
-    el.style.display = 'none';
+    prevElementDisplayMap.set(el, el.style.visibility);
+    el.style.visibility = 'hidden';
     });
 }
 
 function restoreIdentifyTestVisibility() {
     if (!prevElementDisplayMap) return;
-    prevElementDisplayMap.forEach((display, el) => {
-    el.style.display = display;
+    prevElementDisplayMap.forEach((visibility, el) => {
+    el.style.visibility = visibility;
     });
     prevElementDisplayMap.clear();
 }
