@@ -52,6 +52,17 @@
                         <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
                             <i class="fas fa-minus"></i> Line
                         </button>
+                        <!-- Finish Drawing Buttons (Hidden by default) -->
+                        <div id="finishDrawingInterface" class="finish-drawing-buttons" style="display: none;">
+                            <button id="finishDrawingBtn" class="finish-drawing-btn" title="Finish drawing">
+                                <i class="fas fa-check"></i>
+                                <span class="button-text">Finish</span>
+                            </button>
+                            <button id="cancelDrawingBtn" class="cancel-drawing-btn" title="Cancel drawing">
+                                <i class="fas fa-times"></i>
+                                <span class="button-text">Cancel</span>
+                            </button>
+                        </div>
                     </div>
                     <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move elements">
                         <i class="fas fa-arrows-alt"></i> Move
@@ -124,12 +135,6 @@
                     <svg id="shapesLayer" aria-hidden="true"></svg>
                     <svg id="leaderLines" aria-hidden="true"></svg>
                 </div>
-            </div>
-
-            <div id="finishDrawingInterface">
-                <button id="finishDrawingBtn">
-                    <i class="fas fa-check"></i> Finish Drawing
-                </button>
             </div>
         </div>
     </div>

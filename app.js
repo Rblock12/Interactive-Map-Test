@@ -62,12 +62,40 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLeaderLines();
 
     // Add event listener for finish drawing button
-    document.getElementById('finishDrawingBtn').addEventListener('click', () => {
-    if (currentMode === 'polygon' || currentMode === 'line') {
-        finishCurrentShape();
-        document.getElementById('finishDrawingInterface').style.display = 'none';
-    }
+    const finishDrawingBtn = document.getElementById('finishDrawingBtn');
+    const cancelDrawingBtn = document.getElementById('cancelDrawingBtn');
+
+    finishDrawingBtn.addEventListener('click', () => {
+        if (currentMode === 'polygon' || currentMode === 'line') {
+            finishCurrentShape();
+            document.getElementById('finishDrawingInterface').style.display = 'none';
+            setSidebarButtonsEnabled(true);
+        }
     });
+
+    cancelDrawingBtn.addEventListener('click', () => {
+        abortCurrentDrawing();
+        document.getElementById('finishDrawingInterface').style.display = 'none';
+        setSidebarButtonsEnabled(true);
+    });
+
+    function abortCurrentDrawing() {
+        // Remove any in-progress points
+        if (currentShapePoints && currentShapePoints.length > 0) {
+            currentShapePoints.forEach(point => {
+                if (point.element && point.element.parentNode) {
+                    point.element.classList.add('removing');
+                    setTimeout(() => point.element.remove(), 300);
+                }
+            });
+            currentShapePoints = [];
+        }
+        // Remove preview line if it exists
+        const previewLine = document.getElementById('previewLine');
+        if (previewLine) previewLine.remove();
+        currentShape = null;
+        // Keep the mode (polygon/line) active so user can start again
+    }
 
     // Add MutationObserver to watch for layout changes
     const observer = new ResizeObserver(entries => {
@@ -4170,3 +4198,42 @@ window.addEventListener('resize', updateFloatingInterfacesForKeyboard);
 document.addEventListener('DOMContentLoaded', () => {
     updateFloatingInterfacesForKeyboard();
 });
+
+function setSidebarButtonsEnabled(enabled) {
+    // Only enable/disable sidebar drawing and edit buttons, not finish/cancel
+    const ids = [
+        'editToggle', 'addBtn', 'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
+        'pointBtn', 'polygonBtn', 'lineBtn',
+        'findPointBtn', 'identPointBtn'
+    ];
+    ids.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.disabled = !enabled;
+            btn.style.opacity = enabled ? '1' : '0.5';
+            btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+            btn.style.pointerEvents = enabled ? 'auto' : 'none';
+        }
+    });
+}
+
+// Patch setMode to disable all other buttons during drawing
+const originalSetMode = setMode;
+setMode = function(mode) {
+    originalSetMode.call(this, mode);
+    if (mode === 'polygon' || mode === 'line') {
+        setSidebarButtonsEnabled(false);
+        const finishDrawingBtn = document.getElementById('finishDrawingBtn');
+        const cancelDrawingBtn = document.getElementById('cancelDrawingBtn');
+        finishDrawingBtn.disabled = false;
+        finishDrawingBtn.style.opacity = '1';
+        finishDrawingBtn.style.cursor = 'pointer';
+        finishDrawingBtn.style.pointerEvents = 'auto';
+        cancelDrawingBtn.disabled = false;
+        cancelDrawingBtn.style.opacity = '1';
+        cancelDrawingBtn.style.cursor = 'pointer';
+        cancelDrawingBtn.style.pointerEvents = 'auto';
+    } else {
+        setSidebarButtonsEnabled(true);
+    }
+};
