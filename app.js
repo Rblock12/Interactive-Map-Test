@@ -94,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const previewLine = document.getElementById('previewLine');
         if (previewLine) previewLine.remove();
         currentShape = null;
+        
+        // Re-enable all buttons after cancelling shape
+        setSidebarButtonsEnabled(true);
+        
         // Keep the mode (polygon/line) active so user can start again
     }
 
@@ -287,7 +291,8 @@ function setMode(mode) {
 
     // If entering a drawing mode
     if (mode === 'polygon' || mode === 'line') {
-    finishDrawingInterface.style.display = 'none'; // Start hidden, will show when enough points are added
+        // Hide the interface initially, will show when first point is added
+        finishDrawingInterface.style.display = 'none';
     }
     // If leaving a drawing mode
     else if ((previousMode === 'polygon' || previousMode === 'line') && mode !== 'polygon' && mode !== 'line') {
@@ -525,9 +530,13 @@ function updateLeaderLines() {
 function updateSaveButtonState() {
     const saveButton = document.getElementById('saveElementsBtn');
     const hasData = points.length > 0 || polygons.length > 0 || lines.length > 0;
-    saveButton.disabled = !hasData;
-    saveButton.style.opacity = hasData ? '1' : '0.5';
-    saveButton.style.cursor = hasData ? 'pointer' : 'not-allowed';
+    const isDrawing = currentShapePoints && currentShapePoints.length > 0;
+    
+    // Disable save button if drawing or if no data exists
+    const shouldBeDisabled = isDrawing || !hasData;
+    saveButton.disabled = shouldBeDisabled;
+    saveButton.style.opacity = shouldBeDisabled ? '0.5' : '1';
+    saveButton.style.cursor = shouldBeDisabled ? 'not-allowed' : 'pointer';
 }
 
 // Add label at ref point with label offset
@@ -1282,6 +1291,9 @@ function finishCurrentShape() {
     const previewLine = document.getElementById('previewLine');
     if (previewLine) previewLine.remove();
 
+    // Re-enable all buttons after finishing shape
+    setSidebarButtonsEnabled(true);
+
     updateLeaderLines();
     updateButtons();
     updateSaveButtonState();
@@ -1358,9 +1370,17 @@ mapContainer.addEventListener('click', (e) => {
     currentShapePoints.push({ x, y, relX: relCoords.x, relY: relCoords.y, element: point });
     currentShape = currentMode;
 
-    // Show/hide finish button based on number of points
-    const finishDrawingInterface = document.getElementById('finishDrawingInterface');
-    finishDrawingInterface.style.display = hasEnoughPointsForShape() ? 'block' : 'none';
+    // Disable menu buttons after first point is created
+    if (currentShapePoints.length === 1) {
+        setSidebarButtonsEnabled(false);
+        // Show the finish drawing interface when first point is created
+        const finishDrawingInterface = document.getElementById('finishDrawingInterface');
+        finishDrawingInterface.style.display = 'flex';
+        updateFinishDrawingButtonState();
+    } else {
+        // Update finish button state for subsequent points
+        updateFinishDrawingButtonState();
+    }
 
     // Draw or update the preview polyline if we're drawing a line
     if (currentMode === 'line') {
@@ -2506,7 +2526,6 @@ function cleanupTest() {
         button.disabled = false;
         button.style.opacity = '1';
         button.style.cursor = 'pointer';
-        button.style.pointerEvents = 'auto';
         button.classList.remove('test-active');
         button.setAttribute('aria-disabled', 'false');
     }
@@ -2827,7 +2846,6 @@ function _toggleTestModeInternal(mode, selectedTags) {
         button.disabled = true;
         button.style.opacity = '0.5';
         button.style.cursor = 'not-allowed';
-        button.style.pointerEvents = 'none';
     }
     });
 
@@ -2838,7 +2856,6 @@ function _toggleTestModeInternal(mode, selectedTags) {
         if (element.tagName.toLowerCase() === 'label') {
         element.style.opacity = '0.5';
         element.style.cursor = 'not-allowed';
-        element.style.pointerEvents = 'none';
         } else {
         element.disabled = true;
         element.style.opacity = '0.5';
@@ -4165,48 +4182,13 @@ function updateInProgressShapePositions() {
     }
 }
 
-// --- FLOATING INTERFACE KEYBOARD AVOIDANCE ---
-function updateFloatingInterfacesForKeyboard() {
-    // List of floating interface IDs to adjust
-    const floatingIds = ['testInterface', 'finishDrawingInterface'];
-    // Use visualViewport if available for more accurate keyboard detection
-    let keyboardHeight = 0;
-    if (window.visualViewport) {
-    const viewport = window.visualViewport;
-    // The keyboard is open if the layout viewport height is much larger than the visual viewport height
-    keyboardHeight = window.innerHeight - viewport.height - viewport.offsetTop;
-    if (keyboardHeight < 0) keyboardHeight = 0;
-    } else {
-    // Fallback: compare to initial window.innerHeight
-    if (!window._initialInnerHeight) window._initialInnerHeight = window.innerHeight;
-    keyboardHeight = window._initialInnerHeight - window.innerHeight;
-    if (keyboardHeight < 0) keyboardHeight = 0;
-    }
-    floatingIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-        el.style.transition = 'bottom 0.2s';
-        el.style.bottom = (20 + keyboardHeight) + 'px';
-    }
-    });
-}
-
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', updateFloatingInterfacesForKeyboard);
-    window.visualViewport.addEventListener('scroll', updateFloatingInterfacesForKeyboard);
-}
-window.addEventListener('resize', updateFloatingInterfacesForKeyboard);
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateFloatingInterfacesForKeyboard();
-});
-
 function setSidebarButtonsEnabled(enabled) {
     // Only enable/disable sidebar drawing and edit buttons, not finish/cancel
     const ids = [
         'editToggle', 'addBtn', 'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
         'pointBtn', 'polygonBtn', 'lineBtn',
-        'findPointBtn', 'identPointBtn'
+        'findPointBtn', 'identPointBtn',
+        'loadMapButton', 'saveElementsBtn', 'loadElementsBtn'
     ];
     ids.forEach(id => {
         const btn = document.getElementById(id);
@@ -4214,9 +4196,13 @@ function setSidebarButtonsEnabled(enabled) {
             btn.disabled = !enabled;
             btn.style.opacity = enabled ? '1' : '0.5';
             btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
-            btn.style.pointerEvents = enabled ? 'auto' : 'none';
         }
     });
+    
+    // If enabling buttons, update save button state based on whether there are elements
+    if (enabled) {
+        updateSaveButtonState();
+    }
 }
 
 // Patch setMode to disable all other buttons during drawing
@@ -4224,18 +4210,34 @@ const originalSetMode = setMode;
 setMode = function(mode) {
     originalSetMode.call(this, mode);
     if (mode === 'polygon' || mode === 'line') {
-        setSidebarButtonsEnabled(false);
         const finishDrawingBtn = document.getElementById('finishDrawingBtn');
         const cancelDrawingBtn = document.getElementById('cancelDrawingBtn');
-        finishDrawingBtn.disabled = false;
+        finishDrawingBtn.disabled = true;
         finishDrawingBtn.style.opacity = '1';
         finishDrawingBtn.style.cursor = 'pointer';
-        finishDrawingBtn.style.pointerEvents = 'auto';
         cancelDrawingBtn.disabled = false;
         cancelDrawingBtn.style.opacity = '1';
         cancelDrawingBtn.style.cursor = 'pointer';
-        cancelDrawingBtn.style.pointerEvents = 'auto';
     } else {
         setSidebarButtonsEnabled(true);
     }
 };
+
+// Helper function to update finish drawing button state
+function updateFinishDrawingButtonState() {
+    const finishDrawingBtn = document.getElementById('finishDrawingBtn');
+    const cancelDrawingBtn = document.getElementById('cancelDrawingBtn');
+    
+    if (hasEnoughPointsForShape()) {
+        finishDrawingBtn.style.display = 'inline-flex';
+        finishDrawingBtn.disabled = false;
+        finishDrawingBtn.removeAttribute('style');
+        finishDrawingBtn.style.display = 'inline-flex';
+    } else {
+        finishDrawingBtn.style.display = 'inline-flex';
+        finishDrawingBtn.disabled = true;
+        finishDrawingBtn.removeAttribute('style');
+        finishDrawingBtn.style.display = 'inline-flex';
+    }
+    cancelDrawingBtn.style.display = 'inline-flex';
+}

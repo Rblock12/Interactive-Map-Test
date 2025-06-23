@@ -59,9 +59,7 @@ h1 {
     padding: 20px;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    width: 280px;
-    min-width: 280px;
-    max-width: 280px;
+    width: 200px;
     height: fit-content;
     position: sticky;
     top: 20px;
@@ -131,7 +129,10 @@ h1 {
     display: none;
     width: 100%;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    padding: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 5px;
+    padding-right: 5px;
     border-radius: 12px;
     border: 1px solid #e0e0e0;
     flex-direction: column;
@@ -140,6 +141,7 @@ h1 {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
+    text-align: center;
 }
 
 .menu .edit-tools::before {
@@ -184,7 +186,7 @@ h1 {
     gap: 10px;
     color: #555;
     cursor: pointer;
-    justify-content: flex-start;
+    justify-content: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
@@ -236,7 +238,6 @@ h1 {
     padding: 16px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    margin-top: 12px;
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
@@ -292,6 +293,7 @@ h1 {
     box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
     position: relative;
     overflow: hidden;
+    margin-bottom: 20px;
 }
 
 .sidebar-test-interface::before {
@@ -679,7 +681,6 @@ h1 {
     animation: finishButtonPulse 2s ease-in-out infinite;
     opacity: 1 !important;
     pointer-events: auto !important;
-    disabled: false !important;
 }
 
 .finish-drawing-btn:hover {
@@ -712,7 +713,6 @@ h1 {
     box-shadow: 0 2px 8px rgba(244, 67, 54, 0.13);
     opacity: 1 !important;
     pointer-events: auto !important;
-    disabled: false !important;
 }
 
 .cancel-drawing-btn:hover {
@@ -1204,6 +1204,25 @@ h1 {
     white-space: nowrap;
 }
 
+#addSubMenu .finish-drawing-btn:disabled,
+#addSubMenu .cancel-drawing-btn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background-color: #f5f5f5 !important;
+    border-color: #e0e0e0 !important;
+    color: #999 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+#addSubMenu .finish-drawing-btn:disabled:hover,
+#addSubMenu .cancel-drawing-btn:disabled:hover {
+    background-color: #f5f5f5 !important;
+    border-color: #e0e0e0 !important;
+    color: #999 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
 /* Essential Map and Element Styles */
 .map-viewport {
     height: 100%;
@@ -1657,6 +1676,22 @@ h1 {
     color: white !important;
 }
 
+#saveElementsBtn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    background: #f5f5f5 !important;
+    border-color: #e0e0e0 !important;
+    color: #999 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+#saveElementsBtn:disabled:hover {
+    background: #f5f5f5 !important;
+    border-color: #e0e0e0 !important;
+    color: #999 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
 #loadElementsBtn {
     background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
     color: white !important;
@@ -1667,4 +1702,45 @@ h1 {
     background: linear-gradient(135deg, #F57C00 0%, #E65100 100%) !important;
     border-color: #E65100 !important;
     color: white !important;
+}
+
+#loadElementsBtn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    background: #f5f5f5 !important;
+    border-color: #e0e0e0 !important;
+    color: #999 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+#loadElementsBtn:disabled:hover {
+    background: #f5f5f5 !important;
+    border-color: #e0e0e0 !important;
+    color: #999 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+#loadMapContainer button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+}
+
+#loadMapContainer button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+    color: #999;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+#loadMapContainer button:disabled:hover {
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+    color: #999;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+#loadMapContainer button:disabled:hover::before {
+    left: -100%;
 }
