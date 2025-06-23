@@ -466,61 +466,74 @@ function updateLeaderLines() {
 
     // Update SVG size to match container
     updateSVGDimensions();
+
+    // Helper function to get the center coordinates of a label box
+    function getLabelBoxCenter(labelBoxEl) {
+        const rect = labelBoxEl.getBoundingClientRect();
+        const containerRect = mapContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2 - containerRect.left;
+        const centerY = rect.top + rect.height / 2 - containerRect.top;
+        return { x: centerX, y: centerY };
+    }
+
     // Draw leader lines for regular labels
     points.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
-    const x1 = refX;
-    const y1 = refY;
-    const x2 = labelX;
-    const y2 = labelY;
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('class', 'leader-line');
-    if (labelBoxEl.id) {
-        line.setAttribute('data-for', labelBoxEl.id);
-    }
-    line.setAttribute('data-type', type);
-    leaderLinesSVG.appendChild(line);
+        const x1 = refX;
+        const y1 = refY;
+        const center = getLabelBoxCenter(labelBoxEl);
+        const x2 = center.x;
+        const y2 = center.y;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('class', 'leader-line');
+        if (labelBoxEl.id) {
+            line.setAttribute('data-for', labelBoxEl.id);
+        }
+        line.setAttribute('data-type', type);
+        leaderLinesSVG.appendChild(line);
     });
 
     // Draw leader lines for polygon labels
     polygons.forEach(polygon => {
-    const x1 = polygon.anchorX;
-    const y1 = polygon.anchorY;
-    const x2 = parseInt(polygon.labelBoxEl.style.left);
-    const y2 = parseInt(polygon.labelBoxEl.style.top);
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('class', 'leader-line');
-    if (polygon.labelBoxEl.id) {
-        line.setAttribute('data-for', polygon.labelBoxEl.id);
-    }
-    line.setAttribute('data-type', polygon.type);
-    leaderLinesSVG.appendChild(line);
+        const x1 = polygon.anchorX;
+        const y1 = polygon.anchorY;
+        const center = getLabelBoxCenter(polygon.labelBoxEl);
+        const x2 = center.x;
+        const y2 = center.y;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('class', 'leader-line');
+        if (polygon.labelBoxEl.id) {
+            line.setAttribute('data-for', polygon.labelBoxEl.id);
+        }
+        line.setAttribute('data-type', polygon.type);
+        leaderLinesSVG.appendChild(line);
     });
 
     // Draw leader lines for line labels
     lines.forEach(lineObj => {
-    const x1 = lineObj.anchorX;
-    const y1 = lineObj.anchorY;
-    const x2 = parseInt(lineObj.labelBoxEl.style.left);
-    const y2 = parseInt(lineObj.labelBoxEl.style.top);
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    line.setAttribute('class', 'leader-line');
-    if (lineObj.labelBoxEl.id) {
-        line.setAttribute('data-for', lineObj.labelBoxEl.id);
-    }
-    line.setAttribute('data-type', lineObj.type);
-    leaderLinesSVG.appendChild(line);
+        const x1 = lineObj.anchorX;
+        const y1 = lineObj.anchorY;
+        const center = getLabelBoxCenter(lineObj.labelBoxEl);
+        const x2 = center.x;
+        const y2 = center.y;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('class', 'leader-line');
+        if (lineObj.labelBoxEl.id) {
+            line.setAttribute('data-for', lineObj.labelBoxEl.id);
+        }
+        line.setAttribute('data-type', lineObj.type);
+        leaderLinesSVG.appendChild(line);
     });
 
     updateSaveButtonState();
