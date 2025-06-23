@@ -34,6 +34,55 @@
 
     <div class="page-container">
         <div id="mainMenu">
+            <!-- Testing Interface - Always Visible -->
+            <div id="testInterface" class="sidebar-test-interface">
+                <div class="test-header">
+                    <h3><i class="fas fa-graduation-cap"></i> Testing</h3>
+                </div>
+
+                <!-- Testing Mode Buttons -->
+                <div class="test-mode-buttons">
+                    <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
+                        <i class="fas fa-search"></i> Find Elements
+                    </button>
+                    <button id="identPointBtn" onclick="toggleTestMode('ident')" title="Identify the elements">
+                        <i class="fas fa-map-pin"></i> Identify Elements
+                    </button>
+                </div>
+
+                <!-- Test Mode Interfaces (Hidden by default) -->
+                <div id="identifyInterface" class="test-mode-interface">
+                    <div class="test-input-group">
+                        <label for="testInput">Enter element name:</label>
+                        <input type="text" id="testInput" placeholder="Type here..." />
+                    </div>
+                    <div class="feedback"></div>
+                </div>
+
+                <div id="findInterface" class="test-mode-interface">
+                    <div class="target-display">
+                        <div class="target-label">Find:</div>
+                        <div id="targetLabel" class="target-text"><span></span></div>
+                    </div>
+                    <div class="feedback"></div>
+                </div>
+
+                <!-- Progress Indicator (Hidden by default) -->
+                <div id="progressContainer" class="progress-container" style="display: none;">
+                    <div class="progress-text">
+                        <span class="progress-label">Progress</span>
+                        <span class="progress-numbers">0/0</span>
+                    </div>
+                    <div class="progress"></div>
+                </div>
+
+                <!-- Stop Test Button (Hidden by default) -->
+                <div id="stopTestContainer" class="test-footer" style="display: none;">
+                    <button id="stopTestBtn" onclick="stopTest()" title="Stop the test" class="stop-test-btn">
+                        <i class="fas fa-stop"></i> Stop Test
+                    </button>
+                </div>
+            </div>
             <div class="menu" role="toolbar" aria-label="Map interaction controls">
                 <button id="editToggle" onclick="toggleEditMode()" aria-pressed="false" title="Toggle edit mode">
                     <i class="fas fa-edit"></i> Edit Mode
@@ -43,10 +92,12 @@
                         <i class="fas fa-plus"></i> Add
                     </button>
                     <div id="addSubMenu" style="display: none;">
-                        <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false" title="Add new point">
+                        <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false"
+                            title="Add new point">
                             <i class="fas fa-thumbtack"></i> Point
                         </button>
-                        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false" title="Draw shape">
+                        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false"
+                            title="Draw shape">
                             <i class="fas fa-draw-polygon"></i> Shape
                         </button>
                         <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
@@ -71,58 +122,13 @@
                         title="Edit element text">
                         <i class="fas fa-font"></i> Edit Text
                     </button>
-                    <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false" title="Delete elements">
+                    <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false"
+                        title="Delete elements">
                         <i class="fas fa-trash-alt"></i> Delete
                     </button>
                     <button id="tagPanelBtn" onclick="setMode('changeTag')" aria-pressed="false"
                         title="Change existing element tags">
                         <i class="fas fa-tags"></i> Change Tag
-                    </button>
-                </div>
-            </div>
-
-            <!-- Testing Interface - Always Visible -->
-            <div id="testInterface" class="sidebar-test-interface">
-                <div class="test-header">
-                    <h3><i class="fas fa-graduation-cap"></i> Testing</h3>
-                </div>
-                
-                <!-- Testing Mode Buttons -->
-                <div class="test-mode-buttons">
-                    <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
-                        <i class="fas fa-search"></i> Find Elements
-                    </button>
-                    <button id="identPointBtn" onclick="toggleTestMode('ident')" title="Identify the elements">
-                        <i class="fas fa-map-pin"></i> Identify Elements
-                    </button>
-                </div>
-                
-                <!-- Test Mode Interfaces (Hidden by default) -->
-                <div id="identifyInterface" class="test-mode-interface">
-                    <div class="test-input-group">
-                        <label for="testInput">Enter element name:</label>
-                        <input type="text" id="testInput" placeholder="Type here..." />
-                    </div>
-                    <div class="feedback"></div>
-                </div>
-                
-                <div id="findInterface" class="test-mode-interface">
-                    <div class="target-display">
-                        <div class="target-label">Find:</div>
-                        <div id="targetLabel" class="target-text"><span></span></div>
-                    </div>
-                    <div class="feedback"></div>
-                </div>
-                
-                <!-- Progress Indicator (Hidden by default) -->
-                <div id="progressContainer" class="progress-container" style="display: none;">
-                    <div class="progress"></div>
-                </div>
-                
-                <!-- Stop Test Button (Hidden by default) -->
-                <div id="stopTestContainer" class="test-footer" style="display: none;">
-                    <button id="stopTestBtn" onclick="stopTest()" title="Stop the test" class="stop-test-btn">
-                        <i class="fas fa-stop"></i> Stop Test
                     </button>
                 </div>
             </div>
@@ -189,7 +195,8 @@
         <div>
             <h3>Select Tag Types for Test</h3>
             <div class="select-btns">
-                <button type="button" id="selectAllTestTagsBtn" style="background:#ebe7fb; color:#1522d8;">Select All</button>
+                <button type="button" id="selectAllTestTagsBtn" style="background:#ebe7fb; color:#1522d8;">Select
+                    All</button>
                 <button type="button" id="deselectAllTestTagsBtn" style="background:#fbe9e7; color:#d84315;">Deselect
                     All</button>
             </div>

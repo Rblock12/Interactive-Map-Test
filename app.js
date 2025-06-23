@@ -342,7 +342,7 @@ function setMode(mode) {
     }
     if (mode == null || mode === previousMode) {
     toggletagPanel(false);
-    } else if (['polygon', 'line', 'point'].includes(mode)) {
+    } else if (['polygon', 'line', 'point', 'changeTag'].includes(mode)) {
     toggletagPanel(true);
     }
 
@@ -2382,10 +2382,20 @@ function checkAnswer(answer) {
 }
 
 function updateTestProgress() {
-    const progress = document.querySelector('#progressContainer .progress');
-    if (progress) {
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = progressContainer.querySelector('.progress');
+    const progressNumbers = progressContainer.querySelector('.progress-numbers');
+    
+    if (progressBar && progressNumbers) {
         const completed = testItems.length - remainingTestItems.length;
-        progress.textContent = `Progress: ${completed}/${testItems.length}`;
+        const total = testItems.length;
+        const percentage = total > 0 ? (completed / total) * 100 : 0;
+        
+        // Update numeric progress
+        progressNumbers.textContent = `${completed}/${total}`;
+        
+        // Update visual progress bar width using CSS custom property
+        progressBar.style.setProperty('--progress-width', `${percentage}%`);
     }
 }
 
@@ -2786,11 +2796,10 @@ function _toggleTestModeInternal(mode, selectedTags) {
 
     // Show progress container and initialize progress counter
     const progressContainer = document.getElementById('progressContainer');
-    const progress = document.querySelector('#progressContainer .progress');
     progressContainer.style.display = 'block';
-    if (progress) {
-        progress.textContent = `Progress: 0/${testItems.length}`;
-    }
+    
+    // Initialize progress with the new structure
+    updateTestProgress();
 
     // Select the first test item after UI is ready
     selectNextTestItem();
@@ -2999,13 +3008,6 @@ function handleFindModeClick(e) {
     // Remove current item from remaining items
     remainingTestItems.shift();
     console.log(`After removal, remaining items: ${remainingTestItems.length}`);
-
-    // Update progress counter
-    const completed = testItems.length - remainingTestItems.length;
-    const progress = document.querySelector('#progressContainer .progress');
-    if (progress) {
-        progress.textContent = `Progress: ${completed}/${testItems.length}`;
-    }
 
     // Update progress
     updateTestProgress();
