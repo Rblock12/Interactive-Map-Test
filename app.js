@@ -1510,7 +1510,6 @@ mapFileInput.addEventListener('change', async (e) => {
             pageContainer.style.opacity = '1';
             document.getElementById('saveElementsBtn').style.display = 'inline-block';
             document.getElementById('loadElementsBtn').style.display = 'inline-block';
-            document.querySelector('.top-buttons').style.visibility = 'visible';
 
             // Clear all existing data
             points.forEach(point => {
@@ -2355,16 +2354,18 @@ function checkAnswer(answer) {
 }
 
 function updateTestProgress() {
-    const progress = document.querySelector('#testInterface .progress');
-    const completed = testItems.length - remainingTestItems.length;
-    progress.textContent = `Progress: ${completed}/${testItems.length}`;
+    const progress = document.querySelector('#progressContainer .progress');
+    if (progress) {
+        const completed = testItems.length - remainingTestItems.length;
+        progress.textContent = `Progress: ${completed}/${testItems.length}`;
+    }
 }
 
 function endTest(isNaturalCompletion = false) {
     // If in find mode, restore labels before ending
     if (currentTestMode === 'find') {
     // Don't call cleanupFindMode() here when showing completion screen
-    // It will be called in endTestCleanup() when user clicks Continue
+    // It will be called in cleanupTest() when user clicks Continue
     // Ensure reference points remain hidden for find mode completion screen
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
         point.style.visibility = 'hidden';
@@ -2377,43 +2378,28 @@ function endTest(isNaturalCompletion = false) {
     // Show completion message in test interface if this is a natural end
     if (isNaturalCompletion) {
     const testInterface = document.getElementById('testInterface');
-    const testContent = document.getElementById('testContent');
-    const identInterface = document.getElementById('identifyInterface');
-    // const feedback = document.querySelector('.feedback');
-    // const progress = document.querySelector('.progress');
-    const targetLabel = document.getElementById('targetLabel');
-    // const testInput = document.getElementById('testInput');
+    const identifyInterface = document.getElementById('identifyInterface');
+    const findInterface = document.getElementById('findInterface');
+    const progressContainer = document.getElementById('progressContainer');
+    const stopTestContainer = document.getElementById('stopTestContainer');
 
-    // Hide test elements and stop button
-    if (identInterface) identInterface.style.display = 'none';
-    if (testContent) testContent.style.display = 'none';
-    // if (feedback) feedback.style.display = 'none';
-    // if (progress) progress.style.display = 'none';
-    if (targetLabel) targetLabel.style.display = 'none';
-    // if (testInput) testInput.style.display = 'none';
-
-    const stopTestBtn = document.getElementById('stopTestBtn');
-    if (stopTestBtn) {
-        stopTestBtn.style.display = 'none';
-        stopTestBtn.disabled = true;
+    // Hide test mode interfaces and containers
+    identifyInterface.classList.remove('active');
+    findInterface.classList.remove('active');
+    if (progressContainer) {
+        progressContainer.style.display = 'none';
+    }
+    if (stopTestContainer) {
+        stopTestContainer.style.display = 'none';
     }
 
-    // Create completion message
+    // Create compact sidebar completion message
     const completionDiv = document.createElement('div');
-    completionDiv.style.textAlign = 'center';
-    completionDiv.style.padding = '20px';
+    completionDiv.className = 'sidebar-congrats';
     completionDiv.innerHTML = `
-    <h2 style="color: #4CAF50; margin-bottom: 20px;">Congratulations!</h2>
-    <p style="font-size: 16px; margin-bottom: 20px;">You've successfully completed the test!</p>
-    <button id="continueBtn" style="
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-    ">Continue</button>
+        <div class="congrats-icon"><i class="fas fa-trophy"></i></div>
+        <div class="congrats-title">Congratulations!</div>
+        <button id="continueBtn" class="congrats-continue-btn">Continue</button>
     `;
 
     testInterface.appendChild(completionDiv);
@@ -2421,76 +2407,71 @@ function endTest(isNaturalCompletion = false) {
     // Add event listener to continue button
     document.getElementById('continueBtn').addEventListener('click', () => {
         testInterface.removeChild(completionDiv);
-        endTestCleanup();
+        cleanupTest();
     });
 
     return; // Exit early to prevent immediate cleanup
     }
 
-    endTestCleanup();
+    cleanupTest();
 }
 
-function endTestCleanup() {
-    // Re-enable all menu buttons and their submenus
-    const menuButtons = {
-    'loadImageBtn': true,
-    'saveElementsBtn': true,
-    'loadElementsBtn': true,
-    'addBtn': true,
-    'moveBtn': true,
-    'editLabelTextBtn': true,  // Changed from editTextBtn
-    'deleteBtn': true,
-    'identPointBtn': true,
-    'findPointBtn': true,
-    'editToggle': true,
-    // Add submenu buttons
-    'addPointBtn': true,
-    'addShapeBtn': true,
-    'addLineBtn': true
-    };
-
-    // Enable each button and reset its styles
-    Object.keys(menuButtons).forEach(btnId => {
-    const btn = document.getElementById(btnId);
-    if (btn) {
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.cursor = 'pointer';
-        btn.style.pointerEvents = 'auto';
-        btn.classList.remove('test-active');
-        btn.setAttribute('aria-disabled', 'false');
-
-        // Special handling for buttons that might need additional attributes reset
-        if (btnId === 'loadImageBtn' || btnId === 'editLabelTextBtn') {  // Changed from editTextBtn
-        btn.style.display = '';  // Reset to default display
-        }
-        // Special handling for edit toggle
-        if (btnId === 'editToggle') {
-        btn.setAttribute('onclick', 'toggleEditMode()');
-        }
+function cleanupTest() {
+    // Remove find mode click handler and cleanup if in find mode
+    if (currentTestMode === 'find') {
+    mapContainer.removeEventListener('click', handleFindModeClick);
+    cleanupFindMode();
     }
-    });
 
-    // Make sure the add submenu is properly reset
-    const addSubMenu = document.getElementById('addSubMenu');
-    if (addSubMenu) {
-    addSubMenu.querySelectorAll('button').forEach(btn => {
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.cursor = 'pointer';
-        btn.style.pointerEvents = 'auto';
-        btn.setAttribute('aria-disabled', 'false');
-    });
+    const identBtn = document.getElementById('identPointBtn');
+    const findBtn = document.getElementById('findPointBtn');
+    const editToggle = document.getElementById('editToggle');
+    const stopTestBtn = document.getElementById('stopTestBtn');
+    const identifyInterface = document.getElementById('identifyInterface');
+    const findInterface = document.getElementById('findInterface');
+
+    // Hide test mode interfaces
+    identifyInterface.classList.remove('active');
+    findInterface.classList.remove('active');
+
+    // Hide progress container
+    const progressContainer = document.getElementById('progressContainer');
+    if (progressContainer) {
+        progressContainer.style.display = 'none';
     }
+
+    // Hide and disable stop button container
+    const stopTestContainer = document.getElementById('stopTestContainer');
+    if (stopTestContainer) {
+        stopTestContainer.style.display = 'none';
+        stopTestContainer.classList.remove('active');
+    }
+
+    // Reset button states
+    identBtn.classList.remove('test-active');
+    findBtn.classList.remove('test-active');
+    identBtn.disabled = false;
+    findBtn.disabled = false;
+    identBtn.style.opacity = '1';
+    findBtn.style.opacity = '1';
+    identBtn.style.cursor = 'pointer';
+    findBtn.style.cursor = 'pointer';
+
+    // Re-enable edit toggle
+    editToggle.disabled = false;
+    editToggle.style.opacity = '1';
+    editToggle.style.cursor = 'pointer';
 
     // Re-enable and reset all menu buttons
     document.querySelectorAll('.menu button').forEach(button => {
-    button.disabled = false;
-    button.style.opacity = '1';
-    button.style.cursor = 'pointer';
-    button.style.pointerEvents = 'auto';
-    button.classList.remove('test-active');
-    button.setAttribute('aria-disabled', 'false');
+    if (button.id !== 'stopTestBtn') {
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.pointerEvents = 'auto';
+        button.classList.remove('test-active');
+        button.setAttribute('aria-disabled', 'false');
+    }
     });
 
     // Re-enable and reset load map container elements
@@ -2508,148 +2489,6 @@ function endTestCleanup() {
         element.style.pointerEvents = 'auto';
         }
     });
-    }
-
-    // Hide test interface
-    const testInterface = document.getElementById('testInterface');
-    if (testInterface) {
-    testInterface.style.display = 'none';
-    }
-
-    // Hide and disable stop button
-    const stopTestBtn = document.getElementById('stopTestBtn');
-    if (stopTestBtn) {
-    stopTestBtn.style.display = 'none';
-    stopTestBtn.disabled = true;
-    }
-
-    // Show all correct answers and reset styles
-    document.querySelectorAll('.label-box').forEach(label => {
-    if (label.dataset.correctAnswer) {
-        label.textContent = label.dataset.correctAnswer;
-        delete label.dataset.correctAnswer;
-    }
-    // Reset any test-related styles
-    label.classList.remove('highlight-test');
-    label.style.animation = 'none';
-    label.style.backgroundColor = '';
-    label.style.color = '';
-    label.style.borderColor = '';
-    label.style.boxShadow = '';
-    label.style.filter = '';
-    });
-
-    // Reset reference point visibility to non-edit mode state
-    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.visibility = 'hidden';
-    point.classList.remove('highlight-test');
-    point.style.animation = 'none';
-    point.style.backgroundColor = '';
-    point.style.borderColor = '';
-    point.style.transform = 'translate(-50%, -50%) scale(1)';
-    point.style.boxShadow = '';
-    point.style.filter = '';
-    });
-
-    // Reset any highlighted shapes (polygons and lines)
-    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
-    shape.classList.remove('highlight-test');
-    shape.style.animation = 'none';
-    shape.setAttribute('stroke', 'none');
-    shape.setAttribute('stroke-width', '2');
-    shape.style.filter = '';
-    if (shape.classList.contains('polygon-path')) {
-        shape.setAttribute('fill', 'none');
-    }
-    });
-
-    // Reset leader lines
-    document.querySelectorAll('.leader-line').forEach(line => {
-    line.classList.remove('highlight-test');
-    line.style.animation = 'none';
-    line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
-    line.setAttribute('stroke-width', '1');
-    line.setAttribute('stroke-dasharray', '4,3');
-    line.style.filter = '';
-    });
-
-    // Restore tag visibility based on user preferences
-    updateTagVisibilityOnMap();
-
-    // Restore find mode elements if needed
-    // cleanupFindMode(); // Commented out to prevent labels from showing during completion screen
-
-    // Force a reflow to ensure animations are properly reset
-    void document.documentElement.offsetHeight;
-
-    // Remove animation: none after reflow to allow future animations
-    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
-    element.style.animation = '';
-    });
-
-    // Clear any remaining test items
-    testItems = [];
-    remainingTestItems = [];
-    currentTestItem = null;
-
-    // Restore element visibility after Identify Elements mode
-    restoreIdentifyTestVisibility();
-
-    // Restore tag visibility based on user preferences
-    updateTagVisibilityOnMap();
-
-    // After restoreIdentifyTestVisibility();
-    if (!editEnabled) {
-    document.querySelectorAll('.ref-point').forEach(point => {
-        point.style.visibility = 'hidden';
-    });
-    }
-}
-
-function stopTest() {
-    const testInterface = document.getElementById('testInterface');
-    const stopTestBtn = document.getElementById('stopTestBtn');
-
-    // Reset test mode states
-    testingMode = false;
-    currentTestMode = null;
-
-    // Re-enable and reset all menu buttons
-    document.querySelectorAll('.menu button').forEach(button => {
-    button.disabled = false;
-    button.style.opacity = '1';
-    button.style.cursor = 'pointer';
-    button.style.pointerEvents = 'auto';
-    button.classList.remove('test-active');
-    button.setAttribute('aria-disabled', 'false');
-    });
-
-    // Re-enable and reset load map container elements
-    const loadMapContainer = document.getElementById('loadMapContainer');
-    if (loadMapContainer) {
-    loadMapContainer.querySelectorAll('button, label, input').forEach(element => {
-        if (element.tagName.toLowerCase() === 'label') {
-        element.style.opacity = '1';
-        element.style.cursor = 'pointer';
-        element.style.pointerEvents = 'auto';
-        } else {
-        element.disabled = false;
-        element.style.opacity = '1';
-        element.style.cursor = 'pointer';
-        element.style.pointerEvents = 'auto';
-        }
-    });
-    }
-
-    // Hide test interface
-    if (testInterface) {
-    testInterface.style.display = 'none';
-    }
-
-    // Hide and disable stop button
-    if (stopTestBtn) {
-    stopTestBtn.style.display = 'none';
-    stopTestBtn.disabled = true;
     }
 
     // Show all label text and reset point visibility
@@ -2714,6 +2553,23 @@ function stopTest() {
     testItems = [];
     remainingTestItems = [];
     currentTestItem = null;
+
+    // Restore element visibility after Identify Elements mode
+    restoreIdentifyTestVisibility();
+
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
+
+    // After restoreIdentifyTestVisibility();
+    if (!editEnabled) {
+    document.querySelectorAll('.ref-point').forEach(point => {
+        point.style.visibility = 'hidden';
+    });
+    }
+}
+
+function stopTest() {
+    endTest(false); // false indicates this is not a natural completion
 }
 
 // Add event listener for test input
@@ -2846,62 +2702,66 @@ function _toggleTestModeInternal(mode, selectedTags) {
     const findInterface = document.getElementById('findInterface');
     testInterface.style.display = 'block';
 
+    // Show the appropriate test mode interface
+    if (mode === 'ident') {
+        // Hide labels for identify mode
+        document.querySelectorAll('.label-box').forEach(label => {
+            label.textContent = '???';
+        });
+
+        // Show identify interface
+        identifyInterface.classList.add('active');
+        findInterface.classList.remove('active');
+
+        // Focus the input
+        const testInput = document.getElementById('testInput');
+        testInput.value = '';
+        testInput.focus();
+    } else if (mode === 'find') {
+        // Hide all reference points in find mode but keep them in the layout
+        document.querySelectorAll('.ref-point').forEach(point => {
+            point.style.visibility = 'hidden';  
+        });
+
+        // Hide labels and leader lines in find mode
+        document.querySelectorAll('.label-box').forEach(label => {
+            label.style.visibility = 'hidden';
+        });
+        document.querySelectorAll('.leader-line').forEach(line => {
+            line.style.visibility = 'hidden';
+        });
+
+        // Show find interface
+        identifyInterface.classList.remove('active');
+        findInterface.classList.add('active');
+
+        // Show and update the target label
+        const targetLabel = document.querySelector('#targetLabel');
+        const targetLabelSpan = targetLabel.querySelector('span');
+        targetLabel.style.display = 'block';
+
+        // Set initial target label text from first test item
+        if (remainingTestItems.length > 0) {
+            targetLabelSpan.textContent = remainingTestItems[0].label.dataset.correctAnswer;
+        }
+
+        // Add click handler for map elements
+        mapContainer.addEventListener('click', handleFindModeClick);
+    }
+
     // Show and enable stop button
+    const stopTestContainer = document.getElementById('stopTestContainer');
+    stopTestContainer.style.display = 'block';
+    stopTestContainer.classList.add('active');
     stopTestBtn.style.display = 'block';
     stopTestBtn.disabled = false;
 
-    // Initialize progress counter
-    const progress = document.querySelector('#testInterface .progress');
-    progress.textContent = `Progress: 0/${testItems.length}`;
-
-    if (mode === 'ident') {
-    // Hide labels for identify mode
-    document.querySelectorAll('.label-box').forEach(label => {
-        label.textContent = '???';
-    });
-
-    // Show identify interface
-    identifyInterface.style.display = 'block';
-    findInterface.style.display = 'none';
-
-    // Focus the input
-    const testInput = document.getElementById('testInput');
-    testInput.value = '';
-    testInput.focus();
-    } else if (mode === 'find') {
-    // Initialize progress counter
-    const progress = document.querySelector('#findInterface .progress');
-    progress.textContent = `Progress: 0/${testItems.length}`;
-
-    // Hide all reference points in find mode but keep them in the layout
-    document.querySelectorAll('.ref-point').forEach(point => {
-        point.style.visibility = 'hidden';  
-    });
-
-    // Hide labels and leader lines in find mode
-    document.querySelectorAll('.label-box').forEach(label => {
-        label.style.visibility = 'hidden';
-    });
-    document.querySelectorAll('.leader-line').forEach(line => {
-        line.style.visibility = 'hidden';
-    });
-
-    // Show find interface
-    identifyInterface.style.display = 'none';
-    findInterface.style.display = 'block';
-
-    // Show and update the target label
-    const targetLabel = document.querySelector('#targetLabel');
-    const targetLabelSpan = targetLabel.querySelector('span');
-    targetLabel.style.display = 'block';
-
-    // Set initial target label text from first test item
-    if (remainingTestItems.length > 0) {
-        targetLabelSpan.textContent = remainingTestItems[0].label.dataset.correctAnswer;
-    }
-
-    // Add click handler for map elements
-    mapContainer.addEventListener('click', handleFindModeClick);
+    // Show progress container and initialize progress counter
+    const progressContainer = document.getElementById('progressContainer');
+    const progress = document.querySelector('#progressContainer .progress');
+    progressContainer.style.display = 'block';
+    if (progress) {
+        progress.textContent = `Progress: 0/${testItems.length}`;
     }
 
     // Select the first test item after UI is ready
@@ -2915,6 +2775,14 @@ function _toggleTestModeInternal(mode, selectedTags) {
     // Update button states and disable all menu buttons
     identBtn.classList.toggle('test-active', mode === 'ident');
     findBtn.classList.toggle('test-active', mode === 'find');
+    
+    // Disable testing mode buttons during test
+    identBtn.disabled = true;
+    findBtn.disabled = true;
+    identBtn.style.opacity = '0.5';
+    findBtn.style.opacity = '0.5';
+    identBtn.style.cursor = 'not-allowed';
+    findBtn.style.cursor = 'not-allowed';
 
     // Disable all menu buttons except stop test
     document.querySelectorAll('.menu button').forEach(button => {
@@ -2957,107 +2825,6 @@ function _toggleTestModeInternal(mode, selectedTags) {
     }
     }
 
-}
-
-// Also update stopTest to properly reset button states
-function stopTest() {
-    const identBtn = document.getElementById('identPointBtn');
-    const findBtn = document.getElementById('findPointBtn');
-    const editToggle = document.getElementById('editToggle');
-    const stopTestBtn = document.getElementById('stopTestBtn');
-    const testInterface = document.getElementById('testInterface');
-
-    // Reset test mode states
-    testingMode = false;
-    currentTestMode = null;
-
-    // Hide test interface
-    testInterface.style.display = 'none';
-
-    // Reset button states
-    identBtn.classList.remove('test-active');
-    findBtn.classList.remove('test-active');
-    identBtn.disabled = false;
-    findBtn.disabled = false;
-    identBtn.style.opacity = '1';
-    findBtn.style.opacity = '1';
-    identBtn.style.cursor = 'pointer';
-    findBtn.style.cursor = 'pointer';
-
-    // Hide and disable stop button
-    stopTestBtn.style.display = 'none';
-    stopTestBtn.disabled = true;
-
-    // Re-enable edit toggle
-    editToggle.disabled = false;
-    editToggle.style.opacity = '1';
-    editToggle.style.cursor = 'pointer';
-
-    // Show all label text and reset point visibility
-    document.querySelectorAll('.label-box').forEach(label => {
-    if (label.dataset.correctAnswer) {
-        label.textContent = label.dataset.correctAnswer;
-        delete label.dataset.correctAnswer;
-    }
-    // Reset any test-related styles
-    label.classList.remove('highlight-test');
-    label.style.animation = 'none';
-    label.style.backgroundColor = '';
-    label.style.color = '';
-    label.style.borderColor = '';
-    label.style.boxShadow = '';
-    label.style.filter = '';
-    });
-
-    // Reset reference point visibility and styles
-    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.visibility = 'hidden';
-    point.classList.remove('highlight-test');
-    point.style.animation = 'none';
-    point.style.backgroundColor = '';
-    point.style.borderColor = '';
-    point.style.transform = 'translate(-50%, -50%) scale(1)';
-    point.style.boxShadow = '';
-    point.style.filter = '';
-    });
-
-    // Reset any highlighted shapes (polygons and lines)
-    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
-    shape.classList.remove('highlight-test');
-    shape.style.animation = 'none';
-    shape.setAttribute('stroke', 'none');
-    shape.setAttribute('stroke-width', '2');
-    shape.style.filter = '';
-    if (shape.classList.contains('polygon-path')) {
-        shape.setAttribute('fill', 'none');
-    }
-    });
-
-    // Reset leader lines
-    document.querySelectorAll('.leader-line').forEach(line => {
-    line.classList.remove('highlight-test');
-    line.style.animation = 'none';
-    line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
-    line.setAttribute('stroke-width', '1');
-    line.setAttribute('stroke-dasharray', '4,3');
-    line.style.filter = '';
-    });
-
-    // Force a reflow to ensure animations are properly reset
-    void document.documentElement.offsetHeight;
-
-    // Remove animation: none after reflow to allow future animations
-    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
-    element.style.animation = '';
-    });
-
-    // Clear any remaining test items
-    testItems = [];
-    remainingTestItems = [];
-    currentTestItem = null;
-
-    // Restore tag visibility based on user preferences
-    updateTagVisibilityOnMap();
 }
 
 let currentTestMode = null;
@@ -3207,8 +2974,10 @@ function handleFindModeClick(e) {
 
     // Update progress counter
     const completed = testItems.length - remainingTestItems.length;
-    const progress = document.querySelector('#findInterface .progress');
-    progress.textContent = `Progress: ${completed}/${testItems.length}`;
+    const progress = document.querySelector('#progressContainer .progress');
+    if (progress) {
+        progress.textContent = `Progress: ${completed}/${testItems.length}`;
+    }
 
     // Update progress
     updateTestProgress();
@@ -3315,134 +3084,6 @@ function selectNextTestItem() {
     window.scrollTo({
         top: idealScrollTop,
         behavior: 'smooth'
-    });
-    }
-}
-
-// Update stopTest to remove the click handler and cleanup find mode
-function stopTest() {
-    // Remove find mode click handler and cleanup if in find mode
-    if (currentTestMode === 'find') {
-    mapContainer.removeEventListener('click', handleFindModeClick);
-    cleanupFindMode();
-    }
-
-    const identBtn = document.getElementById('identPointBtn');
-    const findBtn = document.getElementById('findPointBtn');
-    const editToggle = document.getElementById('editToggle');
-    const stopTestBtn = document.getElementById('stopTestBtn');
-    const testInterface = document.getElementById('testInterface');
-
-    // Reset test mode states
-    testingMode = false;
-    currentTestMode = null;
-
-    // Hide test interface
-    testInterface.style.display = 'none';
-
-    // Reset button states
-    identBtn.classList.remove('test-active');
-    findBtn.classList.remove('test-active');
-    identBtn.disabled = false;
-    findBtn.disabled = false;
-    identBtn.style.opacity = '1';
-    findBtn.style.opacity = '1';
-    identBtn.style.cursor = 'pointer';
-    findBtn.style.cursor = 'pointer';
-
-    // Hide and disable stop button
-    stopTestBtn.style.display = 'none';
-    stopTestBtn.disabled = true;
-
-    // Re-enable edit toggle
-    editToggle.disabled = false;
-    editToggle.style.opacity = '1';
-    editToggle.style.cursor = 'pointer';
-
-    // Show all label text and reset point visibility
-    document.querySelectorAll('.label-box').forEach(label => {
-    if (label.dataset.correctAnswer) {
-        label.textContent = label.dataset.correctAnswer;
-        delete label.dataset.correctAnswer;
-    }
-    // Reset any test-related styles
-    label.classList.remove('highlight-test');
-    label.style.animation = 'none';
-    label.style.backgroundColor = '';
-    label.style.color = '';
-    label.style.borderColor = '';
-    label.style.boxShadow = '';
-    label.style.filter = '';
-    });
-
-    // Reset reference point visibility and styles
-    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-    point.style.visibility = 'hidden';
-    point.classList.remove('highlight-test');
-    point.style.animation = 'none';
-    point.style.backgroundColor = '';
-    point.style.borderColor = '';
-    point.style.transform = 'translate(-50%, -50%) scale(1)';
-    point.style.boxShadow = '';
-    point.style.filter = '';
-    });
-
-    // Reset any highlighted shapes (polygons and lines)
-    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
-    shape.classList.remove('highlight-test');
-    shape.style.animation = 'none';
-    shape.setAttribute('stroke', 'none');
-    shape.setAttribute('stroke-width', '2');
-    shape.style.filter = '';
-    if (shape.classList.contains('polygon-path')) {
-        shape.setAttribute('fill', 'none');
-    }
-    });
-
-    // Reset leader lines
-    document.querySelectorAll('.leader-line').forEach(line => {
-    line.classList.remove('highlight-test');
-    line.style.animation = 'none';
-    line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
-    line.setAttribute('stroke-width', '1');
-    line.setAttribute('stroke-dasharray', '4,3');
-    line.style.filter = '';
-    });
-
-    // Clear test items
-    testItems = [];
-    remainingTestItems = [];
-    currentTestItem = null;
-
-    // Restore tag visibility based on user preferences
-    updateTagVisibilityOnMap();
-
-    // Restore find mode elements if needed
-    cleanupFindMode();
-
-    // Force a reflow to ensure animations are properly reset
-    void document.documentElement.offsetHeight;
-
-    // Remove animation: none after reflow to allow future animations
-    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
-    element.style.animation = '';
-    });
-
-    // Clear any remaining test items
-    testItems = [];
-    remainingTestItems = [];
-    currentTestItem = null;
-
-    // Restore element visibility after Identify Elements mode
-    restoreIdentifyTestVisibility();
-
-    // Restore tag visibility based on user preferences
-    updateTagVisibilityOnMap();
-
-    // After restoreIdentifyTestVisibility();
-    if (!editEnabled) {
-    document.querySelectorAll('.ref-point').forEach(point => {
-        point.style.visibility = 'hidden';
     });
     }
 }
@@ -3570,7 +3211,7 @@ function cleanupFindMode() {
     });
 
     // Note: Reference points remain hidden in find mode
-    // They will be properly restored in endTestCleanup() when the test is fully ended
+    // They will be properly restored in cleanupTest() when the test is fully ended
 }
 
 // Add a global counter for label IDs

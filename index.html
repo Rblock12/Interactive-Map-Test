@@ -30,14 +30,6 @@
                 style="display: none;" />
             <div id="errorMessage"><i class="fas fa-exclamation-circle"></i> <span></span></div>
         </div>
-        <div class="top-buttons">
-            <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
-                <i class="fas fa-search"></i> Find Elements
-            </button>
-            <button id="identPointBtn" title="Identify the elements">
-                <i class="fas fa-map-pin"></i> Identify Elements
-            </button>
-        </div>
     </header>
 
     <div class="page-container">
@@ -77,6 +69,52 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Testing Interface - Always Visible -->
+            <div id="testInterface" class="sidebar-test-interface">
+                <div class="test-header">
+                    <h3><i class="fas fa-graduation-cap"></i> Testing</h3>
+                </div>
+                
+                <!-- Testing Mode Buttons -->
+                <div class="test-mode-buttons">
+                    <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
+                        <i class="fas fa-search"></i> Find Elements
+                    </button>
+                    <button id="identPointBtn" onclick="toggleTestMode('ident')" title="Identify the elements">
+                        <i class="fas fa-map-pin"></i> Identify Elements
+                    </button>
+                </div>
+                
+                <!-- Test Mode Interfaces (Hidden by default) -->
+                <div id="identifyInterface" class="test-mode-interface">
+                    <div class="test-input-group">
+                        <label for="testInput">Enter element name:</label>
+                        <input type="text" id="testInput" placeholder="Type here..." />
+                    </div>
+                    <div class="feedback"></div>
+                </div>
+                
+                <div id="findInterface" class="test-mode-interface">
+                    <div class="target-display">
+                        <div class="target-label">Find:</div>
+                        <div id="targetLabel" class="target-text"><span></span></div>
+                    </div>
+                    <div class="feedback"></div>
+                </div>
+                
+                <!-- Progress Indicator (Hidden by default) -->
+                <div id="progressContainer" class="progress-container" style="display: none;">
+                    <div class="progress"></div>
+                </div>
+                
+                <!-- Stop Test Button (Hidden by default) -->
+                <div id="stopTestContainer" class="test-footer" style="display: none;">
+                    <button id="stopTestBtn" onclick="stopTest()" title="Stop the test" class="stop-test-btn">
+                        <i class="fas fa-stop"></i> Stop Test
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="content-wrapper">
@@ -85,24 +123,6 @@
                     <img id="mapImage" alt="Map" />
                     <svg id="shapesLayer" aria-hidden="true"></svg>
                     <svg id="leaderLines" aria-hidden="true"></svg>
-                </div>
-            </div>
-
-            <div id="testInterface">
-                <div id="identifyInterface">
-                    <input type="text" id="testInput" placeholder="Enter element name..." />
-                    <div class="feedback"></div>
-                    <div class="progress"></div>
-                </div>
-                <div id="findInterface">
-                    <div id="targetLabel">Find: <span></span></div>
-                    <div class="feedback"></div>
-                    <div class="progress"></div>
-                </div>
-                <div class="test-controls">
-                    <button id="stopTestBtn" onclick="stopTest()" title="Stop the test">
-                        <i class="fas fa-stop"></i> Stop Test
-                    </button>
                 </div>
             </div>
 
