@@ -1040,32 +1040,55 @@ h1 {
     padding: 0;
 }
 
-/* Tag change highlight animation */
+/* Tag change highlight - using same style as tag hover highlighting */
 .label-box.tag-changed {
-    animation: tagChangedFlash 0.7s cubic-bezier(.4, 2, .6, 1);
+    background: rgba(33, 150, 243, 0.85) !important;
+    border-color: #2196F3 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.4) !important;
+    filter: brightness(1.2) drop-shadow(0 0 4px rgba(33, 150, 243, 0.6)) !important;
+    transition: all 0.2s ease !important;
 }
 
-@keyframes tagChangedFlash {
-    0% {
-    background: #fffbe6;
-    box-shadow: 0 0 0 0 #ffe082;
-    }
-
-    30% {
-    background: #ffe082;
-    box-shadow: 0 0 8px 2px #ffe082;
-    }
-
-    70% {
-    background: #ffe082;
-    box-shadow: 0 0 8px 2px #ffe082;
-    }
-
-    100% {
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+.ref-point.tag-changed {
+    background: #2196F3 !important;
+    border-color: #1565c0 !important;
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.6) !important;
+    filter: brightness(1.2) drop-shadow(0 0 4px rgba(33, 150, 243, 0.6)) !important;
+    transition: all 0.2s ease !important;
 }
+
+.leader-line.tag-changed {
+    stroke: #2196F3 !important;
+    stroke-width: 3 !important;
+    filter: drop-shadow(0 0 4px rgba(33, 150, 243, 0.6)) !important;
+    transition: all 0.2s ease !important;
+}
+
+.polygon-path.tag-changed,
+.line-path.tag-changed {
+    stroke: #2196F3 !important;
+    stroke-width: 3 !important;
+    filter: drop-shadow(0 0 6px rgba(33, 150, 243, 0.6)) !important;
+    transition: all 0.2s ease !important;
+}
+
+.polygon-path.tag-changed {
+    fill: rgba(33, 150, 243, 0.2) !important;
+}
+
+.polygon-point.tag-changed,
+.polygon-anchor.tag-changed {
+    background: #2196F3 !important;
+    border-color: #1565c0 !important;
+    box-shadow: 0 0 6px rgba(33, 150, 243, 0.6) !important;
+    filter: brightness(1.2) drop-shadow(0 0 4px rgba(33, 150, 243, 0.6)) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Remove the old animation */
+/* .label-box.tag-changed { animation: tagChangedFlash 0.7s cubic-bezier(.4, 2, .6, 1); } */
+/* @keyframes tagChangedFlash { ... } */
 
 /* Progress Container */
 .progress-container {
@@ -1743,4 +1766,96 @@ h1 {
 
 #loadMapContainer button:disabled:hover::before {
     left: -100%;
+}
+
+/* Element Count Badge Styling - Updated to match program design */
+.element-count-badge {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%) !important;
+    color: #555 !important;
+    padding: 4px 8px !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    margin-left: 8px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #e0e0e0 !important;
+    min-width: 18px !important;
+    text-align: center !important;
+    display: inline-block !important;
+    line-height: 1.2 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Hover effect for badges in tag panel only (not in test modal) */
+#tagPanel .element-count-badge:hover {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%) !important;
+    border-color: #2196F3 !important;
+    color: #1976D2 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15) !important;
+}
+
+/* Active state for badges in tag panel only */
+#tagPanel .element-count-badge:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 6px rgba(33, 150, 243, 0.2) !important;
+}
+
+/* Hover effect for badges when hovering over the entire tag item in side panel */
+#tagPanel li:hover .element-count-badge {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%) !important;
+    border-color: #2196F3 !important;
+    color: #1976D2 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15) !important;
+}
+
+/* Active state for badges when clicking on tag item in side panel */
+#tagPanel li:active .element-count-badge {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 6px rgba(33, 150, 243, 0.2) !important;
+}
+
+/* Tag Hover Highlighting Classes */
+.tag-hover-highlight {
+    filter: brightness(1.2) drop-shadow(0 0 4px rgba(33, 150, 243, 0.6)) !important;
+    transition: all 0.2s ease !important;
+}
+
+.tag-hover-highlight.label-box {
+    background: rgba(33, 150, 243, 0.85) !important;
+    border-color: #2196F3 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.4) !important;
+}
+
+.tag-hover-highlight.ref-point {
+    background: #2196F3 !important;
+    border-color: #1565c0 !important;
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.6) !important;
+}
+
+.tag-hover-highlight.polygon-path,
+.tag-hover-highlight.line-path {
+    stroke: #2196F3 !important;
+    stroke-width: 3 !important;
+    filter: drop-shadow(0 0 6px rgba(33, 150, 243, 0.6)) !important;
+}
+
+.tag-hover-highlight.polygon-path {
+    fill: rgba(33, 150, 243, 0.2) !important;
+}
+
+.tag-hover-highlight.leader-line {
+    stroke: #2196F3 !important;
+    stroke-width: 3 !important;
+    filter: drop-shadow(0 0 4px rgba(33, 150, 243, 0.6)) !important;
+}
+
+.tag-hover-highlight.polygon-point,
+.tag-hover-highlight.polygon-anchor {
+    background: #2196F3 !important;
+    border-color: #1565c0 !important;
+    box-shadow: 0 0 6px rgba(33, 150, 243, 0.6) !important;
 }
