@@ -111,7 +111,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     observer.observe(document.querySelector('.map-viewport'));
+
+    // Initialize help modal functionality
+    initializeHelpModal();
 });
+
+// Help Modal Functions
+function initializeHelpModal() {
+    const helpBtn = document.getElementById('helpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
+
+    // Open help modal
+    helpBtn.addEventListener('click', () => {
+        helpModal.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    });
+
+    // Close help modal
+    closeHelpBtn.addEventListener('click', () => {
+        helpModal.style.display = 'none';
+        document.body.style.overflow = ''; // Restore scrolling
+    });
+
+    // Close modal when clicking outside of it
+    helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) {
+            helpModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && helpModal.style.display === 'block') {
+            helpModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+}
 
 // Function to update SVG dimensions to match container
 function updateSVGDimensions() {
