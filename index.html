@@ -190,20 +190,29 @@
     </div>
 
 
-    <div id="testTagTypeModal"
-        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:4000; align-items:center; justify-content:center;">
-        <div>
-            <h3>Select Tag Types for Test</h3>
-            <div class="select-btns">
-                <button type="button" id="selectAllTestTagsBtn" style="background:#ebe7fb; color:#1522d8;">Select
-                    All</button>
-                <button type="button" id="deselectAllTestTagsBtn" style="background:#fbe9e7; color:#d84315;">Deselect
-                    All</button>
+    <div id="testTagTypeModal" class="test-tag-modal">
+        <div class="test-tag-modal-content">
+            <div class="test-tag-modal-header">
+                <h3><i class="fas fa-tags"></i> Select Tag Types for Test</h3>
             </div>
-            <form id="testTagTypeForm"></form>
-            <div class="modal-btns">
-                <button type="button" onclick="closeTestTagTypeModal()" style="background:#9e9e9e;">Cancel</button>
-                <button type="button" onclick="confirmTestTagTypeModal()">Start Test</button>
+            <div class="test-tag-modal-body">
+                <div class="select-btns">
+                    <button type="button" id="selectAllTestTagsBtn" class="test-tag-btn test-tag-btn-primary">
+                        <i class="fas fa-check-double"></i> Select All
+                    </button>
+                    <button type="button" id="deselectAllTestTagsBtn" class="test-tag-btn test-tag-btn-secondary">
+                        <i class="fas fa-times"></i> Deselect All
+                    </button>
+                </div>
+                <form id="testTagTypeForm"></form>
+                <div class="modal-btns">
+                    <button type="button" onclick="closeTestTagTypeModal()" class="test-tag-btn test-tag-btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" onclick="confirmTestTagTypeModal()" class="test-tag-btn test-tag-btn-primary">
+                        <i class="fas fa-play"></i> Start Test
+                    </button>
+                </div>
             </div>
         </div>
     </div>

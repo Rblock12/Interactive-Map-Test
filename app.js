@@ -1692,40 +1692,31 @@ mapFileInput.addEventListener('change', async (e) => {
     if (hasExistingData) {
         // Create and show the confirmation dialog
         const dialog = document.createElement('div');
-        dialog.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 1000;
-    min-width: 300px;
-    text-align: center;
-    `;
+        dialog.className = 'warning-modal';
+        dialog.innerHTML = `
+            <div class="warning-modal-content">
+                <div class="warning-modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Warning</h3>
+                </div>
+                <div class="warning-modal-body">
+                    <p>Loading a new map will delete any unsaved elements. Would you like to:</p>
+                    <div class="warning-modal-buttons">
+                        <button id="saveAndContinue" class="warning-btn warning-btn-primary">
+                            <i class="fas fa-save"></i> Save & Continue
+                        </button>
+                        <button id="continueWithoutSaving" class="warning-btn warning-btn-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Continue Without Saving
+                        </button>
+                        <button id="cancelLoad" class="warning-btn warning-btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
 
         const overlay = document.createElement('div');
-        overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 999;
-    `;
-
-        dialog.innerHTML = `
-    <h3 style="margin-top: 0; color: #f44336;">Warning</h3>
-    <p>Loading a new map will delete any unsaved elements. Would you like to:</p>
-    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-        <button id="saveAndContinue" style="padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Save & Continue</button>
-        <button id="continueWithoutSaving" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Continue Without Saving</button>
-        <button id="cancelLoad" style="padding: 8px 16px; background: #9e9e9e; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
-    </div>
-    `;
+        overlay.className = 'warning-modal-overlay';
 
         document.body.appendChild(overlay);
         document.body.appendChild(dialog);
@@ -2154,40 +2145,31 @@ function loadElements() {
     if (hasExistingData) {
         // Create and show the confirmation dialog
         const dialog = document.createElement('div');
-        dialog.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 1000;
-    min-width: 300px;
-    text-align: center;
-    `;
+        dialog.className = 'warning-modal';
+        dialog.innerHTML = `
+            <div class="warning-modal-content">
+                <div class="warning-modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Warning</h3>
+                </div>
+                <div class="warning-modal-body">
+                    <p>Loading an elements file will overwrite any existing elements. Would you like to:</p>
+                    <div class="warning-modal-buttons">
+                        <button id="saveAndContinue" class="warning-btn warning-btn-primary">
+                            <i class="fas fa-save"></i> Save Current & Continue
+                        </button>
+                        <button id="continueWithoutSaving" class="warning-btn warning-btn-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Continue Without Saving
+                        </button>
+                        <button id="cancelLoad" class="warning-btn warning-btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
 
         const overlay = document.createElement('div');
-        overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 999;
-    `;
-
-        dialog.innerHTML = `
-    <h3 style="margin-top: 0; color: #f44336;">Warning</h3>
-    <p>Loading an elements file will overwrite any existing elements. Would you like to:</p>
-    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-        <button id="saveAndContinue" style="padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Current & Continue</button>
-        <button id="continueWithoutSaving" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Continue Without Saving</button>
-        <button id="cancelLoad" style="padding: 8px 16px; background: #9e9e9e; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
-    </div>
-    `;
+        overlay.className = 'warning-modal-overlay';
 
         document.body.appendChild(overlay);
         document.body.appendChild(dialog);
@@ -2708,15 +2690,6 @@ document.getElementById('stopTestBtn').addEventListener('click', () => {
 function toggleTestMode(mode) {
     // Show tag type selection modal before starting test
     showTestTagTypeModal(mode, function (selectedTags) {
-        // Check if there are any elements in the selected subset
-        const hasAny =
-            points.some(point => selectedTags.includes(point.type)) ||
-            polygons.some(polygon => selectedTags.includes(polygon.type)) ||
-            lines.some(line => selectedTags.includes(line.type));
-        if (!hasAny) {
-            alert('No elements exist for the selected tag types. Please add elements or select different tags.');
-            return;
-        }
         // Proceed with test setup using only selected tag types
         _toggleTestModeInternal(mode, selectedTags);
     });
@@ -2733,12 +2706,6 @@ function _toggleTestModeInternal(mode, selectedTags) {
 
     // If we're already in test mode and clicking the same button, do nothing
     if (testingMode && currentTestMode === mode) return;
-
-    // Check if there are any labels before proceeding
-    if (points.length === 0 && polygons.length === 0 && lines.length === 0) {
-        alert('Please add some labels in edit mode first!');
-        return;
-    }
 
     // If we're in a different test mode, stop it first
     if (testingMode) {
@@ -3456,12 +3423,42 @@ function renderTagPanel() {
         li.style.display = 'flex';
         li.style.alignItems = 'center';
         li.style.justifyContent = 'space-between';
-        li.style.marginBottom = '6px';
         li.style.padding = '8px 12px';
         li.style.borderRadius = '6px';
         li.style.fontWeight = '500';
         li.style.background = (tag === currentType) ? '#2196F3' : 'transparent';
         li.style.color = (tag === currentType) ? 'white' : '#333';
+        li.style.cursor = 'pointer';
+        li.style.transition = 'background-color 0.2s ease';
+        
+        // Add hover effect for better UX
+        li.addEventListener('mouseenter', () => {
+            if (tag !== currentType) {
+                li.style.background = 'rgba(33, 150, 243, 0.1)';
+            }
+        });
+        
+        li.addEventListener('mouseleave', () => {
+            if (tag !== currentType) {
+                li.style.background = 'transparent';
+            }
+        });
+        
+        // Add click handler to the entire li element
+        li.addEventListener('click', (e) => {
+            // Don't trigger if clicking on interactive elements (buttons, etc.)
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                return;
+            }
+            
+            currentType = tag;
+            if (tagVisibility[tag] === false) {
+                setTagVisibility(tag, true);
+            } else {
+                saveTags();
+                renderTagPanel();
+            }
+        });
         // --- Visibility toggle ---
         const visBtn = document.createElement('button');
         visBtn.title = tagVisibility[tag] === false ? 'Show this tag type' : 'Hide this tag type';
@@ -3540,7 +3537,6 @@ function renderTagPanel() {
         // Tag name clickable for selection
         const tagSpan = document.createElement('span');
         tagSpan.textContent = tag;
-        tagSpan.style.cursor = 'pointer';
 
         // Add element count badge
         const elementCount = getElementCountForTag(tag);
@@ -3583,15 +3579,6 @@ function renderTagPanel() {
             removeElementHighlighting();
         });
 
-        tagSpan.onclick = function () {
-            currentType = tag;
-            if (tagVisibility[tag] === false) {
-                setTagVisibility(tag, true);
-            } else {
-                saveTags();
-                renderTagPanel();
-            }
-        };
         li.appendChild(tagSpan);
         // Edit/Delete buttons (only in edit mode)
         const btnGroup = document.createElement('div');
@@ -3907,94 +3894,139 @@ function showTestTagTypeModal(testMode, callback) {
     const modal = document.getElementById('testTagTypeModal');
     const form = document.getElementById('testTagTypeForm');
     form.innerHTML = '';
+    
+    // Get element counts for each tag
+    const tagElementCounts = {};
+    tags.forEach(tag => {
+        tagElementCounts[tag] = getElementCountForTag(tag);
+    });
+    
+    // Check if any tags have elements
+    const hasAnyElements = Object.values(tagElementCounts).some(count => count > 0);
+    
     tags.forEach(tag => {
         const id = `testTagType_${tag}`;
         const div = document.createElement('div');
-        div.style.marginBottom = '8px';
+        const elementCount = tagElementCounts[tag];
+        const isDisabled = elementCount === 0;
+        
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = id;
         checkbox.value = tag;
-        checkbox.checked = true;
+        checkbox.checked = !isDisabled; // Only check if not disabled
+        checkbox.disabled = isDisabled;
+        checkbox.className = isDisabled ? 'disabled-checkbox' : '';
+        
         div.appendChild(checkbox);
         const label = document.createElement('label');
         label.htmlFor = id;
         label.textContent = tag;
+        label.className = isDisabled ? 'disabled-label' : '';
         
         // Add element count badge
-        const elementCount = getElementCountForTag(tag);
         const countBadge = createElementCountBadge(elementCount);
+        if (isDisabled) {
+            countBadge.className = 'element-count-badge disabled-badge';
+            countBadge.title = 'No elements with this tag type';
+        }
         label.appendChild(countBadge);
         
         label.style.marginLeft = '8px';
-        label.style.cursor = 'pointer';
-        
-        // Add highlighting for both mouse and touch events
-        let highlightTimeout;
-        
-        // Mouse events for desktop
-        div.addEventListener('mouseenter', () => {
-            highlightElementsWithTag(tag);
-        });
-        
-        div.addEventListener('mouseleave', () => {
-            removeElementHighlighting();
-        });
-        
-        // Touch events for mobile devices
-        div.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            highlightElementsWithTag(tag);
+        label.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+       
+        // Add highlighting for both mouse and touch events (only if not disabled)
+        if (!isDisabled) {
+            let highlightTimeout;
             
-            // Clear any existing timeout
-            if (highlightTimeout) {
-                clearTimeout(highlightTimeout);
-            }
-        });
-        
-        div.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            // Add a small delay before removing highlighting to allow users to see the effect
-            highlightTimeout = setTimeout(() => {
+            // Mouse events for desktop
+            div.addEventListener('mouseenter', () => {
+                highlightElementsWithTag(tag);
+            });
+            
+            div.addEventListener('mouseleave', () => {
                 removeElementHighlighting();
-            }, 1000); // 1 second delay
-        });
-        
-        div.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            if (highlightTimeout) {
-                clearTimeout(highlightTimeout);
-            }
-            removeElementHighlighting();
-        });
+            });
+            
+            // Touch events for mobile devices
+            div.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                highlightElementsWithTag(tag);
+                
+                // Clear any existing timeout
+                if (highlightTimeout) {
+                    clearTimeout(highlightTimeout);
+                }
+            });
+            
+            div.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                // Add a small delay before removing highlighting to allow users to see the effect
+                highlightTimeout = setTimeout(() => {
+                    removeElementHighlighting();
+                }, 1000); // 1 second delay
+            });
+            
+            div.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                if (highlightTimeout) {
+                    clearTimeout(highlightTimeout);
+                }
+                removeElementHighlighting();
+            });
+        }
         
         div.appendChild(label);
         form.appendChild(div);
+        
+        // Add click event listener to the entire div to toggle checkbox
+        if (!isDisabled) {
+            div.addEventListener('click', (e) => {
+                // Don't trigger if clicking on the checkbox itself (to avoid double-toggling)
+                if (e.target.type === 'checkbox') {
+                    return;
+                }
+                // Toggle the checkbox
+                checkbox.checked = !checkbox.checked;
+                // Trigger change event to update button state
+                checkbox.dispatchEvent(new Event('change'));
+            });
+        }
     });
+    
     modal.style.display = 'block';
+    
     // Add select/deselect all logic
     setTimeout(() => {
         const selectAllBtn = document.getElementById('selectAllTestTagsBtn');
         const deselectAllBtn = document.getElementById('deselectAllTestTagsBtn');
+        
         if (selectAllBtn) {
             selectAllBtn.onclick = function () {
                 const form = document.getElementById('testTagTypeForm');
-                form.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = true; });
+                form.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(cb => { 
+                    cb.checked = true; 
+                });
                 updateStartTestButtonState();
             };
         }
+        
         if (deselectAllBtn) {
             deselectAllBtn.onclick = function () {
                 const form = document.getElementById('testTagTypeForm');
-                form.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = false; });
+                form.querySelectorAll('input[type=checkbox]').forEach(cb => { 
+                    cb.checked = false; 
+                });
                 updateStartTestButtonState();
             };
         }
+        
         // Add change listeners to checkboxes to update button state
-        const checkboxes = form.querySelectorAll('input[type=checkbox]');
+        const checkboxes = form.querySelectorAll('input[type=checkbox]:not(:disabled)');
         checkboxes.forEach(cb => {
             cb.addEventListener('change', updateStartTestButtonState);
         });
+        
         updateStartTestButtonState();
     }, 0);
 }
@@ -4005,7 +4037,7 @@ function closeTestTagTypeModal() {
 }
 function confirmTestTagTypeModal() {
     const form = document.getElementById('testTagTypeForm');
-    const checked = Array.from(form.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+    const checked = Array.from(form.querySelectorAll('input[type=checkbox]:checked:not(:disabled)')).map(cb => cb.value);
     if (pendingTestModeCallback) {
         pendingTestModeCallback(checked);
     }
@@ -4389,12 +4421,12 @@ loadMapButton.addEventListener('click', () => {
 // Helper to enable/disable the Start Test button
 function updateStartTestButtonState() {
     const form = document.getElementById('testTagTypeForm');
-    const checked = form.querySelectorAll('input[type=checkbox]:checked');
-    const startBtn = document.querySelector('#testTagTypeModal .modal-btns button[type=button]:not([style*="background:#9e9e9e"])');
+    const checked = form.querySelectorAll('input[type=checkbox]:checked:not(:disabled)');
+    const startBtn = document.querySelector('#testTagTypeModal .modal-btns button[onclick="confirmTestTagTypeModal()"]');
     if (startBtn) {
         startBtn.disabled = checked.length === 0;
         startBtn.style.opacity = checked.length === 0 ? '0.5' : '1';
-        startBtn.style.cursor = checked.length === 0 ? 'not-allowed' : 'pointer';
+        startBtn.style.cursor = checked.length === 0 ? 'not-allowed' : 'pointer'; 
     }
 }
 
