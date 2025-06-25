@@ -4135,6 +4135,14 @@ function closeTestTagTypeModal() {
 function confirmTestTagTypeModal() {
     const form = document.getElementById('testTagTypeForm');
     const checked = Array.from(form.querySelectorAll('input[type=checkbox]:checked:not(:disabled)')).map(cb => cb.value);
+    
+    // Sync tag visibility with the selected tags for testing
+    // Set visibility to true for selected tags, false for unselected tags
+    tags.forEach(tag => {
+        const isSelected = checked.includes(tag);
+        setTagVisibility(tag, isSelected);
+    });
+    
     if (pendingTestModeCallback) {
         pendingTestModeCallback(checked);
     }
