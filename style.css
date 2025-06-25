@@ -36,6 +36,36 @@ h1 {
     padding-bottom: 20px;
 }
 
+/* Left Sidebar Container */
+#mainMenu {
+    max-height: calc(100vh - 120px); /* Account for header and padding */
+    overflow-y: auto;
+    min-width: fit-content;
+    padding-right: 8px; /* Space for scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 transparent;
+}
+
+/* Custom scrollbar styling for webkit browsers */
+#mainMenu::-webkit-scrollbar {
+    width: 8px;
+}
+
+#mainMenu::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+#mainMenu::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+#mainMenu::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
 .content-wrapper {
     height: 100%;
     flex-grow: 1;
@@ -776,10 +806,25 @@ h1 {
     background: #fff;
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.12);
     z-index: 2000;
-    padding: 24px 20px 20px 20px;
+    padding: 0px 20px 20px 20px;
     overflow-y: auto;
     transition: transform 0.3s cubic-bezier(.4, 2, .6, 1), box-shadow 0.3s;
     transform: translateX(100%);
+}
+
+/* Sticky header for tag panel */
+.tag-panel-header {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+    padding: 0 0 16px 0;
+    margin: 0px -20px 16px -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 24px;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 #tagPanel .header {
