@@ -4079,8 +4079,8 @@ function showTestTagTypeModal(testMode, callback) {
         // Add click event listener to the entire div to toggle checkbox
         if (!isDisabled) {
             div.addEventListener('click', (e) => {
-                // Don't trigger if clicking on the checkbox itself (to avoid double-toggling)
-                if (e.target.type === 'checkbox') {
+                // Don't trigger if clicking on the checkbox itself or its label (to avoid double-toggling)
+                if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL' || e.target.closest('label')) {
                     return;
                 }
                 // Toggle the checkbox
