@@ -296,6 +296,7 @@ h1 {
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
+    width: 200px
 }
 
 .sidebar-test-interface::before {

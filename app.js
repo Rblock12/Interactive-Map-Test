@@ -2352,6 +2352,11 @@ function startIdentifyTest() {
 }
 
 function selectNextTestItem() {
+    // Check if test is still active before proceeding
+    if (!testingMode) {
+        return;
+    }
+    
     // Remove highlight from previous item and its label if exists
     if (currentTestItem) {
         currentTestItem.element.classList.remove('highlight-test');
@@ -2373,7 +2378,10 @@ function selectNextTestItem() {
     console.log(`Remaining items: ${remainingTestItems.length}`);
 
     if (remainingTestItems.length === 0) {
-        endTest(true); // true indicates this is a natural completion
+        // Double-check that test is still active before showing congratulations
+        if (testingMode) {
+            endTest(true); // true indicates this is a natural completion
+        }
         return;
     }
 
@@ -2381,40 +2389,56 @@ function selectNextTestItem() {
     currentTestItem = remainingTestItems[0];
     console.log(`Selected item at index 0. Current length: ${remainingTestItems.length}`);
 
-    // Show and highlight both the item and its label
-    currentTestItem.element.classList.add('highlight-test');
-    currentTestItem.label.classList.add('highlight-test');
+    if (currentTestMode === 'ident') {
+        // Show and highlight both the item and its label in identify mode
+        currentTestItem.element.classList.add('highlight-test');
+        currentTestItem.label.classList.add('highlight-test');
 
-    // Highlight the leader line
-    const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
-    if (leaderLine) {
-        leaderLine.classList.add('highlight-test');
+        // Highlight the leader line
+        const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
+        if (leaderLine) {
+            leaderLine.classList.add('highlight-test');
+        }
+
+        // If it's a label type, make sure its point is visible
+        if (currentTestItem.type === 'point') {
+            currentTestItem.element.style.visibility = 'visible';
+        }
+    } else {
+        // In find mode, only make shapes visible, not reference points
+        if (currentTestItem.type === 'polygon') {
+            currentTestItem.element.style.visibility = 'visible';
+        } else if (currentTestItem.type === 'line') {
+            currentTestItem.element.style.visibility = 'visible';
+        }
+        // Reference points (label type) stay hidden in find mode
     }
 
-    // If it's a label type, make sure its point is visible
-    if (currentTestItem.type === 'point') {
-        currentTestItem.element.style.visibility = 'visible';
+    // Update the target label in find mode
+    if (currentTestMode === 'find') {
+        const targetLabel = document.querySelector('#targetLabel span');
+        targetLabel.textContent = currentTestItem.label.dataset.correctAnswer;
+    } else if (currentTestMode === 'ident') {
+        // Only scroll in identify mode
+        // Use the element's bounding rect to determine its position
+        const elementRect = currentTestItem.element.getBoundingClientRect();
+        const labelRect = currentTestItem.label.getBoundingClientRect();
+
+        // Calculate the midpoint between the element and its label
+        const midpointY = (elementRect.top + labelRect.top) / 2;
+
+        // Get the viewport height
+        const viewportHeight = window.innerHeight;
+
+        // Calculate the ideal scroll position that centers the midpoint
+        const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
+
+        // Scroll smoothly to the calculated position
+        window.scrollTo({
+            top: idealScrollTop,
+            behavior: 'smooth'
+        });
     }
-
-    // Scroll the element into view with a smooth animation
-    // Use the element's bounding rect to determine its position
-    const elementRect = currentTestItem.element.getBoundingClientRect();
-    const labelRect = currentTestItem.label.getBoundingClientRect();
-
-    // Calculate the midpoint between the element and its label
-    const midpointY = (elementRect.top + labelRect.top) / 2;
-
-    // Get the viewport height
-    const viewportHeight = window.innerHeight;
-
-    // Calculate the ideal scroll position that centers the midpoint
-    const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
-
-    // Scroll smoothly to the calculated position
-    window.scrollTo({
-        top: idealScrollTop,
-        behavior: 'smooth'
-    });
 }
 
 function checkAnswer(answer) {
@@ -3090,6 +3114,11 @@ function handleFindModeClick(e) {
 }
 
 function selectNextTestItem() {
+    // Check if test is still active before proceeding
+    if (!testingMode) {
+        return;
+    }
+    
     // Remove highlight from previous item and its label if exists
     if (currentTestItem) {
         currentTestItem.element.classList.remove('highlight-test');
@@ -3111,7 +3140,10 @@ function selectNextTestItem() {
     console.log(`Remaining items: ${remainingTestItems.length}`);
 
     if (remainingTestItems.length === 0) {
-        endTest(true); // true indicates this is a natural completion
+        // Double-check that test is still active before showing congratulations
+        if (testingMode) {
+            endTest(true); // true indicates this is a natural completion
+        }
         return;
     }
 
