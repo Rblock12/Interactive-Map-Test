@@ -8,12 +8,12 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3Cfilter id='shadow' x='-20%' y='-20%' width='140%' height='140%'%3E%3CfeDropShadow dx='0' dy='2' stdDeviation='2' flood-color='%23000' flood-opacity='0.3'/%3E%3C/filter%3E%3C/defs%3E%3Cpath d='M32 6c-9 0-16 7-16 16 0 10.5 13.5 28.5 15.1 30.6a2 2 0 0 0 3.8 0C34.5 50.5 48 32.5 48 22c0-9-7-16-16-16z' fill='%23ea4335' filter='url(%23shadow)'/%3E%3Ccircle cx='32' cy='22' r='7' fill='white' stroke='%23b71c1c' stroke-width='2'/%3E%3C/svg%3E" />
     <title>Map Testing Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-    <div class="top-bar">
-        <h1><i class="fas fa-map-marked-alt"></i> Map Testing Tool</h1>
+    <header class="top-bar">
+        <h1><i class="fas fa-map-marked-alt"></i> Map Testing Tool <button id="helpBtn" class="help-button" title="Help & Instructions"><i class="fas fa-question-circle"></i> Help</button></h1>
         <div id="loadMapContainer">
             <input type="file" id="mapFileInput" accept="image/*" style="display:none;" />
             <button id="loadMapButton" type="button">
@@ -30,37 +30,90 @@
                 style="display: none;" />
             <div id="errorMessage"><i class="fas fa-exclamation-circle"></i> <span></span></div>
         </div>
-        <div class="top-buttons">
-            <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
-                <i class="fas fa-search"></i> Find Elements
-            </button>
-            <button id="identPointBtn" title="Identify the elements">
-                <i class="fas fa-map-pin"></i> Identify Elements
-            </button>
-        </div>
-    </div>
+    </header>
 
     <div class="page-container">
-
         <div id="mainMenu">
+            <!-- Testing Interface - Always Visible -->
+            <div id="testInterface" class="sidebar-test-interface">
+                <div class="test-header">
+                    <h3><i class="fas fa-graduation-cap"></i> Testing</h3>
+                </div>
+
+                <!-- Testing Mode Buttons -->
+                <div class="test-mode-buttons">
+                    <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
+                        <i class="fas fa-search"></i> Find Elements
+                    </button>
+                    <button id="identPointBtn" onclick="toggleTestMode('ident')" title="Identify the elements">
+                        <i class="fas fa-map-pin"></i> Identify Elements
+                    </button>
+                </div>
+
+                <!-- Test Mode Interfaces (Hidden by default) -->
+                <div id="identifyInterface" class="test-mode-interface">
+                    <div class="test-input-group">
+                        <label for="testInput">Enter element name:</label>
+                        <input type="text" id="testInput" placeholder="Type here..." />
+                    </div>
+                    <div class="feedback"></div>
+                </div>
+
+                <div id="findInterface" class="test-mode-interface">
+                    <div class="target-display">
+                        <div class="target-label">Find:</div>
+                        <div id="targetLabel" class="target-text"><span></span></div>
+                    </div>
+                    <div class="feedback"></div>
+                </div>
+
+                <!-- Progress Indicator (Hidden by default) -->
+                <div id="progressContainer" class="progress-container" style="display: none;">
+                    <div class="progress-text">
+                        <span class="progress-label">Progress</span>
+                        <span class="progress-numbers">0/0</span>
+                    </div>
+                    <div class="progress"></div>
+                </div>
+
+                <!-- Stop Test Button (Hidden by default) -->
+                <div id="stopTestContainer" class="test-footer" style="display: none;">
+                    <button id="stopTestBtn" onclick="stopTest()" title="Stop the test" class="stop-test-btn">
+                        <i class="fas fa-stop"></i> Stop Test
+                    </button>
+                </div>
+            </div>
             <div class="menu" role="toolbar" aria-label="Map interaction controls">
                 <button id="editToggle" onclick="toggleEditMode()" aria-pressed="false" title="Toggle edit mode">
-                    <i class="fas fa-edit"></i> Edit mode
+                    <i class="fas fa-edit"></i> Edit Mode
                 </button>
                 <div class="edit-tools">
                     <button id="addBtn" onclick="toggleAddMenu()" disabled aria-pressed="false" title="Add elements">
                         <i class="fas fa-plus"></i> Add
                     </button>
                     <div id="addSubMenu" style="display: none;">
-                        <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false" title="Add new point">
+                        <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false"
+                            title="Add new point">
                             <i class="fas fa-thumbtack"></i> Point
                         </button>
-                        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false" title="Draw shape">
+                        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false"
+                            title="Draw shape">
                             <i class="fas fa-draw-polygon"></i> Shape
                         </button>
                         <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
                             <i class="fas fa-minus"></i> Line
                         </button>
+                        <!-- Finish Drawing Buttons (Hidden by default) -->
+                        <div id="finishDrawingInterface" class="finish-drawing-buttons" style="display: none;">
+                            <button id="finishDrawingBtn" class="finish-drawing-btn" title="Finish drawing">
+                                <i class="fas fa-check"></i>
+                                <span class="button-text">Finish</span>
+                            </button>
+                            <button id="cancelDrawingBtn" class="cancel-drawing-btn" title="Cancel drawing">
+                                <i class="fas fa-times"></i>
+                                <span class="button-text">Cancel</span>
+                            </button>
+                        </div>
                     </div>
                     <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move elements">
                         <i class="fas fa-arrows-alt"></i> Move
@@ -69,7 +122,8 @@
                         title="Edit element text">
                         <i class="fas fa-font"></i> Edit Text
                     </button>
-                    <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false" title="Delete elements">
+                    <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false"
+                        title="Delete elements">
                         <i class="fas fa-trash-alt"></i> Delete
                     </button>
                     <button id="tagPanelBtn" onclick="setMode('changeTag')" aria-pressed="false"
@@ -81,42 +135,19 @@
         </div>
 
         <div class="content-wrapper">
-         
-            <div id="mapContainer" tabindex="0" aria-label="Map with annotated elements" style="outline:none;">
-                <img id="mapImage" alt="Map" />
-                <svg id="shapesLayer" aria-hidden="true"></svg>
-                <svg id="leaderLines" aria-hidden="true"></svg>
-            </div>
-
-            <div id="testInterface">
-                <div id="identifyInterface">
-                    <input type="text" id="testInput" placeholder="Enter element name..." />
-                    <div class="feedback"></div>
-                    <div class="progress"></div>
+            <div class="map-viewport">
+                <div id="mapContainer" tabindex="0" aria-label="Map with annotated elements" style="outline:none;">
+                    <img id="mapImage" alt="Map" />
+                    <svg id="shapesLayer" aria-hidden="true"></svg>
+                    <svg id="leaderLines" aria-hidden="true"></svg>
                 </div>
-                <div id="findInterface">
-                    <div id="targetLabel">Find: <span></span></div>
-                    <div class="feedback"></div>
-                    <div class="progress"></div>
-                </div>
-                <div class="test-controls">
-                    <button id="stopTestBtn" onclick="stopTest()" title="Stop the test">
-                        <i class="fas fa-stop"></i> Stop Test
-                    </button>
-                </div>
-            </div>
-
-            <div id="finishDrawingInterface">
-                <button id="finishDrawingBtn">
-                    <i class="fas fa-check"></i> Finish Drawing
-                </button>
             </div>
         </div>
     </div>
 
     <!-- Tag/Type Sidebar Panel -->
     <div id="tagPanel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div class="tag-panel-header" style="display:flex; justify-content:space-between; align-items:center;">
             <h2 style="font-size:20px; color:#2196F3; margin:0;">Select a Tag</h2>
             <button onclick="toggletagPanel()"
                 style="background:none; border:none; font-size:22px; color:#888; cursor:pointer;" title="Close panel"><i
@@ -130,13 +161,20 @@
                 <button onclick="addNewTag()"
                     style="padding:7px 14px; background:#2196F3; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Add</button>
             </div>
+            <div id="newTagError" style="display:none; color:#f44336; font-size:13px; margin-top:6px; padding:4px 8px; background:#ffebee; border-radius:4px; border-left:3px solid #f44336;">
+                <i class="fas fa-exclamation-circle"></i> Tag already exists
+            </div>
         </div>
         <!-- Edit Tag Modal -->
-        <div id="editTagModal"
-            style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:3000; padding:24px 20px; min-width:300px;">
+        <div id="editTagModalBackdrop" onclick="closeEditTagModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:2999; backdrop-filter:blur(4px);"></div>
+        <div id="editTagModal" onclick="event.stopPropagation()"
+            style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:3000; padding:24px 20px;">
             <h3 style="margin-top:0; color:#2196F3;">Edit Tag</h3>
             <input id="editTagInput" type="text"
-                style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:15px; margin-bottom:16px;">
+                style="padding:8px; border-radius:6px; border:1px solid #ccc; font-size:15px; margin-bottom:16px;">
+            <div id="editTagError" style="display:none; color:#f44336; font-size:13px; margin-bottom:16px; padding:4px 8px; background:#ffebee; border-radius:4px; border-left:3px solid #f44336;">
+                <i class="fas fa-exclamation-circle"></i> Tag already exists
+            </div>
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button onclick="closeEditTagModal()"
                     style="padding:7px 16px; background:#9e9e9e; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">Cancel</button>
@@ -145,7 +183,8 @@
             </div>
         </div>
         <!-- Delete Tag Confirmation Modal -->
-        <div id="deleteTagModal"
+        <div id="deleteTagModalBackdrop" onclick="closeDeleteTagModal()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:2999; backdrop-filter:blur(4px);"></div>
+        <div id="deleteTagModal" onclick="event.stopPropagation()"
             style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:3000; padding:24px 20px; min-width:300px;">
             <h3 style="margin-top:0; color:#f44336;">Delete Tag</h3>
             <p id="deleteTagMsg">Are you sure you want to delete this tag?</p>
@@ -159,19 +198,87 @@
     </div>
 
 
-    <div id="testTagTypeModal"
-        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.25); z-index:4000; align-items:center; justify-content:center;">
-        <div>
-            <h3>Select Tag Types for Test</h3>
-            <div class="select-btns">
-                <button type="button" id="selectAllTestTagsBtn" style="background:#ebe7fb; color:#1522d8;">Select All</button>
-                <button type="button" id="deselectAllTestTagsBtn" style="background:#fbe9e7; color:#d84315;">Deselect
-                    All</button>
+    <div id="testTagTypeModal" class="test-tag-modal">
+        <div class="test-tag-modal-content">
+            <div class="test-tag-modal-header">
+                <h3><i class="fas fa-tags"></i> Select Tag Types for Test</h3>
             </div>
-            <form id="testTagTypeForm"></form>
-            <div class="modal-btns">
-                <button type="button" onclick="closeTestTagTypeModal()" style="background:#9e9e9e;">Cancel</button>
-                <button type="button" onclick="confirmTestTagTypeModal()">Start Test</button>
+            <div class="test-tag-modal-body">
+                <div class="select-btns">
+                    <button type="button" id="selectAllTestTagsBtn" class="test-tag-btn test-tag-btn-primary">
+                        <i class="fas fa-check-double"></i> Select All
+                    </button>
+                    <button type="button" id="deselectAllTestTagsBtn" class="test-tag-btn test-tag-btn-secondary">
+                        <i class="fas fa-times"></i> Deselect All
+                    </button>
+                </div>
+                <form id="testTagTypeForm"></form>
+                <div class="modal-btns">
+                    <button type="button" onclick="closeTestTagTypeModal()" class="test-tag-btn test-tag-btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" onclick="confirmTestTagTypeModal()" class="test-tag-btn test-tag-btn-primary">
+                        <i class="fas fa-play"></i> Start Test
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="help-modal">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2><i class="fas fa-question-circle"></i> Map Testing Tool - Help & Instructions</h2>
+                <button id="closeHelpBtn" class="help-close-btn" title="Close help">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="help-modal-body">
+                <div class="help-section">
+                    <h3><i class="fas fa-upload"></i> Getting Started</h3>
+                    <ol>
+                        <li><strong>Load a Map:</strong> Click the "Load Map Image" button to upload an unlabelled image of your map.</li>
+                        <li><strong>Enable Edit Mode:</strong> Click the "Edit Mode" button to start adding elements to your map.</li>
+                        <li><strong>Select a Testing Mode:</strong> Click on one of the testing modes to start testing yourself on the map.</li>
+                    </ol>
+                </div>
+
+                <div class="help-section">
+                    <h3><i class="fas fa-edit"></i> Editing Features</h3>
+                    <ul>
+                        <li><strong>Add:</strong> Place points, draw shapes, or create lines on your map. Make sure to select the correct tag type first. After adding an element to the map, you can type a name for it.
+                            <ul class="help-subsection">
+                                <li><strong>Points:</strong> Click anywhere on the map to place a point.</li>
+                                <li><strong>Shapes:</strong> Click multiple points on the map to create a shape. Click "Finish" when done or "Cancel" to start over.</li>
+                                <li><strong>Lines:</strong> Click multiple points to create a line with multiple segments. Click "Finish" when done or "Cancel" to start over.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Move:</strong> Click and drag elements to reposition them</li>
+                        <li><strong>Edit Text:</strong> Modify labels and text associated with elements</li>
+                        <li><strong>Delete:</strong> Remove unwanted elements from your map</li>
+                        <li><strong>Change Tag:</strong> Modify the category/tag of existing elements so that you can later choose what type of elements you want to test yourself on</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3><i class="fas fa-graduation-cap"></i> Testing Features</h3>
+                    <ul>
+                        <li><strong>Find Elements:</strong> The name of a random element will be given to you, and you must find it on the map</li>
+                        <li><strong>Identify Elements:</strong> An element will be randomly selected on the map and you will need to type its name</li>
+                        <li><strong>Note:</strong> Before a test is started, you'll be given an opportunity to filter what types of elements you want to test yourself on</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h3><i class="fas fa-save"></i> Saving & Loading</h3>
+                    <ul>
+                        <li><strong>Load Map Image:</strong> Load a blank map image so you can add elements to it</li>
+                        <li><strong>Save Elements:</strong> Save your map annotations as a JSON file for future sessions</li>
+                        <li><strong>Load Elements:</strong> Import previously saved map annotations</li>
+                    </ul>
+                </div>
+                
             </div>
         </div>
     </div>
