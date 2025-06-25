@@ -3476,13 +3476,13 @@ function renderTagPanel() {
         li.style.transition = 'background-color 0.2s ease';
         
         // Add hover effect for better UX
-        li.addEventListener('mouseenter', () => {
+        li.addEventListener('pointerenter', () => {
             if (tag !== currentType) {
                 li.style.background = 'rgba(33, 150, 243, 0.1)';
             }
         });
         
-        li.addEventListener('mouseleave', () => {
+        li.addEventListener('pointerleave', () => {
             if (tag !== currentType) {
                 li.style.background = 'transparent';
             }
@@ -3503,6 +3503,11 @@ function renderTagPanel() {
                 renderTagPanel();
             }
         });
+
+        li.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+          });
+
         // --- Visibility toggle ---
         const visBtn = document.createElement('button');
         visBtn.title = tagVisibility[tag] === false ? 'Show this tag type' : 'Hide this tag type';
@@ -3591,37 +3596,17 @@ function renderTagPanel() {
         let highlightTimeout;
 
         // Mouse events for desktop
-        li.addEventListener('mouseenter', () => {
+        li.addEventListener('pointerenter', () => {
             highlightElementsWithTag(tag);
         });
 
-        li.addEventListener('mouseleave', () => {
+        li.addEventListener('pointerleave', () => {
             removeElementHighlighting();
         });
 
-        // Touch events for mobile devices
-        li.addEventListener('touchstart', (e) => {
+        li.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            highlightElementsWithTag(tag);
-
-            // Clear any existing timeout
-            if (highlightTimeout) {
-                clearTimeout(highlightTimeout);
-            }
-        });
-
-        li.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            removeElementHighlighting();
-        });
-
-        li.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            if (highlightTimeout) {
-                clearTimeout(highlightTimeout);
-            }
-            removeElementHighlighting();
-        });
+          });
 
         li.appendChild(tagSpan);
         // Edit/Delete buttons (only in edit mode)
@@ -4038,40 +4023,17 @@ function showTestTagTypeModal(testMode, callback) {
             let highlightTimeout;
             
             // Mouse events for desktop
-            div.addEventListener('mouseenter', () => {
+            div.addEventListener('pointerenter', () => {
                 highlightElementsWithTag(tag);
             });
             
-            div.addEventListener('mouseleave', () => {
+            div.addEventListener('pointerleave', () => {
                 removeElementHighlighting();
             });
-            
-            // Touch events for mobile devices
-            div.addEventListener('touchstart', (e) => {
+
+            div.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-                highlightElementsWithTag(tag);
-                
-                // Clear any existing timeout
-                if (highlightTimeout) {
-                    clearTimeout(highlightTimeout);
-                }
-            });
-            
-            div.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                // Add a small delay before removing highlighting to allow users to see the effect
-                highlightTimeout = setTimeout(() => {
-                    removeElementHighlighting();
-                }, 1000); // 1 second delay
-            });
-            
-            div.addEventListener('touchcancel', (e) => {
-                e.preventDefault();
-                if (highlightTimeout) {
-                    clearTimeout(highlightTimeout);
-                }
-                removeElementHighlighting();
-            });
+              });
         }
         
         div.appendChild(label);
