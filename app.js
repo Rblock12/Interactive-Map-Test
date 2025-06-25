@@ -1584,8 +1584,9 @@ mapFileInput.addEventListener('change', async (e) => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-        errorMessage.textContent = 'Please select a valid image file.';
-        errorMessage.style.display = 'block';
+        showFileTypeWarningModal(file.type, 'image');
+        // Reset the file input to allow selecting the same file again
+        mapFileInput.value = '';
         return;
     }
 
@@ -1836,6 +1837,15 @@ function loadElements() {
         input.onchange = function (e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            // File type validation for JSON
+            // Accept either application/json or .json extension (for browsers that don't set type)
+            const isJson = file.type === 'application/json' || file.name.toLowerCase().endsWith('.json');
+            if (!isJson) {
+                showFileTypeWarningModal(file.type || file.name.split('.').pop(), 'JSON');
+                input.value = '';
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function (e) {
@@ -4568,4 +4578,53 @@ function createElementCountBadge(count) {
     badge.textContent = `${count}`;
     badge.className = 'element-count-badge';
     return badge;
+}
+
+// Function to show file type warning modal
+function showFileTypeWarningModal(fileType, expectedType) {
+    const dialog = document.createElement('div');
+    dialog.className = 'warning-modal';
+    dialog.innerHTML = `
+        <div class="warning-modal-content">
+            <div class="warning-modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Invalid File Type</h3>
+            </div>
+            <div class="warning-modal-body">
+                <p>The selected file is not a valid ${expectedType} file. Please select a file with the correct format.</p>
+                <div class="warning-modal-buttons">
+                    <button id="okFileTypeWarning" class="warning-btn warning-btn-primary">
+                        <i class="fas fa-check"></i> OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'warning-modal-overlay';
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(dialog);
+
+    // Handle dialog button
+    document.getElementById('okFileTypeWarning').onclick = () => {
+        dialog.remove();
+        overlay.remove();
+    };
+
+    // Close modal when clicking outside of it
+    overlay.addEventListener('click', () => {
+        dialog.remove();
+        overlay.remove();
+    });
+
+    // Close modal with Escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            dialog.remove();
+            overlay.remove();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
 }
