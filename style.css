@@ -1037,8 +1037,34 @@ h1 {
 }
 
 .test-tag-modal-body {
-    padding: 24px;
+    padding-left: 24px;
+    padding-right: 24px;
     line-height: 1.6;
+    max-height: 70vh; /* Limit height to 70% of viewport height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 transparent;
+}
+
+/* Custom scrollbar styling for webkit browsers */
+.test-tag-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.test-tag-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+.test-tag-modal-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.test-tag-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .test-tag-modal-body .select-btns {
@@ -1047,6 +1073,13 @@ h1 {
     justify-content: center;
     margin-bottom: 24px;
     flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    padding-bottom: 16px;
+    padding-top: 16px;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .test-tag-modal-body .modal-btns {
@@ -1055,6 +1088,13 @@ h1 {
     justify-content: center;
     margin-top: 24px;
     flex-wrap: wrap;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    z-index: 10;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    border-top: 1px solid #e0e0e0;
 }
 
 .test-tag-btn {
@@ -1101,7 +1141,6 @@ h1 {
 }
 
 #testTagTypeForm {
-    margin: 24px 0;
     text-align: left;
     display: flex;
     flex-direction: column;
