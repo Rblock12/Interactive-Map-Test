@@ -3798,7 +3798,8 @@ function renderTagPanel() {
 // When the panel is closed, exit edit mode
 function toggletagPanel(forceOpen) {
     const panel = document.getElementById('tagPanel');
-    const isClosed = (panel.style.display === 'none' || panel.style.transform === 'translateX(100%)');
+    const computedStyle = window.getComputedStyle(panel);
+    const isClosed = (computedStyle.display === 'none' || computedStyle.transform === 'translateX(100%)' || panel.style.transform === 'translateX(100%)');
 
     if (!isClosed === forceOpen) return; // already in requested state
 
