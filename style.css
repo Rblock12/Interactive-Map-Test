@@ -539,13 +539,23 @@ h1 {
 }
 
 @keyframes progressPulse {
-    0%,
-    100% {
+    0%, 100% {
         opacity: 1;
     }
-
     50% {
         opacity: 0.7;
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-2px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(2px);
     }
 }
 
@@ -873,7 +883,6 @@ h1 {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     z-index: 3000;
     padding: 24px 20px;
-    min-width: 300px;
 }
 
 #tagPanel .edit-tag-modal h3 {
@@ -882,7 +891,6 @@ h1 {
 }
 
 #tagPanel .edit-tag-modal input[type="text"] {
-    width: 100%;
     padding: 8px;
     border-radius: 6px;
     border: 1px solid #ccc;
@@ -2394,7 +2402,6 @@ h1 {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     z-index: 3000;
     padding: 24px 20px;
-    min-width: 300px;
 }
 
 .edit-tag-title {
@@ -2403,7 +2410,6 @@ h1 {
 }
 
 .edit-tag-input {
-    width: 100%;
     padding: 8px;
     border-radius: 6px;
     border: 1px solid #ccc;

@@ -460,6 +460,7 @@ function toggleEditMode() {
         // Close the tag type panel if open
         const tagPanel = document.getElementById('tagPanel');
         if (tagPanel && tagPanel.style.display !== 'none') {
+            clearTagError();
             tagPanel.style.transform = 'translateX(100%)';
             setTimeout(() => { tagPanel.style.display = 'none'; }, 300);
         }
@@ -2901,6 +2902,7 @@ function _toggleTestModeInternal(mode, selectedTags) {
     // Close the tag type panel if open
     const tagPanel = document.getElementById('tagPanel');
     if (tagPanel && tagPanel.style.display !== 'none') {
+        clearTagError();
         tagPanel.style.transform = 'translateX(100%)';
         setTimeout(() => { tagPanel.style.display = 'none'; }, 300);
     }
@@ -3595,33 +3597,46 @@ function renderTagPanel() {
         if (tagPanelEditing) {
             // Rename button
             const editBtn = document.createElement('button');
-            editBtn.textContent = 'Rename';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.title = 'Rename tag';
             editBtn.style.background = '#FFC107';
             editBtn.style.color = '#333';
             editBtn.style.border = 'none';
             editBtn.style.borderRadius = '4px';
-            editBtn.style.padding = '2px 10px';
+            editBtn.style.padding = '4px 8px';
             editBtn.style.fontSize = '13px';
             editBtn.style.cursor = 'pointer';
             editBtn.style.marginRight = '6px';
+            editBtn.style.width = '28px';
+            editBtn.style.height = '28px';
+            editBtn.style.display = 'flex';
+            editBtn.style.alignItems = 'center';
+            editBtn.style.justifyContent = 'center';
             editBtn.onclick = function (e) {
                 e.stopPropagation();
                 tagToEdit = tag;
                 document.getElementById('editTagInput').value = tag;
+                document.getElementById('editTagModalBackdrop').style.display = 'block';
                 document.getElementById('editTagModal').style.display = 'block';
             };
             btnGroup.appendChild(editBtn);
             // Only show delete button if more than one tag exists
             if (tags.length > 1) {
                 const delBtn = document.createElement('button');
-                delBtn.textContent = 'Delete';
+                delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                delBtn.title = 'Delete tag';
                 delBtn.style.background = '#f44336';
                 delBtn.style.color = 'white';
                 delBtn.style.border = 'none';
                 delBtn.style.borderRadius = '4px';
-                delBtn.style.padding = '2px 10px';
+                delBtn.style.padding = '4px 8px';
                 delBtn.style.fontSize = '13px';
                 delBtn.style.cursor = 'pointer';
+                delBtn.style.width = '28px';
+                delBtn.style.height = '28px';
+                delBtn.style.display = 'flex';
+                delBtn.style.alignItems = 'center';
+                delBtn.style.justifyContent = 'center';
                 delBtn.onclick = function (e) {
                     e.stopPropagation();
                     tagToDelete = tag;
@@ -3646,7 +3661,6 @@ function renderTagPanel() {
                     const select = document.createElement('select');
                     select.id = 'deleteTagDropdown';
                     select.style.margin = '16px 0 0 0';
-                    select.style.width = '100%';
                     select.style.padding = '8px';
                     select.style.borderRadius = '6px';
                     select.style.border = '1px solid #ccc';
@@ -3658,6 +3672,7 @@ function renderTagPanel() {
                         select.appendChild(opt);
                     });
                     msg.appendChild(select);
+                    document.getElementById('deleteTagModalBackdrop').style.display = 'block';
                     modal.style.display = 'block';
                 };
                 btnGroup.appendChild(delBtn);
@@ -3730,6 +3745,7 @@ function renderTagPanel() {
         doneBtn.style.marginLeft = '10px';
         doneBtn.onclick = function () {
             tagPanelEditing = false;
+            clearTagError();
             renderTagPanel();
         };
         // Insert after h2, before close button
@@ -3764,6 +3780,8 @@ function toggletagPanel(forceOpen) {
             });
         });
     } else {
+        // Clear error message when closing the panel
+        clearTagError();
         panel.style.transform = 'translateX(100%)';
         setTimeout(() => {
             panel.style.display = 'none';
@@ -3782,23 +3800,59 @@ function toggletagPanel(forceOpen) {
 
 function addNewTag() {
     const input = document.getElementById('newTagInput');
+    const errorElement = document.getElementById('newTagError');
     const val = input.value.trim();
-    if (val && !tags.includes(val)) {
-        tags.push(val);
-        saveTags();
-        renderTagPanel();
-        input.value = '';
+    
+    // Clear any existing error message
+    clearTagError();
+    
+    if (val) {
+        if (tags.includes(val)) {
+            // Show error message for duplicate tag
+            errorElement.style.display = 'block';
+            // Add a subtle shake animation to the input
+            input.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                input.style.animation = '';
+            }, 500);
+        } else {
+            // Add the new tag
+            tags.push(val);
+            saveTags();
+            renderTagPanel();
+            input.value = '';
+        }
     }
 }
 
 // Edit Tag Modal logic
 function closeEditTagModal() {
+    clearEditTagError();
+    document.getElementById('editTagModalBackdrop').style.display = 'none';
     document.getElementById('editTagModal').style.display = 'none';
     tagToEdit = null;
 }
 function saveEditTag() {
     const newName = document.getElementById('editTagInput').value.trim();
-    if (!newName || tags.includes(newName)) return;
+    const errorElement = document.getElementById('editTagError');
+    const input = document.getElementById('editTagInput');
+    
+    // Clear any existing error message
+    clearEditTagError();
+    
+    if (!newName) return;
+    
+    if (tags.includes(newName)) {
+        // Show error message for duplicate tag
+        errorElement.style.display = 'block';
+        // Add a subtle shake animation to the input
+        input.style.animation = 'shake 0.5s ease-in-out';
+        setTimeout(() => {
+            input.style.animation = '';
+        }, 500);
+        return;
+    }
+    
     // Update tag in tags array
     const idx = tags.indexOf(tagToEdit);
     if (idx !== -1) tags[idx] = newName;
@@ -3815,6 +3869,7 @@ function saveEditTag() {
 
 // Delete Tag Modal logic
 function closeDeleteTagModal() {
+    document.getElementById('deleteTagModalBackdrop').style.display = 'none';
     document.getElementById('deleteTagModal').style.display = 'none';
     tagToDelete = null;
 }
@@ -4627,4 +4682,38 @@ function showFileTypeWarningModal(fileType, expectedType) {
         }
     };
     document.addEventListener('keydown', handleEscape);
+}
+
+// Add event listener to clear error message when user starts typing
+document.addEventListener('DOMContentLoaded', function() {
+    const newTagInput = document.getElementById('newTagInput');
+    if (newTagInput) {
+        newTagInput.addEventListener('input', function() {
+            clearTagError();
+        });
+    }
+    
+    // Add event listener for edit tag input
+    const editTagInput = document.getElementById('editTagInput');
+    if (editTagInput) {
+        editTagInput.addEventListener('input', function() {
+            clearEditTagError();
+        });
+    }
+});
+
+// Helper function to clear tag error message
+function clearTagError() {
+    const errorElement = document.getElementById('newTagError');
+    if (errorElement) {
+        errorElement.style.display = 'none';
+    }
+}
+
+// Helper function to clear edit tag error message
+function clearEditTagError() {
+    const errorElement = document.getElementById('editTagError');
+    if (errorElement) {
+        errorElement.style.display = 'none';
+    }
 }
