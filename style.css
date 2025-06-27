@@ -9,7 +9,7 @@ body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     text-align: center;
     margin: 0;
-    padding: 0 20px;
+    padding: 0 min(20px, 2vw);
     user-select: none;
     background-color: #f5f5f5;
     color: #333;
@@ -18,30 +18,39 @@ body {
 h1 {
     color: #2196F3;
     font-weight: 600;
+    font-size: min(4vw, 2em);
+    margin: 0;
 }
 
 .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: min(2vw, 10px) 0px;
 }
 
 .page-container {
     display: flex;
+    flex-direction: row;
     opacity: 0;
     transition: opacity 1s;
     flex: 1;
-    gap: 20px;
+    gap: min(2vw, 20px);
     min-height: 0;
     padding-bottom: 20px;
 }
 
+@media (max-width: 1024px) {
+    .page-container {
+        flex-direction: column;
+    }
+}
+
 /* Left Sidebar Container */
 #mainMenu {
-    max-height: calc(100vh - 120px); /* Account for header and padding */
-    overflow-y: auto;
+    max-height: calc(100vh - 120px);
     min-width: fit-content;
-    padding-right: 8px; /* Space for scrollbar */
+    padding-right: 8px;
     scrollbar-width: thin;
     scrollbar-color: #c1c1c1 transparent;
 }
@@ -73,7 +82,6 @@ h1 {
     flex-direction: column;
     box-sizing: border-box;
     align-items: center;
-
     background: white;
     padding: 10px;
     border-radius: 12px;
@@ -320,13 +328,13 @@ h1 {
 .sidebar-test-interface {
     background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px 20px;
     border: 1px solid #ffcc02;
     box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
-    width: 200px
+    min-width: 250px;
 }
 
 .sidebar-test-interface::before {
@@ -341,9 +349,10 @@ h1 {
 }
 
 .test-header {
-    margin-bottom: 16px;
     text-align: center;
     position: relative;
+    display: flex;
+    margin-bottom: 12px;
 }
 
 .test-header h3 {
@@ -353,8 +362,8 @@ h1 {
     margin: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
+    flex: 1;
 }
 
 .test-header h3 i {
@@ -364,14 +373,13 @@ h1 {
 
 .test-mode-buttons {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 10px;
-    margin-bottom: 16px;
 }
 
 .test-mode-buttons button {
     padding: 12px 16px;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     border: 1px solid #ffcc02;
     background: white;
@@ -380,10 +388,11 @@ h1 {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
     color: #E65100;
     justify-content: center;
     box-shadow: 0 2px 6px rgba(255, 193, 7, 0.1);
+    flex: 1;
 }
 
 .test-mode-buttons button:hover:not(:disabled) {
@@ -408,10 +417,8 @@ h1 {
     display: none;
     background: white;
     border-radius: 8px;
-    padding: 16px;
     border: 1px solid #e0e0e0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    margin-top: 12px;
 }
 
 .test-mode-interface.active {
@@ -432,7 +439,7 @@ h1 {
 }
 
 .test-input-group {
-    margin-bottom: 12px;
+    padding: 12px;
 }
 
 .test-input-group label {
@@ -445,7 +452,8 @@ h1 {
 
 .test-input-group input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px;
+    padding-right: 2em;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 14px;
@@ -460,11 +468,10 @@ h1 {
 }
 
 .target-display {
-    background: #f8f9fa;
+    background: white;
     border-radius: 8px;
     padding: 12px;
     border: 1px solid #e0e0e0;
-    margin-bottom: 12px;
 }
 
 .target-label {
@@ -478,8 +485,8 @@ h1 {
     font-size: 16px;
     font-weight: 700;
     color: #FF9800;
-    background: white;
-    padding: 8px 12px;
+    background: #fffbf5;
+    padding: 8px 2em;
     border-radius: 6px;
     border: 1px solid #ffcc02;
     min-height: 20px;
@@ -520,9 +527,8 @@ h1 {
 
 /* Progress Container */
 .progress-container {
-    margin-top: 15px;
+    margin-top: 0px;
     padding-top: 10px;
-    border-top: 2px solid #f0f0f0;
 }
 
 .progress-container .progress {
@@ -575,30 +581,42 @@ h1 {
 }
 
 @keyframes progressPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.7;
     }
 }
 
 @keyframes shake {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateX(0);
     }
-    10%, 30%, 50%, 70%, 90% {
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
         transform: translateX(-2px);
     }
-    20%, 40%, 60%, 80% {
+
+    20%,
+    40%,
+    60%,
+    80% {
         transform: translateX(2px);
     }
 }
 
 /* Test Footer */
 .test-footer {
-    margin-top: 16px;
-    padding-top: 16px;
     border-top: 1px solid #e0e0e0;
     display: none;
 }
@@ -622,7 +640,7 @@ h1 {
 
 .stop-test-btn {
     width: 100%;
-    padding: 12px 16px;
+    padding: 8px 16px;
     background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
     color: white;
     border: none;
@@ -636,6 +654,7 @@ h1 {
     justify-content: center;
     gap: 8px;
     box-shadow: 0 4px 15px rgba(244, 67, 54, 0.2);
+    display: block;
 }
 
 .stop-test-btn:hover {
@@ -1014,6 +1033,8 @@ h1 {
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     animation: modalSlideIn 0.3s ease-out;
+    width: 80%;
+    max-width: 400px;
 }
 
 .test-tag-modal-header {
@@ -1040,9 +1061,9 @@ h1 {
     padding-left: 24px;
     padding-right: 24px;
     line-height: 1.6;
-    max-height: 70vh; /* Limit height to 70% of viewport height */
-    overflow-y: auto; /* Enable vertical scrolling */
-    overflow-x: hidden; /* Prevent horizontal scrolling */
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: #c1c1c1 transparent;
 }
@@ -2074,12 +2095,12 @@ h1 {
     cursor: pointer;
     padding: 8px 12px;
     border-radius: 20px;
-    transition: all 0.3s ease;
+    transition: transform, color, background-color 0.3s ease;
     margin-left: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 1vw;
     font-weight: 500;
 }
 
@@ -2117,6 +2138,8 @@ h1 {
     max-height: 80vh;
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease-out;
+    width: 80%;
+    max-width: 1400px;
 }
 
 @keyframes modalSlideIn {
@@ -2604,4 +2627,26 @@ h1 {
     background-color: transparent;
     transform: none;
     box-shadow: none;
+}
+
+.test-mode-buttons button[disabled] {
+    display: none;
+}
+
+div#targetLabel::after {
+    position: absolute;
+    right: 5px;
+}
+
+div#targetLabel.correct::after {
+    content: "✅";
+}
+
+div#targetLabel.incorrect::after {
+    content: "❌";
+}
+
+div#targetLabel {
+    position: relative;
+    display: block;
 }

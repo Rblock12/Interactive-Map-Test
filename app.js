@@ -2356,7 +2356,7 @@ function selectNextTestItem() {
     if (!testingMode) {
         return;
     }
-    
+
     // Remove highlight from previous item and its label if exists
     if (currentTestItem) {
         currentTestItem.element.classList.remove('highlight-test');
@@ -3118,7 +3118,7 @@ function selectNextTestItem() {
     if (!testingMode) {
         return;
     }
-    
+
     // Remove highlight from previous item and its label if exists
     if (currentTestItem) {
         currentTestItem.element.classList.remove('highlight-test');
@@ -3474,27 +3474,27 @@ function renderTagPanel() {
         li.style.color = (tag === currentType) ? 'white' : '#333';
         li.style.cursor = 'pointer';
         li.style.transition = 'background-color 0.2s ease';
-        
+
         // Add hover effect for better UX
         li.addEventListener('pointerenter', () => {
             if (tag !== currentType) {
                 li.style.background = 'rgba(33, 150, 243, 0.1)';
             }
         });
-        
+
         li.addEventListener('pointerleave', () => {
             if (tag !== currentType) {
                 li.style.background = 'transparent';
             }
         });
-        
+
         // Add click handler to the entire li element
         li.addEventListener('click', (e) => {
             // Don't trigger if clicking on interactive elements (buttons, etc.)
             if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
                 return;
             }
-            
+
             currentType = tag;
             if (tagVisibility[tag] === false) {
                 setTagVisibility(tag, true);
@@ -3506,7 +3506,7 @@ function renderTagPanel() {
 
         li.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-          });
+        });
 
         // --- Visibility toggle ---
         const visBtn = document.createElement('button');
@@ -3606,7 +3606,7 @@ function renderTagPanel() {
 
         li.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-          });
+        });
 
         li.appendChild(tagSpan);
         // Edit/Delete buttons (only in edit mode)
@@ -3820,10 +3820,10 @@ function addNewTag() {
     const input = document.getElementById('newTagInput');
     const errorElement = document.getElementById('newTagError');
     const val = input.value.trim();
-    
+
     // Clear any existing error message
     clearTagError();
-    
+
     if (val) {
         if (tags.includes(val)) {
             // Show error message for duplicate tag
@@ -3854,12 +3854,12 @@ function saveEditTag() {
     const newName = document.getElementById('editTagInput').value.trim();
     const errorElement = document.getElementById('editTagError');
     const input = document.getElementById('editTagInput');
-    
+
     // Clear any existing error message
     clearEditTagError();
-    
+
     if (!newName) return;
-    
+
     if (tags.includes(newName)) {
         // Show error message for duplicate tag
         errorElement.style.display = 'block';
@@ -3870,7 +3870,7 @@ function saveEditTag() {
         }, 500);
         return;
     }
-    
+
     // Update tag in tags array
     const idx = tags.indexOf(tagToEdit);
     if (idx !== -1) tags[idx] = newName;
@@ -3977,22 +3977,22 @@ function showTestTagTypeModal(testMode, callback) {
     const modal = document.getElementById('testTagTypeModal');
     const form = document.getElementById('testTagTypeForm');
     form.innerHTML = '';
-    
+
     // Get element counts for each tag
     const tagElementCounts = {};
     tags.forEach(tag => {
         tagElementCounts[tag] = getElementCountForTag(tag);
     });
-    
+
     // Check if any tags have elements
     const hasAnyElements = Object.values(tagElementCounts).some(count => count > 0);
-    
+
     tags.forEach(tag => {
         const id = `testTagType_${tag}`;
         const div = document.createElement('div');
         const elementCount = tagElementCounts[tag];
         const isDisabled = elementCount === 0;
-        
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = id;
@@ -4000,13 +4000,13 @@ function showTestTagTypeModal(testMode, callback) {
         checkbox.checked = !isDisabled; // Only check if not disabled
         checkbox.disabled = isDisabled;
         checkbox.className = isDisabled ? 'disabled-checkbox' : '';
-        
+
         div.appendChild(checkbox);
         const label = document.createElement('label');
         label.htmlFor = id;
         label.textContent = tag;
         label.className = isDisabled ? 'disabled-label' : '';
-        
+
         // Add element count badge
         const countBadge = createElementCountBadge(elementCount);
         if (isDisabled) {
@@ -4014,31 +4014,31 @@ function showTestTagTypeModal(testMode, callback) {
             countBadge.title = 'No elements with this tag type';
         }
         label.appendChild(countBadge);
-        
+
         label.style.marginLeft = '8px';
         label.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-       
+
         // Add highlighting for both mouse and touch events (only if not disabled)
         if (!isDisabled) {
             let highlightTimeout;
-            
+
             // Mouse events for desktop
             div.addEventListener('pointerenter', () => {
                 highlightElementsWithTag(tag);
             });
-            
+
             div.addEventListener('pointerleave', () => {
                 removeElementHighlighting();
             });
 
             div.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-              });
+            });
         }
-        
+
         div.appendChild(label);
         form.appendChild(div);
-        
+
         // Add click event listener to the entire div to toggle checkbox
         if (!isDisabled) {
             div.addEventListener('click', (e) => {
@@ -4053,40 +4053,40 @@ function showTestTagTypeModal(testMode, callback) {
             });
         }
     });
-    
+
     modal.style.display = 'block';
-    
+
     // Add select/deselect all logic
     setTimeout(() => {
         const selectAllBtn = document.getElementById('selectAllTestTagsBtn');
         const deselectAllBtn = document.getElementById('deselectAllTestTagsBtn');
-        
+
         if (selectAllBtn) {
             selectAllBtn.onclick = function () {
                 const form = document.getElementById('testTagTypeForm');
-                form.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(cb => { 
-                    cb.checked = true; 
+                form.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(cb => {
+                    cb.checked = true;
                 });
                 updateStartTestButtonState();
             };
         }
-        
+
         if (deselectAllBtn) {
             deselectAllBtn.onclick = function () {
                 const form = document.getElementById('testTagTypeForm');
-                form.querySelectorAll('input[type=checkbox]').forEach(cb => { 
-                    cb.checked = false; 
+                form.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                    cb.checked = false;
                 });
                 updateStartTestButtonState();
             };
         }
-        
+
         // Add change listeners to checkboxes to update button state
         const checkboxes = form.querySelectorAll('input[type=checkbox]:not(:disabled)');
         checkboxes.forEach(cb => {
             cb.addEventListener('change', updateStartTestButtonState);
         });
-        
+
         updateStartTestButtonState();
     }, 0);
 }
@@ -4098,14 +4098,14 @@ function closeTestTagTypeModal() {
 function confirmTestTagTypeModal() {
     const form = document.getElementById('testTagTypeForm');
     const checked = Array.from(form.querySelectorAll('input[type=checkbox]:checked:not(:disabled)')).map(cb => cb.value);
-    
+
     // Sync tag visibility with the selected tags for testing
     // Set visibility to true for selected tags, false for unselected tags
     tags.forEach(tag => {
         const isSelected = checked.includes(tag);
         setTagVisibility(tag, isSelected);
     });
-    
+
     if (pendingTestModeCallback) {
         pendingTestModeCallback(checked);
     }
@@ -4237,21 +4237,21 @@ mapContainer.addEventListener('click', function (e) {
         if (changedLabelBox && changedLabelBox.id) {
             const line = document.querySelector(`.leader-line[data-for="${changedLabelBox.id}"]`);
             if (line) line.setAttribute('data-type', currentType);
-            
+
             // Visual indication: highlight the changed element and ALL its related components
             changedLabelBox.classList.add('tag-changed');
-            
+
             // Also highlight the reference point if it exists (for points)
             const refPoint = changedLabelBox.previousElementSibling;
             if (refPoint && refPoint.classList.contains('ref-point')) {
                 refPoint.classList.add('tag-changed');
             }
-            
+
             // Also highlight the leader line if it exists
             if (line) {
                 line.classList.add('tag-changed');
             }
-            
+
             // Find and highlight the associated polygon or line elements
             // Check if this is a polygon label
             const polygon = polygons.find(p => p.labelBoxEl === changedLabelBox);
@@ -4271,7 +4271,7 @@ mapContainer.addEventListener('click', function (e) {
                     polygon.anchorPoint.element.classList.add('tag-changed');
                 }
             }
-            
+
             // Check if this is a line label
             const lineObj = lines.find(l => l.labelBoxEl === changedLabelBox);
             if (lineObj) {
@@ -4290,7 +4290,7 @@ mapContainer.addEventListener('click', function (e) {
                     lineObj.anchorPoint.classList.add('tag-changed');
                 }
             }
-            
+
             // Remove highlighting after 700ms
             setTimeout(() => {
                 changedLabelBox.classList.remove('tag-changed');
@@ -4300,7 +4300,7 @@ mapContainer.addEventListener('click', function (e) {
                 if (line) {
                     line.classList.remove('tag-changed');
                 }
-                
+
                 // Remove highlighting from polygon elements
                 if (polygon) {
                     if (polygon.svgPath) {
@@ -4315,7 +4315,7 @@ mapContainer.addEventListener('click', function (e) {
                         polygon.anchorPoint.element.classList.remove('tag-changed');
                     }
                 }
-                
+
                 // Remove highlighting from line elements
                 if (lineObj) {
                     if (lineObj.polyline) {
@@ -4494,7 +4494,7 @@ function updateStartTestButtonState() {
     if (startBtn) {
         startBtn.disabled = checked.length === 0;
         startBtn.style.opacity = checked.length === 0 ? '0.5' : '1';
-        startBtn.style.cursor = checked.length === 0 ? 'not-allowed' : 'pointer'; 
+        startBtn.style.cursor = checked.length === 0 ? 'not-allowed' : 'pointer';
     }
 }
 
@@ -4688,18 +4688,18 @@ function showFileTypeWarningModal(fileType, expectedType) {
 }
 
 // Add event listener to clear error message when user starts typing
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const newTagInput = document.getElementById('newTagInput');
     if (newTagInput) {
-        newTagInput.addEventListener('input', function() {
+        newTagInput.addEventListener('input', function () {
             clearTagError();
         });
     }
-    
+
     // Add event listener for edit tag input
     const editTagInput = document.getElementById('editTagInput');
     if (editTagInput) {
-        editTagInput.addEventListener('input', function() {
+        editTagInput.addEventListener('input', function () {
             clearEditTagError();
         });
     }
