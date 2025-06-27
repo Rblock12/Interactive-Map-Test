@@ -334,7 +334,7 @@ h1 {
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
-    min-width: 250px;
+    min-width: 290px;
 }
 
 .sidebar-test-interface::before {
@@ -440,6 +440,7 @@ h1 {
 
 .test-input-group {
     padding: 12px;
+    position: relative;
 }
 
 .test-input-group label {
@@ -453,7 +454,6 @@ h1 {
 .test-input-group input {
     width: 100%;
     padding: 8px;
-    padding-right: 2em;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 14px;
@@ -465,6 +465,32 @@ h1 {
     outline: none;
     border-color: #FF9800;
     box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+}
+
+#testInput.correct {
+  border-color: #4CAF50;
+  background-color: #e8f5e9;
+}
+#testInput.incorrect {
+  border-color: #f44336;
+  background-color: #ffebee;
+}
+#testInput.correct::after, #testInput.incorrect::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.3em;
+  pointer-events: none;
+}
+#testInput.correct::after {
+  content: '✔';
+  color: #4CAF50;
+}
+#testInput.incorrect::after {
+  content: '✗';
+  color: #f44336;
 }
 
 .target-display {
@@ -486,7 +512,7 @@ h1 {
     font-weight: 700;
     color: #FF9800;
     background: #fffbf5;
-    padding: 8px 2em;
+    padding: 8px;
     border-radius: 6px;
     border: 1px solid #ffcc02;
     min-height: 20px;
@@ -2633,20 +2659,20 @@ h1 {
     display: none;
 }
 
-div#targetLabel::after {
-    position: absolute;
-    right: 5px;
-}
-
-div#targetLabel.correct::after {
-    content: "✅";
-}
-
-div#targetLabel.incorrect::after {
-    content: "❌";
-}
 
 div#targetLabel {
     position: relative;
     display: block;
+    transition: background-color 0.3s, border-color 0.3s;
+    border-color: #ffcc02;
+    background: #fffbf5;
+}
+
+div#targetLabel.correct {
+  border-color: #4CAF50;
+  background-color: #e8f5e9;
+}
+div#targetLabel.incorrect {
+  border-color: #f44336;
+  background-color: #ffebee;
 }

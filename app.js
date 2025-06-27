@@ -2444,34 +2444,44 @@ function selectNextTestItem() {
 function checkAnswer(answer) {
     const correctAnswer = currentTestItem.label.dataset.correctAnswer.trim().toLowerCase();
     const userAnswer = answer.toLowerCase();
-    const feedback = document.querySelector('#testInterface .feedback');
     const testInput = document.getElementById('testInput');
+    const targetLabel = document.getElementById('targetLabel');
+
+    // Remove previous feedback classes
+    testInput.classList.remove('correct', 'incorrect');
+    targetLabel.classList.remove('correct', 'incorrect');
 
     if (userAnswer === correctAnswer) {
         // Correct answer
-        feedback.textContent = 'Correct!';
-        feedback.className = 'feedback correct';
+        if (currentTestMode === 'ident') {
+            testInput.classList.add('correct');
+        } else if (currentTestMode === 'find') {
+            targetLabel.classList.add('correct');
+        }
 
         // Remove current item from remaining items
-        remainingTestItems.shift();  // Remove the first item since we know it's the current one
-        console.log(`After removal, remaining items: ${remainingTestItems.length}`);
-
-        // Update progress first
+        remainingTestItems.shift();
         updateTestProgress();
 
-        // Clear input and select next item
         setTimeout(() => {
             testInput.value = '';
-            feedback.textContent = '';
-            feedback.className = 'feedback';
+            testInput.classList.remove('correct', 'incorrect');
+            targetLabel.classList.remove('correct', 'incorrect');
             selectNextTestItem();
         }, 1500);
     } else {
         // Incorrect answer
-        feedback.textContent = 'Try again!';
-        feedback.className = 'feedback incorrect';
+        if (currentTestMode === 'ident') {
+            testInput.classList.add('incorrect');
+        } else if (currentTestMode === 'find') {
+            targetLabel.classList.add('incorrect');
+        }
         testInput.value = '';
         testInput.focus();
+        setTimeout(() => {
+            testInput.classList.remove('incorrect');
+            targetLabel.classList.remove('incorrect');
+        }, 1200);
     }
 }
 
@@ -3079,24 +3089,13 @@ function handleFindModeClick(e) {
 
     if (isCorrect) {
         // Correct click
-        feedback.textContent = 'Correct!';
-        feedback.className = 'feedback correct';
-
-        // Remove current item from remaining items
+        const targetLabel = document.getElementById('targetLabel');
+        targetLabel.classList.add('correct');
         remainingTestItems.shift();
-        console.log(`After removal, remaining items: ${remainingTestItems.length}`);
-
-        // Update progress
         updateTestProgress();
-
-        // Disable click handler until next point is loaded
         mapContainer.removeEventListener('click', handleFindModeClick);
-
-        // Clear feedback and select next item after delay
         setTimeout(() => {
-            feedback.textContent = '';
-            feedback.className = 'feedback';
-            // Re-enable click handler if there are more items
+            targetLabel.classList.remove('correct', 'incorrect');
             if (remainingTestItems.length > 0) {
                 mapContainer.addEventListener('click', handleFindModeClick);
             }
@@ -3104,12 +3103,11 @@ function handleFindModeClick(e) {
         }, 1500);
     } else {
         // Incorrect click
-        feedback.textContent = 'Try again!';
-        feedback.className = 'feedback incorrect';
+        const targetLabel = document.getElementById('targetLabel');
+        targetLabel.classList.add('incorrect');
         setTimeout(() => {
-            feedback.textContent = '';
-            feedback.className = 'feedback';
-        }, 1500);
+            targetLabel.classList.remove('incorrect');
+        }, 1200);
     }
 }
 
