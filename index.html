@@ -15,70 +15,94 @@
     <header class="top-bar">
         <h1><i class="fas fa-map-marked-alt"></i> Map Testing Tool <button id="helpBtn" class="help-button"
                 title="Help & Instructions"><i class="fas fa-question-circle"></i> Help</button></h1>
-        <div id="loadMapContainer">
-            <input type="file" id="mapFileInput" accept="image/*" style="display:none;" />
-            <button id="loadMapButton" type="button">
+    </header>
+
+    <!-- Front and center load map button (shown when no map is loaded) -->
+    <div id="frontLoadMapContainer" class="front-load-map-container">
+        <div class="front-load-map-content">
+            <div class="front-load-map-icon">
+                <i class="fas fa-map-marked-alt"></i>
+            </div>
+            <h2>Welcome to Map Testing Tool</h2>
+            <p>Get started by loading your map image</p>
+            <button id="frontLoadMapButton" type="button" class="front-load-map-btn">
                 <i class="fas fa-upload"></i> Load Map Image
             </button>
-            <button id="saveElementsBtn" onclick="saveElements()" style="display: none;">
-                <i class="fas fa-save"></i> Save Elements
-            </button>
-            <button id="loadElementsBtn" onclick="loadElements()" style="display: none;">
-                <i class="fas fa-folder-open"></i> Load Elements
-            </button>
-            <input type="file" id="elementsFileInput" accept=".json" style="display: none;" />
-            <input type="file" id="saveElementsFileInput" nwsaveas="map_elements.json" accept=".json"
-                style="display: none;" />
-            <div id="errorMessage"><i class="fas fa-exclamation-circle"></i> <span></span></div>
+            <input type="file" id="frontMapFileInput" accept="image/*" style="display:none;" />
         </div>
-    </header>
+    </div>
 
     <div class="page-container">
         <div id="mainMenu">
-            <!-- Testing Interface - Always Visible -->
-            <div id="testInterface" class="sidebar-test-interface" style="display: block">
-                <div class="test-header">
-                    <h3><i class="fas fa-graduation-cap"></i> Testing</h3>
-                    <!-- Stop Test Button (Hidden by default) -->
-                    <div id="stopTestContainer" class="test-footer" style="display: none;">
-                        <button id="stopTestBtn" onclick="stopTest()" title="Stop the test" class="stop-test-btn">
-                            <i class="fas fa-stop"></i> Stop Test
+            <input type="radio" id="tab-loadsave" name="sidebar-tabs" class="tab-radio" checked>
+            <input type="radio" id="tab-test" name="sidebar-tabs" class="tab-radio">
+            
+            <div class="sidebar-tab-bar">
+                <label for="tab-loadsave" class="tab-btn" data-tab="loadsave">Load/Save</label>
+                <label for="tab-test" class="tab-btn" data-tab="test">Test</label>
+            </div>
+            <div class="sidebar-tabs">
+                <div id="loadMapContainer" class="sidebar-loadsave-interface tab-panel" data-tab="loadsave">
+                    <div class="loadsave-header">
+                        <h3><i class="fas fa-folder-open"></i> Load & Save</h3>
+                    </div>
+                    <div class="loadsave-content">
+                        <input type="file" id="mapFileInput" accept="image/*" style="display:none;" />
+                        <button id="loadMapButton" type="button">
+                            <i class="fas fa-upload"></i> Load Map Image
+                        </button>
+                        <button id="saveElementsBtn" onclick="saveElements()" style="display: none;">
+                            <i class="fas fa-save"></i> Save Elements
+                        </button>
+                        <button id="loadElementsBtn" onclick="loadElements()" style="display: none;">
+                            <i class="fas fa-folder-open"></i> Load Elements
+                        </button>
+                        <input type="file" id="elementsFileInput" accept=".json" style="display: none;" />
+                        <input type="file" id="saveElementsFileInput" nwsaveas="map_elements.json" accept=".json"
+                            style="display: none;" />
+                        <div id="errorMessage"><i class="fas fa-exclamation-circle"></i> <span></span></div>
+                    </div>
+                </div>
+                <div id="testInterface" class="sidebar-test-interface tab-panel" data-tab="test">
+                    <div class="test-header">
+                        <h3><i class="fas fa-graduation-cap"></i> Testing</h3>
+                        <!-- Stop Test Button (Hidden by default) -->
+                        <div id="stopTestContainer" class="test-footer" style="display: none;">
+                            <button id="stopTestBtn" onclick="stopTest()" title="Stop the test" class="stop-test-btn">
+                                <i class="fas fa-stop"></i> Stop Test
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Testing Mode Buttons -->
+                    <div class="test-mode-buttons">
+                        <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
+                            <i class="fas fa-search"></i> Find Elements
+                        </button>
+                        <button id="identPointBtn" onclick="toggleTestMode('ident')" title="Identify the elements">
+                            <i class="fas fa-map-pin"></i> Identify Elements
                         </button>
                     </div>
-                </div>
-
-                <!-- Testing Mode Buttons -->
-                <div class="test-mode-buttons">
-                    <button id="findPointBtn" onclick="toggleTestMode('find')" title="Find the elements">
-                        <i class="fas fa-search"></i> Find Elements
-                    </button>
-                    <button id="identPointBtn" onclick="toggleTestMode('ident')" title="Identify the elements">
-                        <i class="fas fa-map-pin"></i> Identify Elements
-                    </button>
-                </div>
-
-                <!-- Test Mode Interfaces (Hidden by default) -->
-                <div id="identifyInterface" class="test-mode-interface">
-                    <div class="test-input-group">
-                        <label for="testInput">Enter element name:</label>
-                        <input type="text" id="testInput" placeholder="Type here..." />
+                    <!-- Test Mode Interfaces (Hidden by default) -->
+                    <div id="identifyInterface" class="test-mode-interface">
+                        <div class="test-input-group">
+                            <label for="testInput">Enter element name:</label>
+                            <input type="text" id="testInput" placeholder="Type here..." />
+                        </div>
                     </div>
-                </div>
-
-                <div id="findInterface" class="test-mode-interface">
-                    <div class="target-display">
-                        <div class="target-label">Find:</div>
-                        <div id="targetLabel" class="target-text"><span></span></div>
+                    <div id="findInterface" class="test-mode-interface">
+                        <div class="target-display">
+                            <div class="target-label">Find:</div>
+                            <div id="targetLabel" class="target-text"><span></span></div>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Progress Indicator (Hidden by default) -->
-                <div id="progressContainer" class="progress-container" style="display: none;">
-                    <div class="progress-text">
-                        <span class="progress-label">Progress</span>
-                        <span class="progress-numbers">0/0</span>
+                    <!-- Progress Indicator (Hidden by default) -->
+                    <div id="progressContainer" class="progress-container" style="display: none;">
+                        <div class="progress-text">
+                            <span class="progress-label">Progress</span>
+                            <span class="progress-numbers">0/0</span>
+                        </div>
+                        <div class="progress"></div>
                     </div>
-                    <div class="progress"></div>
                 </div>
             </div>
             <div class="menu" role="toolbar" aria-label="Map interaction controls">

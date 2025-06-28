@@ -1617,6 +1617,12 @@ mapFileInput.addEventListener('change', async (e) => {
                     document.getElementById('saveElementsBtn').style.display = 'inline-block';
                     document.getElementById('loadElementsBtn').style.display = 'inline-block';
 
+                    // Hide the front load map container
+                    const frontLoadMapContainer = document.getElementById('frontLoadMapContainer');
+                    if (frontLoadMapContainer) {
+                        frontLoadMapContainer.classList.add('hidden');
+                    }
+
                     // Clear all existing data
                     points.forEach(point => {
                         if (point.refPointEl) point.refPointEl.remove();
@@ -2707,6 +2713,90 @@ function cleanupTest() {
             point.style.visibility = 'hidden';
         });
     }
+
+    // Re-enable the load/save tab when test ends
+    const loadsaveTabRadio = document.getElementById('tab-loadsave');
+    const loadsaveTabBtn = document.querySelector('label[for="tab-loadsave"]');
+    if (loadsaveTabRadio && loadsaveTabBtn) {
+        loadsaveTabRadio.disabled = false;
+        loadsaveTabBtn.classList.remove('disabled');
+    }
+
+    // Show all label text and reset point visibility
+    document.querySelectorAll('.label-box').forEach(label => {
+        if (label.dataset.correctAnswer) {
+            label.textContent = label.dataset.correctAnswer;
+            delete label.dataset.correctAnswer;
+        }
+        // Reset any test-related styles
+        label.classList.remove('highlight-test');
+        label.style.animation = 'none';
+        label.style.backgroundColor = '';
+        label.style.color = '';
+        label.style.borderColor = '';
+        label.style.boxShadow = '';
+        label.style.filter = '';
+    });
+
+    // Reset reference point visibility and styles
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+        point.style.visibility = 'hidden';
+        point.classList.remove('highlight-test');
+        point.style.animation = 'none';
+        point.style.backgroundColor = '';
+        point.style.borderColor = '';
+        point.style.transform = 'translate(-50%, -50%) scale(1)';
+        point.style.boxShadow = '';
+        point.style.filter = '';
+    });
+
+    // Reset any highlighted shapes (polygons and lines)
+    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
+        shape.classList.remove('highlight-test');
+        shape.style.animation = 'none';
+        shape.setAttribute('stroke', 'none');
+        shape.setAttribute('stroke-width', '2');
+        shape.style.filter = '';
+        if (shape.classList.contains('polygon-path')) {
+            shape.setAttribute('fill', 'none');
+        }
+    });
+
+    // Reset leader lines
+    document.querySelectorAll('.leader-line').forEach(line => {
+        line.classList.remove('highlight-test');
+        line.style.animation = 'none';
+        line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
+        line.setAttribute('stroke-width', '1');
+        line.setAttribute('stroke-dasharray', '4,3');
+        line.style.filter = '';
+    });
+
+    // Force a reflow to ensure animations are properly reset
+    void document.documentElement.offsetHeight;
+
+    // Remove animation: none after reflow to allow future animations
+    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
+        element.style.animation = '';
+    });
+
+    // Clear any remaining test items
+    testItems = [];
+    remainingTestItems = [];
+    currentTestItem = null;
+
+    // Restore element visibility after Identify Elements mode
+    restoreIdentifyTestVisibility();
+
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
+
+    // After restoreIdentifyTestVisibility();
+    if (!editEnabled) {
+        document.querySelectorAll('.ref-point').forEach(point => {
+            point.style.visibility = 'hidden';
+        });
+    }
 }
 
 function stopTest() {
@@ -2931,6 +3021,14 @@ function _toggleTestModeInternal(mode, selectedTags) {
                 element.style.cursor = 'not-allowed';
             }
         });
+    }
+
+    // Disable the load/save tab when test is active
+    const loadsaveTabRadio = document.getElementById('tab-loadsave');
+    const loadsaveTabBtn = document.querySelector('label[for="tab-loadsave"]');
+    if (loadsaveTabRadio && loadsaveTabBtn) {
+        loadsaveTabRadio.disabled = true;
+        loadsaveTabBtn.classList.add('disabled');
     }
 
     // Close the tag type panel if open
@@ -4484,6 +4582,216 @@ loadMapButton.addEventListener('click', () => {
     document.getElementById('mapFileInput').click();
 });
 
+// Front load map button functionality
+const frontLoadMapButton = document.getElementById('frontLoadMapButton');
+const frontMapFileInput = document.getElementById('frontMapFileInput');
+const frontLoadMapContainer = document.getElementById('frontLoadMapContainer');
+
+frontLoadMapButton.addEventListener('click', () => {
+    frontMapFileInput.click();
+});
+
+frontMapFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Use the same file loading logic as the original button
+    const mapFileInput = document.getElementById('mapFileInput');
+    const errorMessage = document.getElementById('errorMessage');
+    const pageContainer = document.querySelector('.page-container');
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        errorMessage.textContent = 'Please select a valid image file.';
+        errorMessage.style.display = 'block';
+        frontMapFileInput.value = '';
+        return;
+    }
+
+    // Check if there are any existing labels, polygons, or lines
+    const hasExistingData = points.length > 0 || polygons.length > 0 || lines.length > 0;
+
+    const loadNewMap = () => {
+        return new Promise((resolve, reject) => {
+            errorMessage.style.display = 'none';
+
+            // Reset all UI states
+            resetUIState();
+
+            // Hide save/load buttons while loading
+            document.getElementById('saveElementsBtn').style.display = 'none';
+            document.getElementById('loadElementsBtn').style.display = 'none';
+
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const img = new Image();
+
+                img.onload = () => {
+                    console.log('Image loaded successfully:', img.width, 'x', img.height);
+                    mapImage.src = img.src;
+                    pageContainer.style.opacity = '1';
+                    document.getElementById('saveElementsBtn').style.display = 'inline-block';
+                    document.getElementById('loadElementsBtn').style.display = 'inline-block';
+
+                    // Hide the front load map container
+                    frontLoadMapContainer.classList.add('hidden');
+
+                    // Clear all existing data
+                    points.forEach(point => {
+                        if (point.refPointEl) point.refPointEl.remove();
+                        if (point.labelBoxEl) point.labelBoxEl.remove();
+                    });
+                    points.length = 0;
+
+                    polygons.forEach(polygon => {
+                        polygon.points.forEach(p => p.element.remove());
+                        polygon.labelBoxEl.remove();
+                        polygon.svgPath.remove();
+                        polygon.anchorPoint.element.remove();
+                    });
+                    polygons.length = 0;
+
+                    lines.forEach(line => {
+                        line.points.forEach(p => p.element.remove());
+                        line.labelBoxEl.remove();
+                        line.polyline.remove();
+                        line.anchorPoint.remove();
+                    });
+                    lines.length = 0;
+
+                    // Clear SVG layers
+                    while (shapesLayer.firstChild) {
+                        shapesLayer.removeChild(shapesLayer.firstChild);
+                    }
+                    while (leaderLinesSVG.firstChild) {
+                        leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
+                    }
+
+                    // Update SVG size to match new image
+                    requestAnimationFrame(() => {
+                        updateSVGDimensions();
+                        // Reset file input to allow selecting the same file again
+                        frontMapFileInput.value = '';
+                        // Update save button state after clearing data
+                        updateSaveButtonState();
+                        resolve();
+                    });
+                };
+
+                img.onerror = () => {
+                    console.error('Failed to load image');
+                    errorMessage.textContent = 'Failed to load the image. Please try another file.';
+                    errorMessage.style.display = 'block';
+                    // Keep save/load buttons hidden
+                    document.getElementById('saveElementsBtn').style.display = 'none';
+                    document.getElementById('loadElementsBtn').style.display = 'none';
+                    // Reset file input to allow selecting the same file again
+                    frontMapFileInput.value = '';
+                    reject(new Error('Failed to load image'));
+                };
+
+                // Set image source from FileReader result
+                img.src = e.target.result;
+            };
+
+            reader.onerror = () => {
+                console.error('Failed to read file');
+                errorMessage.textContent = 'Error reading the file. Please try again.';
+                errorMessage.style.display = 'block';
+                // Keep save/load buttons hidden
+                document.getElementById('saveElementsBtn').style.display = 'none';
+                document.getElementById('loadElementsBtn').style.display = 'none';
+                // Reset file input to allow selecting the same file again
+                frontMapFileInput.value = '';
+                reject(new Error('Failed to read file'));
+            };
+
+            reader.readAsDataURL(file);
+        });
+    };
+
+    if (hasExistingData) {
+        // Create and show the confirmation dialog
+        const dialog = document.createElement('div');
+        dialog.className = 'warning-modal';
+        dialog.innerHTML = `
+            <div class="warning-modal-content">
+                <div class="warning-modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Warning</h3>
+                </div>
+                <div class="warning-modal-body">
+                    <p>Loading a new map will delete any unsaved elements. Would you like to:</p>
+                    <div class="warning-modal-buttons">
+                        <button id="saveAndContinue" class="warning-btn warning-btn-primary">
+                            <i class="fas fa-save"></i> Save & Continue
+                        </button>
+                        <button id="continueWithoutSaving" class="warning-btn warning-btn-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Continue Without Saving
+                        </button>
+                        <button id="cancelLoad" class="warning-btn warning-btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'warning-modal-overlay';
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(dialog);
+
+        // Handle dialog buttons
+        document.getElementById('saveAndContinue').onclick = async () => {
+            // Save current labels first
+            await new Promise(resolve => {
+                saveElements();
+                // Give time for the save dialog to complete
+                const checkInterval = setInterval(() => {
+                    const saveDialog = document.querySelector('input[type="file"][nwsaveas]');
+                    if (!saveDialog) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 100);
+            });
+            dialog.remove();
+            overlay.remove();
+            try {
+                await loadNewMap();
+            } catch (error) {
+                console.error('Failed to load new map:', error);
+            }
+        };
+
+        document.getElementById('continueWithoutSaving').onclick = async () => {
+            dialog.remove();
+            overlay.remove();
+            try {
+                await loadNewMap();
+            } catch (error) {
+                console.error('Failed to load new map:', error);
+            }
+        };
+
+        document.getElementById('cancelLoad').onclick = () => {
+            dialog.remove();
+            overlay.remove();
+            // Reset the file input
+            frontMapFileInput.value = '';
+        };
+    } else {
+        // If no existing data, load the new map directly
+        try {
+            await loadNewMap();
+        } catch (error) {
+            console.error('Failed to load new map:', error);
+        }
+    }
+});
+
 // Helper to enable/disable the Start Test button
 function updateStartTestButtonState() {
     const form = document.getElementById('testTagTypeForm');
@@ -4718,3 +5026,31 @@ function clearEditTagError() {
         errorElement.style.display = 'none';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Sidebar tab switching
+    const tabBtns = document.querySelectorAll('.sidebar-tab-bar .tab-btn');
+    const sidebarTabs = document.querySelector('.sidebar-tabs');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            tabBtns.forEach(b => b.setAttribute('aria-selected', 'false'));
+            btn.setAttribute('aria-selected', 'true');
+            sidebarTabs.setAttribute('data-active-tab', btn.getAttribute('data-tab'));
+        });
+    });
+
+    // Show front load map container if no map is loaded
+    const mapImage = document.getElementById('mapImage');
+    const frontLoadMapContainer = document.getElementById('frontLoadMapContainer');
+    
+    if (mapImage && frontLoadMapContainer) {
+        // Check if map image has a source
+        if (!mapImage.src || mapImage.src === window.location.href) {
+            // No map loaded, show the front load container
+            frontLoadMapContainer.classList.remove('hidden');
+        } else {
+            // Map is loaded, hide the front load container
+            frontLoadMapContainer.classList.add('hidden');
+        }
+    }
+});

@@ -41,15 +41,6 @@ h1 {
     padding-bottom: 20px;
 }
 
-@media (max-width: 1024px) {
-    .page-container {
-        flex-direction: column;
-    }
-    .top-bar {
-        flex-direction: column;
-    }
-}
-
 /* Left Sidebar Container */
 #mainMenu {
     max-height: calc(100vh - 120px);
@@ -371,7 +362,7 @@ h1 {
 }
 
 .test-header h3 i {
-    font-size: 20px;
+    font-size: 1.1em;
     color: #FF9800;
 }
 
@@ -383,19 +374,18 @@ h1 {
 
 .test-mode-buttons button {
     padding: 12px 16px;
-    font-size: 12px;
-    font-weight: 500;
-    border: 1px solid #ffcc02;
-    background: white;
+    font-weight: 600;
+    border: 2px solid #e0e0e0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     gap: 5px;
-    color: #E65100;
+    color: #555;
     justify-content: center;
-    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     flex: 1;
 }
 
@@ -472,29 +462,34 @@ h1 {
 }
 
 #testInput.correct {
-  border-color: #4CAF50;
-  background-color: #e8f5e9;
+    border-color: #4CAF50;
+    background-color: #e8f5e9;
 }
+
 #testInput.incorrect {
-  border-color: #f44336;
-  background-color: #ffebee;
+    border-color: #f44336;
+    background-color: #ffebee;
 }
-#testInput.correct::after, #testInput.incorrect::after {
-  content: '';
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.3em;
-  pointer-events: none;
-}
-#testInput.correct::after {
-  content: '✔';
-  color: #4CAF50;
-}
+
+#testInput.correct::after,
 #testInput.incorrect::after {
-  content: '✗';
-  color: #f44336;
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.3em;
+    pointer-events: none;
+}
+
+#testInput.correct::after {
+    content: '✔';
+    color: #4CAF50;
+}
+
+#testInput.incorrect::after {
+    content: '✗';
+    color: #f44336;
 }
 
 .target-display {
@@ -1862,17 +1857,26 @@ h1 {
 
 /* File Loading Container */
 #loadMapContainer {
-    margin: 0;
-    text-align: center;
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    flex: 1;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 600px;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid #ffcc02;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    min-width: 290px;
+}
+
+#loadMapContainer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #FF9800, #FFC107, #FFEB3B);
+    border-radius: 12px 12px 0 0;
 }
 
 #loadMapContainer input[type="file"] {
@@ -1881,8 +1885,7 @@ h1 {
 
 #loadMapContainer button {
     padding: 12px 20px;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: min(max(2vw, 12px), 20px);
     border: 2px solid #e0e0e0;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 12px;
@@ -1898,6 +1901,7 @@ h1 {
     position: relative;
     overflow: hidden;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    flex: 1;
 }
 
 #loadMapContainer button::before {
@@ -2673,10 +2677,361 @@ div#targetLabel {
 }
 
 div#targetLabel.correct {
-  border-color: #4CAF50;
-  background-color: #e8f5e9;
+    border-color: #4CAF50;
+    background-color: #e8f5e9;
 }
+
 div#targetLabel.incorrect {
-  border-color: #f44336;
-  background-color: #ffebee;
+    border-color: #f44336;
+    background-color: #ffebee;
+}
+
+.sidebar-tab-bar {
+    display: none;
+    gap: 1vw;
+}
+
+/* Hide radio inputs */
+.tab-radio {
+    display: none;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 0;
+    background: #fff3e0;
+    border: 1px solid #ffcc02;
+    border-bottom: 2px solid transparent;
+    font-weight: 600;
+    color: #E65100;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    border-radius: 12px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    text-align: center;
+}
+
+.tab-btn:hover {
+    background: #fffbe7;
+}
+
+/* Style for checked radio button's label */
+.tab-radio:checked+.tab-btn {
+    background: #fffbe7;
+    border-bottom: 2px solid #FF9800;
+    color: #FF9800;
+}
+
+.tab-panel {
+    display: block;
+}
+
+/* Front and center load map container */
+.front-load-map-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    z-index: 1000;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.front-load-map-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.front-load-map-content {
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 60%;
+    animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.front-load-map-icon {
+    font-size: 4em;
+    color: #2196F3;
+    margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.front-load-map-content h2 {
+    color: #333;
+    font-size: 1.8em;
+    margin: 0 0 10px 0;
+    font-weight: 600;
+}
+
+.front-load-map-content p {
+    color: #666;
+    font-size: 1.1em;
+    margin: 0 0 30px 0;
+    line-height: 1.5;
+}
+
+.front-load-map-btn {
+    padding: 15px 30px;
+    font-size: 1.1em;
+    font-weight: 600;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.front-load-map-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+}
+
+.front-load-map-btn:hover::before {
+    left: 100%;
+}
+
+.front-load-map-btn:hover {
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(33, 150, 243, 0.4);
+}
+
+.front-load-map-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+}
+
+.front-load-map-btn i {
+    font-size: 1.2em;
+}
+
+/* Load/Save Interface - Matching Testing Interface */
+.sidebar-loadsave-interface {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-loadsave-interface::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+}
+
+.loadsave-header {
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.loadsave-header h3 {
+    color: #E65100;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.loadsave-header h3 i {
+    font-size: 1.1em;
+    color: #FF9800;
+}
+
+.loadsave-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.loadsave-content button {
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #e0e0e0;
+    background: white;
+    border-radius: 10px;
+    user-select: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.loadsave-content button:hover:not(:disabled) {
+    background: #f5f5f5;
+    border-color: #4CAF50;
+    color: #4CAF50;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+}
+
+.loadsave-content button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+.loadsave-content button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.loadsave-content button:disabled:hover {
+    background: white;
+    border-color: #e0e0e0;
+    color: inherit;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Style for checked radio button's label */
+.tab-radio:checked+.tab-btn {
+    background: #fffbe7;
+    border-bottom: 2px solid #FF9800;
+    color: #FF9800;
+}
+
+/* Style for disabled tab buttons */
+.tab-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5 !important;
+    color: #999 !important;
+    border-color: #ddd !important;
+}
+
+.tab-btn.disabled:hover {
+    background: #f5f5f5 !important;
+    color: #999 !important;
+    border-color: #ddd !important;
+}
+
+/* Disable the radio input when tab is disabled */
+.tab-radio:disabled+.tab-btn {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5 !important;
+    color: #999 !important;
+    border-color: #ddd !important;
+}
+
+.tab-radio:disabled+.tab-btn:hover {
+    background: #f5f5f5 !important;
+    color: #999 !important;
+    border-color: #ddd !important;
+}
+
+@media (max-width: 1023px) {
+    .sidebar-tab-bar {
+        display: flex;
+    }
+
+    .sidebar-tabs {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tab-panel {
+        display: none !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+    }
+
+    .loadsave-content {
+        flex-direction: row;
+    }
+
+    /* CSS-only tab switching using radio inputs - more specific selectors */
+    #mainMenu #tab-loadsave:checked~.sidebar-tabs .tab-panel[data-tab="loadsave"] {
+        display: block !important;
+    }
+
+    #mainMenu #tab-test:checked~.sidebar-tabs .tab-panel[data-tab="test"] {
+        display: block !important;
+    }
+
+    /* Make sidebar more compact on mobile */
+    #mainMenu {
+        min-width: 0;
+        width: 100%;
+        margin: 0 auto;
+        padding-right: 0;
+    }
+
+    .page-container {
+        flex-direction: column;
+    }
+
+    .top-bar {
+        flex-direction: column;
+    }
+
+    .loadsave-content button {
+        padding: 12px 16px;
+    }
+
+    .test-mode-buttons button {
+        font-size: min(max(2vw, 12px), 20px);
+    }
+
 }
