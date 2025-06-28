@@ -2722,6 +2722,14 @@ function cleanupTest() {
         loadsaveTabBtn.classList.remove('disabled');
     }
 
+    // Re-enable the edit tab when test ends
+    const editTabRadio = document.getElementById('tab-edit');
+    const editTabBtn = document.querySelector('label[for="tab-edit"]');
+    if (editTabRadio && editTabBtn) {
+        editTabRadio.disabled = false;
+        editTabBtn.classList.remove('disabled');
+    }
+
     // Show all label text and reset point visibility
     document.querySelectorAll('.label-box').forEach(label => {
         if (label.dataset.correctAnswer) {
@@ -3029,6 +3037,14 @@ function _toggleTestModeInternal(mode, selectedTags) {
     if (loadsaveTabRadio && loadsaveTabBtn) {
         loadsaveTabRadio.disabled = true;
         loadsaveTabBtn.classList.add('disabled');
+    }
+
+    // Disable the edit tab when test is active
+    const editTabRadio = document.getElementById('tab-edit');
+    const editTabBtn = document.querySelector('label[for="tab-edit"]');
+    if (editTabRadio && editTabBtn) {
+        editTabRadio.disabled = true;
+        editTabBtn.classList.add('disabled');
     }
 
     // Close the tag type panel if open
@@ -5052,5 +5068,39 @@ document.addEventListener('DOMContentLoaded', function () {
             // Map is loaded, hide the front load container
             frontLoadMapContainer.classList.add('hidden');
         }
+    }
+});
+
+// Edit tab functionality - automatically enable/disable edit mode
+const editTabRadio = document.getElementById('tab-edit');
+const editToggle = document.getElementById('editToggle');
+
+editTabRadio.addEventListener('change', () => {
+    if (editTabRadio.checked) {
+        // Enable edit mode when edit tab is selected
+        if (!editEnabled) {
+            toggleEditMode();
+        }
+    } else {
+        // Disable edit mode when other tabs are selected
+        if (editEnabled) {
+            toggleEditMode();
+        }
+    }
+});
+
+// Also handle when other tabs are selected to disable edit mode
+const loadsaveTabRadio = document.getElementById('tab-loadsave');
+const testTabRadio = document.getElementById('tab-test');
+
+loadsaveTabRadio.addEventListener('change', () => {
+    if (loadsaveTabRadio.checked && editEnabled) {
+        toggleEditMode();
+    }
+});
+
+testTabRadio.addEventListener('change', () => {
+    if (testTabRadio.checked && editEnabled) {
+        toggleEditMode();
     }
 });

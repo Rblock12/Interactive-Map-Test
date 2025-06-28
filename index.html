@@ -36,10 +36,12 @@
         <div id="mainMenu">
             <input type="radio" id="tab-loadsave" name="sidebar-tabs" class="tab-radio" checked>
             <input type="radio" id="tab-test" name="sidebar-tabs" class="tab-radio">
+            <input type="radio" id="tab-edit" name="sidebar-tabs" class="tab-radio">
             
             <div class="sidebar-tab-bar">
                 <label for="tab-loadsave" class="tab-btn" data-tab="loadsave">Load/Save</label>
                 <label for="tab-test" class="tab-btn" data-tab="test">Test</label>
+                <label for="tab-edit" class="tab-btn" data-tab="edit">Edit</label>
             </div>
             <div class="sidebar-tabs">
                 <div id="loadMapContainer" class="sidebar-loadsave-interface tab-panel" data-tab="loadsave">
@@ -104,55 +106,62 @@
                         <div class="progress"></div>
                     </div>
                 </div>
+                <div id="editInterface" class="sidebar-edit-interface tab-panel" data-tab="edit">
+                    <div class="edit-header">
+                        <h3><i class="fas fa-edit"></i> Edit Map</h3>
+                    </div>
+                    <div class="edit-content">
+                        <div class="edit-tools">
+                            <button id="addBtn" onclick="toggleAddMenu()" disabled aria-pressed="false" title="Add elements">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                            <div id="addSubMenu" style="display: none;">
+                                <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false"
+                                    title="Add new point">
+                                    <i class="fas fa-thumbtack"></i> Point
+                                </button>
+                                <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false"
+                                    title="Draw shape">
+                                    <i class="fas fa-draw-polygon"></i> Shape
+                                </button>
+                                <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
+                                    <i class="fas fa-minus"></i> Line
+                                </button>
+                                <!-- Finish Drawing Buttons (Hidden by default) -->
+                                <div id="finishDrawingInterface" class="finish-drawing-buttons" style="display: none;">
+                                    <button id="finishDrawingBtn" class="finish-drawing-btn" title="Finish drawing">
+                                        <i class="fas fa-check"></i>
+                                        <span class="button-text">Finish</span>
+                                    </button>
+                                    <button id="cancelDrawingBtn" class="cancel-drawing-btn" title="Cancel drawing">
+                                        <i class="fas fa-times"></i>
+                                        <span class="button-text">Cancel</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move elements">
+                                <i class="fas fa-arrows-alt"></i> Move
+                            </button>
+                            <button id="editLabelTextBtn" onclick="setMode('editLabelText')" disabled aria-pressed="false"
+                                title="Edit element text">
+                                <i class="fas fa-font"></i> Edit Text
+                            </button>
+                            <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false"
+                                title="Delete elements">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                            <button id="tagPanelBtn" onclick="setMode('changeTag')" aria-pressed="false"
+                                title="Change existing element tags">
+                                <i class="fas fa-tags"></i> Change Tag
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="menu" role="toolbar" aria-label="Map interaction controls">
                 <button id="editToggle" onclick="toggleEditMode()" aria-pressed="false" title="Toggle edit mode">
                     <i class="fas fa-edit"></i> Edit Mode
                 </button>
-                <div class="edit-tools">
-                    <button id="addBtn" onclick="toggleAddMenu()" disabled aria-pressed="false" title="Add elements">
-                        <i class="fas fa-plus"></i> Add
-                    </button>
-                    <div id="addSubMenu" style="display: none;">
-                        <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false"
-                            title="Add new point">
-                            <i class="fas fa-thumbtack"></i> Point
-                        </button>
-                        <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false"
-                            title="Draw shape">
-                            <i class="fas fa-draw-polygon"></i> Shape
-                        </button>
-                        <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
-                            <i class="fas fa-minus"></i> Line
-                        </button>
-                        <!-- Finish Drawing Buttons (Hidden by default) -->
-                        <div id="finishDrawingInterface" class="finish-drawing-buttons" style="display: none;">
-                            <button id="finishDrawingBtn" class="finish-drawing-btn" title="Finish drawing">
-                                <i class="fas fa-check"></i>
-                                <span class="button-text">Finish</span>
-                            </button>
-                            <button id="cancelDrawingBtn" class="cancel-drawing-btn" title="Cancel drawing">
-                                <i class="fas fa-times"></i>
-                                <span class="button-text">Cancel</span>
-                            </button>
-                        </div>
-                    </div>
-                    <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false" title="Move elements">
-                        <i class="fas fa-arrows-alt"></i> Move
-                    </button>
-                    <button id="editLabelTextBtn" onclick="setMode('editLabelText')" disabled aria-pressed="false"
-                        title="Edit element text">
-                        <i class="fas fa-font"></i> Edit Text
-                    </button>
-                    <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false"
-                        title="Delete elements">
-                        <i class="fas fa-trash-alt"></i> Delete
-                    </button>
-                    <button id="tagPanelBtn" onclick="setMode('changeTag')" aria-pressed="false"
-                        title="Change existing element tags">
-                        <i class="fas fa-tags"></i> Change Tag
-                    </button>
-                </div>
             </div>
         </div>
 

@@ -273,7 +273,7 @@ h1 {
     padding: 16px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
     gap: 12px;
     border: 1px solid #e0e0e0;
@@ -300,6 +300,7 @@ h1 {
     background: #f8f9fa;
     border: 1px solid #e0e0e0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 1;
 }
 
 #addSubMenu button:hover:not(:disabled) {
@@ -2981,6 +2982,126 @@ div#targetLabel.incorrect {
     border-color: #ddd !important;
 }
 
+/* Edit Interface - Matching Testing Interface */
+.sidebar-edit-interface {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid #ffcc02;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    min-width: 290px;
+}
+
+.sidebar-edit-interface::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #FF9800, #FFC107, #FFEB3B);
+    border-radius: 16px 16px 0 0;
+}
+
+.edit-header {
+    text-align: center;
+    position: relative;
+    display: flex;
+    margin-bottom: 12px;
+}
+
+.edit-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #E65100;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.edit-header h3 i {
+    font-size: 1.1em;
+    color: #FF9800;
+}
+
+.edit-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.edit-content .edit-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.edit-content .edit-tools button {
+    padding: 12px 20px;
+    font-size: min(max(2vw, 12px), 20px);
+    border: 2px solid #e0e0e0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    user-select: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #555;
+    cursor: pointer;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    flex: 1;
+}
+
+.edit-content .edit-tools button:hover:not(:disabled) {
+    background: #fff8e1;
+    border-color: #FF9800;
+    color: #BF360C;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+}
+
+.edit-content .edit-tools button:active {
+
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+}
+
+.edit-content .edit-tools button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    color: #999;
+    border-color: #ddd;
+    transform: none;
+    box-shadow: none;
+}
+
+.edit-content .edit-tools button:disabled:hover {
+    background: #f5f5f5;
+    color: #999;
+    border-color: #ddd;
+    transform: none;
+    box-shadow: none;
+}
+
+.edit-content .edit-tools button.active,
+.edit-content .edit-tools button[aria-pressed="true"] {
+    background: #FF9800;
+    color: white;
+    border-color: #BF360C;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
 @media (max-width: 1023px) {
     .sidebar-tab-bar {
         display: flex;
@@ -3010,6 +3131,10 @@ div#targetLabel.incorrect {
         display: block !important;
     }
 
+    #mainMenu #tab-edit:checked~.sidebar-tabs .tab-panel[data-tab="edit"] {
+        display: block !important;
+    }
+
     /* Make sidebar more compact on mobile */
     #mainMenu {
         min-width: 0;
@@ -3032,6 +3157,10 @@ div#targetLabel.incorrect {
 
     .test-mode-buttons button {
         font-size: min(max(2vw, 12px), 20px);
+    }
+
+    .edit-content .edit-tools {
+        flex-direction: row;
     }
 
 }
