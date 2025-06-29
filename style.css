@@ -83,62 +83,30 @@ h1 {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Menu Styles - Redesigned */
-.menu {
-    user-select: none;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    background: white;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    width: 200px;
-    height: fit-content;
-    position: sticky;
-    top: 20px;
-}
-
 /* Edit Mode Toggle - Main Button */
 #editToggle {
-    padding: 12px 20px;
-    font-size: 15px;
+    overflow: hidden;
+    width: 100%;
+    padding: 8px 16px;
+    background: rgb(227, 234, 252);
+    color: rgb(25, 118, 210);
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
     font-weight: 600;
-    border: 2px solid #e0e0e0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border-radius: 12px;
-    user-select: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #555;
-    cursor: pointer;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    position: relative;
-    overflow: hidden;
-}
-
-#editToggle::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.5s;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
 }
 
 #editToggle:hover::before {
     left: 100%;
 }
 
-#editToggle:hover:not(:disabled) {
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    border-color: #2196F3;
-    color: #1976D2;
+#editToggle:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(33, 150, 243, 0.15);
 }
@@ -154,8 +122,19 @@ h1 {
     color: white;
     border-color: #1565C0;
     font-weight: 600;
-    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
     transform: translateY(-2px);
+}
+
+/* CSS-based button text switching */
+#editToggle::after {
+    content: "Enable Editing";
+    margin-left: 8px;
+    font-weight: 600;
+}
+
+#editToggle[data-edit-mode="true"]::after {
+    content: "Done";
 }
 
 /* Edit Tools Container */
@@ -267,18 +246,20 @@ h1 {
     transform: translateY(-1px);
 }
 
+button#addBtn[aria-pressed="true"] {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
 /* Add Submenu */
 #addSubMenu {
-    background: white;
-    padding: 16px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    display: flex;
     flex-direction: row;
     align-items: stretch;
-    gap: 12px;
-    border: 1px solid #e0e0e0;
     position: relative;
     overflow: hidden;
+    gap: 10px;
+    padding: 10px
 }
 
 #addSubMenu::before {
@@ -288,8 +269,6 @@ h1 {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
-    border-radius: 10px 10px 0 0;
 }
 
 #addSubMenu button {
@@ -298,25 +277,24 @@ h1 {
     font-size: 13px;
     border-radius: 8px;
     background: #f8f9fa;
-    border: 1px solid #e0e0e0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex: 1;
+    align-items: center;
 }
 
 #addSubMenu button:hover:not(:disabled) {
-    background: #e8f5e8;
-    border-color: #4CAF50;
-    color: #2E7D32;
+    background: #fff8e1;
+    border-color: #FF9800;
+    color: #BF360C;
     transform: translateY(-1px);
     box-shadow: 0 3px 10px rgba(76, 175, 80, 0.15);
 }
 
 #addSubMenu button.active,
 #addSubMenu button[aria-pressed="true"] {
-    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    background: #FF9800;
     color: white;
-    border-color: #2E7D32;
-    font-weight: 600;
+    border-color: #BF360C;
     box-shadow: 0 3px 12px rgba(76, 175, 80, 0.25);
 }
 
@@ -1884,7 +1862,7 @@ h1 {
     display: none;
 }
 
-#loadMapContainer button {
+#loadMapContainer button:not(.interface-toggle) {
     padding: 12px 20px;
     font-size: min(max(2vw, 12px), 20px);
     border: 2px solid #e0e0e0;
@@ -3038,11 +3016,10 @@ div#targetLabel.incorrect {
 .edit-content .edit-tools {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
 
 .edit-content .edit-tools button {
-    padding: 12px 20px;
     font-size: min(max(2vw, 12px), 20px);
     border: 2px solid #e0e0e0;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
@@ -3050,7 +3027,7 @@ div#targetLabel.incorrect {
     user-select: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
-    align-items: center;
+    flex-direction: row;
     gap: 10px;
     color: #555;
     cursor: pointer;
@@ -3060,6 +3037,7 @@ div#targetLabel.incorrect {
     overflow: hidden;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     flex: 1;
+    align-items: center;
 }
 
 .edit-content .edit-tools button:hover:not(:disabled) {
@@ -3071,7 +3049,6 @@ div#targetLabel.incorrect {
 }
 
 .edit-content .edit-tools button:active {
-
     transform: translateY(0);
     box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
 }
@@ -3100,6 +3077,28 @@ div#targetLabel.incorrect {
     color: white;
     border-color: #BF360C;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.addButtonContainer {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 2px solid #f89f20;
+    flex: 1;
+}
+
+.otherButtonContainer {
+    display: grid;
+    grid-template-columns: .5fr .5fr;
+    grid-template-rows: .5fr .5fr;
+    flex: 1;
+    gap: 12px;
+}
+
+.otherButtonContainer {
+    display: flex;
+    flex-direction: column;
 }
 
 @media (max-width: 1023px) {
@@ -3163,4 +3162,178 @@ div#targetLabel.incorrect {
         flex-direction: row;
     }
 
+    .otherButtonContainer {
+        display: grid;
+        grid-template-columns: .5fr .5fr;
+        grid-template-rows: .5fr .5fr;
+        flex: 1;
+    }
+
+    @media (max-width: 499px) {
+        .otherButtonContainer {
+            grid-template-columns: .25fr .25fr .25fr .25fr;
+            grid-template-rows: 1fr;
+        }
+
+        .edit-content .edit-tools {
+            flex-direction: column;
+        }
+
+        .edit-content .edit-tools .otherButtonContainer button {
+            flex-direction: row;
+            gap: 10px;
+        }
+    }
 }
+
+button#addBtn[aria-pressed="true"] {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+/* Add Button Header */
+.add-button-header {
+    padding: 8px;
+    font-size: min(max(2vw, 12px), 20px);
+    background: rgb(255 204 130 / 70%);
+    border-radius: 12px;
+    user-select: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    color: #555;
+    cursor: default;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-bottom: 2px solid #f89f20;
+}
+
+.add-button-header.active {
+    background: #FF9800;
+    color: white;
+    border-color: #BF360C;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+/* Interface Toggle Buttons - Only visible on larger screens */
+.interface-toggle {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    display: none;
+    /* Hidden by default, shown only on larger screens */
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+}
+
+.interface-toggle:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.interface-toggle i {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interface-toggle.collapsed i {
+    transform: rotate(-90deg);
+}
+
+/* Interface Content Containers */
+.interface-content {
+    overflow: hidden;
+    max-height: 1000px;
+    /* Large enough to accommodate content */
+    opacity: 1;
+}
+
+.interface-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Only apply transitions on larger screens where twirl functionality exists */
+@media (min-width: 1024px) {
+    .interface-content {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .interface-content.collapsed {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+/* Header styling to accommodate toggle buttons */
+.loadsave-header,
+.test-header,
+.edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loadsave-header h3,
+.test-header h3,
+.edit-header h3 {
+    margin: 0;
+    flex: 1;
+}
+
+/* Visual feedback for collapsed interfaces */
+.loadsave-header.collapsed,
+.test-header.collapsed,
+.edit-header.collapsed {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Show toggle buttons only on larger screens */
+@media (min-width: 1024px) {
+    .interface-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loadsave-header,
+    .test-header,
+    .edit-header {
+        cursor: pointer;
+    }
+
+    .loadsave-header:hover .interface-toggle,
+    .test-header:hover .interface-toggle,
+    .edit-header:hover .interface-toggle {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .loadsave-header:hover,
+    .test-header:hover,
+    .edit-header:hover {
+        background: rgba(0, 0, 0, 0.02);
+    }
+}
+
+/* Removed block that forced all interfaces collapsed by default on large screens */

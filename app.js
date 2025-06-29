@@ -41,19 +41,10 @@ const lines = [];
 document.addEventListener('DOMContentLoaded', () => {
     const editTools = document.querySelector('.edit-tools');
     editTools.classList.remove('visible');
-    const editToggle = document.getElementById('editToggle');
-    editToggle.setAttribute('aria-pressed', 'false');
-    editToggle.classList.remove('active');
     editEnabled = false;
 
     // Ensure all edit buttons are disabled initially
-    ['addBtn', 'deleteBtn', 'moveBtn', 'polygonBtn', 'lineBtn', 'editLabelTextBtn', 'tagPanelBtn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            btn.disabled = true;
-            btn.setAttribute('aria-disabled', 'true');
-        }
-    });
+    setEditButtonsEnabled(false);
 
     // Initialize SVG size to match container
     updateSVGDimensions();
@@ -114,7 +105,139 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize help modal functionality
     initializeHelpModal();
+    
+    // Initialize collapsible interface functionality
+    initializeCollapsibleInterfaces();
 });
+
+// Collapsible Interface Functions
+function initializeCollapsibleInterfaces() {
+    // Add event listeners to toggle buttons
+    document.querySelectorAll('.interface-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetId = toggle.getAttribute('data-target');
+            const content = document.querySelector(`[data-interface="${targetId}"]`);
+            toggleInterface(content, toggle);
+        });
+    });
+    
+    // Add event listeners to headers for click-to-toggle (only on larger screens)
+    document.querySelectorAll('.loadsave-header, .test-header, .edit-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Only allow header clicks on larger screens
+            if (window.innerWidth >= 1024) {
+                // Don't trigger if clicking on interactive elements
+                if (e.target.closest('button, input, select, textarea')) {
+                    return;
+                }
+                
+                const toggle = header.querySelector('.interface-toggle');
+                const targetId = toggle.getAttribute('data-target');
+                const content = document.querySelector(`[data-interface="${targetId}"]`);
+                toggleInterface(content, toggle);
+            }
+        });
+    });
+    
+    // Add event listeners to tab buttons to expand corresponding interface
+    document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+        tabBtn.addEventListener('click', () => {
+            // Wait a bit for the tab switch to complete
+            setTimeout(() => {
+                const activeTab = document.querySelector('.tab-radio:checked');
+                if (activeTab) {
+                    const tabName = activeTab.id.replace('tab-', '');
+                    const targetContent = document.querySelector(`[data-interface="${tabName}-content"]`);
+                    const toggle = document.querySelector(`[data-target="${tabName}-content"]`);
+                    if (targetContent && toggle) {
+                        expandInterface(targetContent, toggle, toggle.closest('.loadsave-header, .test-header, .edit-header'));
+                        collapseOtherInterfaces(targetContent);
+                    }
+                    // On small screens, enable edit mode when Edit tab is selected
+                    if (window.innerWidth < 1024) {
+                        if (tabName === 'edit') {
+                            if (!editEnabled) toggleEditMode(true);
+                        } else {
+                            if (editEnabled) toggleEditMode(false);
+                        }
+                    }
+                }
+            }, 50);
+        });
+    });
+    
+    // Set initial state - expand the active tab's interface, collapse others
+    const activeTab = document.querySelector('.tab-radio:checked');
+    if (activeTab) {
+        const tabName = activeTab.id.replace('tab-', '');
+        const targetContent = document.querySelector(`[data-interface="${tabName}-content"]`);
+        const toggle = document.querySelector(`[data-target="${tabName}-content"]`);
+        if (targetContent && toggle) {
+            expandInterface(targetContent, toggle, toggle.closest('.loadsave-header, .test-header, .edit-header'));
+            collapseOtherInterfaces(targetContent);
+        }
+        // On small screens, enable edit mode if Edit tab is selected
+        if (window.innerWidth < 1024 && tabName === 'edit') {
+            if (!editEnabled) toggleEditMode(true);
+        }
+    }
+}
+
+function toggleInterface(content, toggle) {
+    const isCollapsed = content.classList.contains('collapsed');
+    const header = toggle.closest('.loadsave-header, .test-header, .edit-header');
+    const isEdit = content.getAttribute('data-interface') === 'edit-content';
+    
+    if (isCollapsed) {
+        // Expand this interface and collapse all others
+        expandInterface(content, toggle, header);
+        collapseOtherInterfaces(content);
+        // On large screens, enable edit mode if Edit Map is twirled open
+        if (window.innerWidth >= 1024 && isEdit && !editEnabled) {
+            toggleEditMode(true);
+        }
+    } else {
+        // Collapse this interface
+        collapseInterface(content, toggle, header);
+        // On large screens, disable edit mode if Edit Map is twirled closed
+        if (window.innerWidth >= 1024 && isEdit && editEnabled) {
+            toggleEditMode(false);
+        }
+    }
+}
+
+function expandInterface(content, toggle, header) {
+    content.classList.remove('collapsed');
+    toggle.classList.remove('collapsed');
+    if (header) header.classList.remove('collapsed');
+    toggle.setAttribute('title', 'Collapse interface');
+}
+
+function collapseInterface(content, toggle, header) {
+    content.classList.add('collapsed');
+    toggle.classList.add('collapsed');
+    if (header) header.classList.add('collapsed');
+    toggle.setAttribute('title', 'Expand interface');
+}
+
+function collapseOtherInterfaces(currentContent) {
+    // Find all other interface contents and collapse them
+    document.querySelectorAll('.interface-content').forEach(content => {
+        if (content !== currentContent) {
+            const toggle = document.querySelector(`[data-target="${content.getAttribute('data-interface')}"]`);
+            const header = toggle ? toggle.closest('.loadsave-header, .test-header, .edit-header') : null;
+            collapseInterface(content, toggle, header);
+            
+            // If this is the Edit Map interface being collapsed, disable edit mode on large screens
+            if (content.getAttribute('data-interface') === 'edit-content' && window.innerWidth >= 1024) {
+                if (editEnabled) {
+                    toggleEditMode(false);
+                }
+            }
+        }
+    });
+}
 
 // Help Modal Functions
 function initializeHelpModal() {
@@ -160,55 +283,10 @@ function updateSVGDimensions() {
     shapesLayer.setAttribute('height', containerRect.height);
 }
 
-// Toggle Add submenu
+// Toggle Add submenu - now just updates the header state
 function toggleAddMenu() {
-    const addBtn = document.getElementById('addBtn');
-    const addSubMenu = document.getElementById('addSubMenu');
-    const isVisible = addSubMenu.style.display === 'flex';
-
-    if (isVisible) {
-        // If Add submenu is visible, hide it and deactivate Add mode
-        addSubMenu.style.display = 'none';
-        addBtn.setAttribute('aria-pressed', 'false');
-        addBtn.classList.remove('active');
-
-        // Turn off current mode if it's a drawing mode
-        if (currentMode === 'point' || currentMode === 'polygon' || currentMode === 'line') {
-            currentMode = null;
-            currentShape = null;
-            // Clear any remaining points
-            if (currentShapePoints.length > 0) {
-                currentShapePoints.forEach(point => {
-                    if (point.element && point.element.parentNode) {
-                        point.element.remove();
-                    }
-                });
-                currentShapePoints = [];
-            }
-            // Remove preview line if it exists
-            const previewLine = document.getElementById('previewLine');
-            if (previewLine) previewLine.remove();
-
-            // Reset button text
-            const polygonBtn = document.getElementById('polygonBtn');
-            const lineBtn = document.getElementById('lineBtn');
-            polygonBtn.textContent = 'Shape';
-            polygonBtn.title = 'Draw shape';
-            lineBtn.textContent = 'Line';
-            lineBtn.title = 'Draw line';
-
-            // Reset cursor
-            mapContainer.classList.remove('point-mode', 'polygon-mode', 'line-mode');
-            mapContainer.style.cursor = 'default';
-        }
-        updateButtons();
-    } else {
-        setMode(currentMode);
-        // If Add submenu is hidden, show it but don't activate any mode
-        addSubMenu.style.display = 'flex';
-        addBtn.setAttribute('aria-pressed', 'true');
-        addBtn.classList.add('active');
-    }
+    // The add submenu is now always visible, so we just update the header state
+    updateAddButtonHeaderState();
 }
 
 // Helper function to update cursor styles based on current mode
@@ -355,25 +433,6 @@ function setMode(mode) {
         if (previewLine) previewLine.remove();
     }
 
-    // Handle Add submenu and button state
-    const addSubMenu = document.getElementById('addSubMenu');
-    const addBtn = document.getElementById('addBtn');
-
-    // Only hide Add submenu if explicitly switching to a non-Add mode
-    // Keep it open when finishing shapes/lines
-    if (mode !== null && mode !== 'point' && mode !== 'polygon' && mode !== 'line') {
-        addSubMenu.style.display = 'none';
-        addBtn.setAttribute('aria-pressed', 'false');
-        addBtn.classList.remove('active');
-    }
-
-    // If switching to Add mode, show Add submenu and activate Add button
-    if (mode === 'point') {
-        addSubMenu.style.display = 'flex';
-        addBtn.setAttribute('aria-pressed', 'true');
-        addBtn.classList.add('active');
-    }
-
     // If clicking the same mode button again, deactivate the mode
     if (mode === previousMode) {
         currentMode = null;
@@ -391,38 +450,31 @@ function setMode(mode) {
 
     // Update all button states
     updateButtons();
+
+    // Update add button header state
+    updateAddButtonHeaderState();
 }
 
 // Update toggleEditMode to use the new cursor style helper
-function toggleEditMode() {
-    editEnabled = !editEnabled;
-    document.getElementById('editToggle').setAttribute('aria-pressed', editEnabled);
+function toggleEditMode(forceState) {
+    // If forceState is provided, set editEnabled to that value
+    if (typeof forceState === 'boolean') {
+        if (editEnabled === forceState) return;
+        editEnabled = forceState;
+    } else {
+        editEnabled = !editEnabled;
+    }
 
     // Toggle visibility of edit tools
     const editTools = document.querySelector('.edit-tools');
     if (editEnabled) {
         editTools.classList.add('visible');
-        // Enable edit tool buttons
-        ['addBtn', 'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'pointBtn', 'polygonBtn', 'lineBtn', 'tagPanelBtn'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) {
-                btn.disabled = false;
-                btn.setAttribute('aria-disabled', 'false');
-                btn.classList.remove('active');
-                btn.setAttribute('aria-pressed', 'false');
-            }
-        });
-        // Don't call showReferencePoints() here - let updateTagVisibilityOnMap() handle it
+        setEditButtonsEnabled(true);
     } else {
         editTools.classList.remove('visible');
-        // Reset current mode when exiting edit mode
         currentMode = null;
         currentShape = null;
-
-        // Hide finish drawing interface
         document.getElementById('finishDrawingInterface').style.display = 'none';
-
-        // Clear any in-progress shape points
         if (currentShapePoints.length > 0) {
             currentShapePoints.forEach(point => {
                 if (point.element && point.element.parentNode) {
@@ -431,32 +483,10 @@ function toggleEditMode() {
             });
             currentShapePoints = [];
         }
-
-        // Remove preview line if it exists
         const previewLine = document.getElementById('previewLine');
         if (previewLine) previewLine.remove();
-
-        // Reset all buttons to inactive state
-        document.querySelectorAll('.menu button').forEach(btn => {
-            btn.setAttribute('aria-pressed', 'false');
-            btn.classList.remove('active');
-            // Only disable certain buttons
-            if (btn.id !== 'editToggle' &&
-                btn.id !== 'identPointBtn' &&
-                btn.id !== 'findPointBtn' &&
-                btn.id !== 'editLabelTextBtn') {
-                btn.disabled = true;
-                btn.setAttribute('aria-disabled', 'true');
-            }
-        });
-
-        // Reset Add submenu
-        const addSubMenu = document.getElementById('addSubMenu');
-        addSubMenu.style.display = 'none';
-        const addBtn = document.getElementById('addBtn');
-        addBtn.setAttribute('aria-pressed', 'false');
-        addBtn.classList.remove('active');
-
+        setEditButtonsEnabled(false);
+        updateButtons();
         // Close the tag type panel if open
         const tagPanel = document.getElementById('tagPanel');
         if (tagPanel && tagPanel.style.display !== 'none') {
@@ -465,37 +495,31 @@ function toggleEditMode() {
             setTimeout(() => { tagPanel.style.display = 'none'; }, 300);
         }
     }
-
-    // Update cursor styles based on edit mode state
     updateCursorStyles(currentMode);
-
-    // Update tag visibility based on user preferences and edit mode
     updateTagVisibilityOnMap();
-
-    // Toggle visibility of shape strokes and fills
     document.querySelectorAll('.polygon-path').forEach(polygon => {
         polygon.setAttribute('stroke', editEnabled ? 'blue' : 'none');
         polygon.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
     });
-
-    // Toggle visibility of line strokes
     document.querySelectorAll('.line-path').forEach(line => {
         line.setAttribute('stroke', editEnabled ? 'blue' : 'none');
     });
+    updateAddButtonHeaderState();
 }
 
 function updateButtons() {
-    ['moveBtn', 'deleteBtn', 'pointBtn', 'polygonBtn', 'lineBtn', 'editLabelTextBtn', 'tagPanelBtn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            const btnMode = id === 'pointBtn' ? 'point' : id.replace('Btn', '');
+    // Update all edit mode buttons
+    document.querySelectorAll('.edit-mode-btn').forEach(btn => {
+        const btnMode = btn.getAttribute('data-mode');
+        if (btnMode) {
             const active = (btnMode === currentMode);
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', active);
         }
     });
 
-    document.getElementById('editToggle').setAttribute('aria-checked', editEnabled);
+    // Update add button header state
+    updateAddButtonHeaderState();
 }
 
 // Draw leader lines connecting ref points and label boxes
@@ -2605,14 +2629,9 @@ function cleanupTest() {
     identBtn.style.cursor = 'pointer';
     findBtn.style.cursor = 'pointer';
 
-    // Re-enable edit toggle
-    editToggle.disabled = false;
-    editToggle.style.opacity = '1';
-    editToggle.style.cursor = 'pointer';
-
     // Re-enable and reset all menu buttons
     document.querySelectorAll('.menu button').forEach(button => {
-        if (button.id !== 'stopTestBtn') {
+        if (button.id !== 'stopTestBtn' && button.id !== 'addBtn') {
             button.disabled = false;
             button.style.opacity = '1';
             button.style.cursor = 'pointer';
@@ -2842,7 +2861,6 @@ function toggleTestMode(mode) {
 function _toggleTestModeInternal(mode, selectedTags) {
     const identBtn = document.getElementById('identPointBtn');
     const findBtn = document.getElementById('findPointBtn');
-    const editToggle = document.getElementById('editToggle');
     const stopTestBtn = document.getElementById('stopTestBtn');
     const editTools = document.querySelector('.edit-tools');
     const addSubMenu = document.getElementById('addSubMenu');
@@ -2853,34 +2871,16 @@ function _toggleTestModeInternal(mode, selectedTags) {
     // If we're in a different test mode, stop it first
     if (testingMode) {
         endTest(false); // false indicates this is not a natural completion
-        restoreVisibility(); // Make sure everything is visible before starting new mode
+        // Only restore visibility if we're not entering find mode (where we want to hide elements)
+        if (mode !== 'find') {
+            restoreVisibility(); // Make sure everything is visible before starting new mode
+        }
     }
 
     // If we're in edit mode, disable it
     if (editEnabled) {
-        editEnabled = false;
-        editToggle.setAttribute('aria-pressed', 'false');
-        editToggle.classList.remove('active');
-        editTools.classList.remove('visible');
-        addSubMenu.style.display = 'none';
-
-        // Reset all edit-related states
-        currentMode = null;
-        currentShape = null;
-
-        // Hide finish drawing interface
-        document.getElementById('finishDrawingInterface').style.display = 'none';
-
-        if (currentShapePoints.length > 0) {
-            currentShapePoints.forEach(point => {
-                if (point.element && point.element.parentNode) {
-                    point.element.remove();
-                }
-            });
-            currentShapePoints = [];
-        }
-        const previewLine = document.getElementById('previewLine');
-        if (previewLine) previewLine.remove();
+        // Call toggleEditMode to properly close edit mode and update all UI states
+        toggleEditMode(false);
     }
 
     // Start the test mode
@@ -2990,10 +2990,10 @@ function _toggleTestModeInternal(mode, selectedTags) {
     // Select the first test item after UI is ready
     selectNextTestItem();
 
-    // Disable edit toggle during test
-    editToggle.disabled = true;
-    editToggle.style.opacity = '0.5';
-    editToggle.style.cursor = 'not-allowed';
+    // Disable edit mode during test (no longer need to disable editToggle button)
+    if (editEnabled) {
+        toggleEditMode(false);
+    }
 
     // Update button states and disable all menu buttons
     identBtn.classList.toggle('test-active', mode === 'ident');
@@ -3062,7 +3062,6 @@ function _toggleTestModeInternal(mode, selectedTags) {
             currentTestItem.element.style.visibility = 'visible';
         }
     }
-
 }
 
 let currentTestMode = null;
@@ -3085,9 +3084,7 @@ function resetUIState() {
     // Exit edit mode if active
     if (editEnabled) {
         editEnabled = false;
-        const editToggle = document.getElementById('editToggle');
-        editToggle.setAttribute('aria-pressed', 'false');
-        editToggle.classList.remove('active');
+        // Removed editToggle references
         const editTools = document.querySelector('.edit-tools');
         editTools.classList.remove('visible');
     }
@@ -3097,8 +3094,7 @@ function resetUIState() {
         btn.setAttribute('aria-pressed', 'false');
         btn.classList.remove('active');
         // Only disable certain buttons
-        if (btn.id !== 'editToggle' &&
-            btn.id !== 'identPointBtn' &&
+        if (btn.id !== 'identPointBtn' &&
             btn.id !== 'findPointBtn' &&
             btn.id !== 'editLabelTextBtn') {  // Don't disable edit text button
             btn.disabled = true;
@@ -3108,7 +3104,6 @@ function resetUIState() {
 
     // Hide Add submenu
     const addSubMenu = document.getElementById('addSubMenu');
-    addSubMenu.style.display = 'none';
     const addBtn = document.getElementById('addBtn');
     addBtn.setAttribute('aria-pressed', 'false');
     addBtn.classList.remove('active');
@@ -4842,12 +4837,33 @@ function updateInProgressShapePositions() {
 function setSidebarButtonsEnabled(enabled) {
     // Only enable/disable sidebar drawing and edit buttons, not finish/cancel
     const ids = [
-        'editToggle', 'addBtn', 'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
+        'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
         'pointBtn', 'polygonBtn', 'lineBtn',
         'findPointBtn', 'identPointBtn',
         'loadMapButton', 'saveElementsBtn', 'loadElementsBtn'
     ];
     ids.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.disabled = !enabled;
+            btn.style.opacity = enabled ? '1' : '0.5';
+            btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+        }
+    });
+
+    // If enabling buttons, update save button state based on whether there are elements
+    if (enabled) {
+        updateSaveButtonState();
+    }
+}
+
+// Function to enable/disable only edit buttons (excluding editToggle)
+function setEditButtonsEnabled(enabled) {
+    const editButtonIds = [
+        'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
+        'pointBtn', 'polygonBtn', 'lineBtn'
+    ];
+    editButtonIds.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.disabled = !enabled;
@@ -5058,7 +5074,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Show front load map container if no map is loaded
     const mapImage = document.getElementById('mapImage');
     const frontLoadMapContainer = document.getElementById('frontLoadMapContainer');
-    
+
     if (mapImage && frontLoadMapContainer) {
         // Check if map image has a source
         if (!mapImage.src || mapImage.src === window.location.href) {
@@ -5073,18 +5089,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Edit tab functionality - automatically enable/disable edit mode
 const editTabRadio = document.getElementById('tab-edit');
-const editToggle = document.getElementById('editToggle');
 
 editTabRadio.addEventListener('change', () => {
     if (editTabRadio.checked) {
         // Enable edit mode when edit tab is selected
         if (!editEnabled) {
-            toggleEditMode();
+            toggleEditMode(true);
         }
     } else {
         // Disable edit mode when other tabs are selected
         if (editEnabled) {
-            toggleEditMode();
+            toggleEditMode(false);
         }
     }
 });
@@ -5095,12 +5110,33 @@ const testTabRadio = document.getElementById('tab-test');
 
 loadsaveTabRadio.addEventListener('change', () => {
     if (loadsaveTabRadio.checked && editEnabled) {
-        toggleEditMode();
+        toggleEditMode(false);
     }
 });
 
 testTabRadio.addEventListener('change', () => {
     if (testTabRadio.checked && editEnabled) {
-        toggleEditMode();
+        toggleEditMode(false);
     }
 });
+
+// Function to update add button header active state
+function updateAddButtonHeaderState() {
+    const addBtnHeader = document.getElementById('addBtn');
+    const pointBtn = document.getElementById('pointBtn');
+    const polygonBtn = document.getElementById('polygonBtn');
+    const lineBtn = document.getElementById('lineBtn');
+
+    // Check if any submenu item is active
+    const isAnySubmenuActive = (pointBtn && pointBtn.getAttribute('aria-pressed') === 'true') ||
+        (polygonBtn && polygonBtn.getAttribute('aria-pressed') === 'true') ||
+        (lineBtn && lineBtn.getAttribute('aria-pressed') === 'true');
+
+    if (addBtnHeader) {
+        if (isAnySubmenuActive) {
+            addBtnHeader.classList.add('active');
+        } else {
+            addBtnHeader.classList.remove('active');
+        }
+    }
+}
