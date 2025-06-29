@@ -36,7 +36,6 @@ h1 {
     opacity: 0;
     transition: opacity 1s;
     flex: 1;
-    gap: min(2vw, 20px);
     min-height: 0;
     padding-bottom: 20px;
 }
@@ -283,28 +282,28 @@ button#addBtn[aria-pressed="true"] {
 }
 
 #addSubMenu button:hover:not(:disabled) {
-    background: #fff8e1;
-    border-color: #FF9800;
-    color: #BF360C;
+    background: #e3f2fd;
+    border-color: #2196F3;
+    color: #1976D2;
     transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.15);
+    box-shadow: 0 3px 10px rgba(33, 150, 243, 0.15);
 }
 
 #addSubMenu button.active,
 #addSubMenu button[aria-pressed="true"] {
-    background: #FF9800;
+    background: #2196F3;
     color: white;
-    border-color: #BF360C;
-    box-shadow: 0 3px 12px rgba(76, 175, 80, 0.25);
+    border-color: #1976D2;
+    box-shadow: 0 3px 12px rgba(33, 150, 243, 0.25);
 }
 
 /* Test Interface - Redesigned */
 .sidebar-test-interface {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+    background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
     border-radius: 12px;
     padding: 16px 20px;
-    border: 1px solid #ffcc02;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
+    border: 1px solid #2196F3;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.1);
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
@@ -318,7 +317,7 @@ button#addBtn[aria-pressed="true"] {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #FF9800, #FFC107, #FFEB3B);
+    background: linear-gradient(90deg, #2196F3, #1976D2, #1565C0);
     border-radius: 12px 12px 0 0;
 }
 
@@ -331,7 +330,7 @@ button#addBtn[aria-pressed="true"] {
 .test-header h3 {
     font-size: 18px;
     font-weight: 700;
-    color: #E65100;
+    color: #1976D2;
     margin: 0;
     display: flex;
     align-items: center;
@@ -341,7 +340,7 @@ button#addBtn[aria-pressed="true"] {
 
 .test-header h3 i {
     font-size: 1.1em;
-    color: #FF9800;
+    color: #2196F3;
 }
 
 .test-mode-buttons {
@@ -353,7 +352,6 @@ button#addBtn[aria-pressed="true"] {
 
 .test-mode-buttons button {
     padding: 12px 16px;
-    font-weight: 600;
     border: 2px solid #e0e0e0;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 10px;
@@ -366,22 +364,24 @@ button#addBtn[aria-pressed="true"] {
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     flex: 1;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-weight: 500;
 }
 
 .test-mode-buttons button:hover:not(:disabled) {
-    background: #fff8e1;
-    border-color: #FF9800;
-    color: #BF360C;
+    background: #e3f2fd;
+    border-color: #2196F3;
+    color: #1976D2;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
 }
 
 .test-mode-buttons button.test-active {
-    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
     color: white;
-    border-color: #E65100;
+    border-color: #1565C0;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.25);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.25);
     transform: translateY(-1px);
 }
 
@@ -436,8 +436,8 @@ button#addBtn[aria-pressed="true"] {
 
 .test-input-group input:focus {
     outline: none;
-    border-color: #FF9800;
-    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
 #testInput.correct {
@@ -488,11 +488,11 @@ button#addBtn[aria-pressed="true"] {
 .target-text {
     font-size: 16px;
     font-weight: 700;
-    color: #FF9800;
-    background: #fffbf5;
+    color: #2196F3;
+    background: #e3f2fd;
     padding: 8px;
     border-radius: 6px;
-    border: 1px solid #ffcc02;
+    border: 1px solid #2196F3;
     min-height: 20px;
     text-transform: uppercase;
 }
@@ -1721,9 +1721,9 @@ button#addBtn[aria-pressed="true"] {
 }
 
 .ref-point.highlight-test {
-    background: #ff9800;
+    background: #2196F3;
     transform: translate(-50%, -50%) scale(1.2);
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
     z-index: 100;
 }
 
@@ -1736,45 +1736,45 @@ button#addBtn[aria-pressed="true"] {
     height: 200%;
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: rgba(255, 152, 0, 0.3);
+    background: rgba(33, 150, 243, 0.3);
     animation: ripple 1.5s ease-in-out infinite;
 }
 
 .polygon-path.highlight-test {
-    stroke: #ff9800;
+    stroke: #2196F3;
     stroke-width: 4;
-    fill: rgba(255, 152, 0, 0.3);
-    filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.7));
+    fill: rgba(33, 150, 243, 0.3);
+    filter: drop-shadow(0 0 8px rgba(33, 150, 243, 0.7));
 }
 
 .line-path.highlight-test {
-    stroke: #ff9800;
+    stroke: #2196F3;
     stroke-width: 4;
-    filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.7));
+    filter: drop-shadow(0 0 8px rgba(33, 150, 243, 0.7));
 }
 
 .label-box.highlight-test {
-    border: 2px solid #ff9800;
+    border: 2px solid #2196F3;
     background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
     z-index: 100;
     animation: pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
-        filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0.7));
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
+        filter: drop-shadow(0 0 0 rgba(33, 150, 243, 0.7));
     }
 
     50% {
-        box-shadow: 0 0 20px 10px rgba(255, 152, 0, 0);
-        filter: drop-shadow(0 0 15px rgba(255, 152, 0, 0.7));
+        box-shadow: 0 0 20px 10px rgba(33, 150, 243, 0);
+        filter: drop-shadow(0 0 15px rgba(33, 150, 243, 0.7));
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
-        filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0));
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+        filter: drop-shadow(0 0 0 rgba(33, 150, 243, 0));
     }
 }
 
@@ -1792,26 +1792,26 @@ button#addBtn[aria-pressed="true"] {
 
 @keyframes svgPulse {
     0% {
-        stroke: #ff9800;
+        stroke: #2196F3;
         stroke-width: 2;
-        filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0.7));
+        filter: drop-shadow(0 0 0 rgba(33, 150, 243, 0.7));
     }
 
     50% {
-        stroke: #ff9800;
+        stroke: #2196F3;
         stroke-width: 3;
-        filter: drop-shadow(0 0 8px rgba(255, 152, 0, 0.7));
+        filter: drop-shadow(0 0 8px rgba(33, 150, 243, 0.7));
     }
 
     100% {
-        stroke: #ff9800;
+        stroke: #2196F3;
         stroke-width: 2;
-        filter: drop-shadow(0 0 0 rgba(255, 152, 0, 0.7));
+        filter: drop-shadow(0 0 0 rgba(33, 150, 243, 0.7));
     }
 }
 
 .leader-line.highlight-test {
-    stroke: #ff9800 !important;
+    stroke: #2196F3 !important;
     stroke-width: 3 !important;
     stroke-dasharray: 4, 7 !important;
     animation: none !important;
@@ -1819,28 +1819,28 @@ button#addBtn[aria-pressed="true"] {
 
 .polygon-path.highlight-test,
 .line-path.highlight-test {
-    stroke: #ff9800;
+    stroke: #2196F3;
     stroke-width: 2;
     animation: svgPulse 1.5s ease-in-out infinite;
 }
 
 .polygon-path.highlight-test {
-    fill: rgba(255, 152, 0, 0.15);
+    fill: rgba(33, 150, 243, 0.15);
 }
 
 .ref-point.highlight-test {
-    background: #ff9800;
+    background: #2196F3;
     border-color: white;
     animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* File Loading Container */
 #loadMapContainer {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+    background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
     border-radius: 12px;
     padding: 16px 20px;
-    border: 1px solid #ffcc02;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
+    border: 1px solid #2196F3;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.1);
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
@@ -1854,7 +1854,7 @@ button#addBtn[aria-pressed="true"] {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #FF9800, #FFC107, #FFEB3B);
+    background: linear-gradient(90deg, #2196F3, #1976D2, #1565C0);
     border-radius: 12px 12px 0 0;
 }
 
@@ -1864,7 +1864,7 @@ button#addBtn[aria-pressed="true"] {
 
 #loadMapContainer button:not(.interface-toggle) {
     padding: 12px 20px;
-    font-size: min(max(2vw, 12px), 20px);
+    font-size: min(max(2vw, 12px), 14px);
     border: 2px solid #e0e0e0;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 12px;
@@ -1881,17 +1881,6 @@ button#addBtn[aria-pressed="true"] {
     overflow: hidden;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     flex: 1;
-}
-
-#loadMapContainer button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.5s;
 }
 
 #loadMapContainer button:hover::before {
@@ -1950,14 +1939,14 @@ button#addBtn[aria-pressed="true"] {
 }
 
 #loadElementsBtn {
-    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
     color: white !important;
-    border-color: #FF9800 !important;
+    border-color: #2196F3 !important;
 }
 
 #loadElementsBtn:hover {
-    background: linear-gradient(135deg, #F57C00 0%, #E65100 100%) !important;
-    border-color: #E65100 !important;
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
+    border-color: #1565C0 !important;
     color: white !important;
 }
 
@@ -2306,13 +2295,13 @@ button#addBtn[aria-pressed="true"] {
     align-items: center;
     padding: 24px 24px 16px 24px;
     border-bottom: 1px solid #e0e0e0;
-    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+    background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
     border-radius: 16px 16px 0 0;
 }
 
 .warning-modal-header h3 {
     margin: 0;
-    color: #f57c00;
+    color: #1976D2;
     font-size: 24px;
     font-weight: 600;
     display: flex;
@@ -2651,8 +2640,8 @@ div#targetLabel {
     position: relative;
     display: block;
     transition: background-color 0.3s, border-color 0.3s;
-    border-color: #ffcc02;
-    background: #fffbf5;
+    border-color: #2196F3;
+    background: #e3f2fd;
 }
 
 div#targetLabel.correct {
@@ -2678,11 +2667,11 @@ div#targetLabel.incorrect {
 .tab-btn {
     flex: 1;
     padding: 10px 0;
-    background: #fff3e0;
-    border: 1px solid #ffcc02;
+    background: #e3f2fd;
+    border: 1px solid #2196F3;
     border-bottom: 2px solid transparent;
     font-weight: 600;
-    color: #E65100;
+    color: #1976D2;
     cursor: pointer;
     transition: background 0.2s, border-color 0.2s;
     border-radius: 12px;
@@ -2692,14 +2681,14 @@ div#targetLabel.incorrect {
 }
 
 .tab-btn:hover {
-    background: #fffbe7;
+    background: #bbdefb;
 }
 
 /* Style for checked radio button's label */
 .tab-radio:checked+.tab-btn {
-    background: #fffbe7;
-    border-bottom: 2px solid #FF9800;
-    color: #FF9800;
+    background: #bbdefb;
+    border-bottom: 2px solid #2196F3;
+    color: #2196F3;
 }
 
 .tab-panel {
@@ -2716,7 +2705,7 @@ div#targetLabel.incorrect {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
     z-index: 1000;
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
@@ -2849,6 +2838,7 @@ div#targetLabel.incorrect {
     left: 0;
     right: 0;
     height: 3px;
+    background: linear-gradient(90deg, #2196F3, #1976D2, #1565C0);
     border-radius: 16px 16px 0 0;
 }
 
@@ -2857,7 +2847,7 @@ div#targetLabel.incorrect {
 }
 
 .loadsave-header h3 {
-    color: #E65100;
+    color: #1976D2;
     font-size: 18px;
     font-weight: 700;
     margin: 0;
@@ -2869,7 +2859,7 @@ div#targetLabel.incorrect {
 
 .loadsave-header h3 i {
     font-size: 1.1em;
-    color: #FF9800;
+    color: #2196F3;
 }
 
 .loadsave-content {
@@ -2896,16 +2886,16 @@ div#targetLabel.incorrect {
 }
 
 .loadsave-content button:hover:not(:disabled) {
-    background: #f5f5f5;
-    border-color: #4CAF50;
-    color: #4CAF50;
+    background: #e3f2fd;
+    border-color: #2196F3;
+    color: #1976D2;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
 }
 
 .loadsave-content button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
 }
 
 .loadsave-content button:disabled {
@@ -2925,9 +2915,9 @@ div#targetLabel.incorrect {
 
 /* Style for checked radio button's label */
 .tab-radio:checked+.tab-btn {
-    background: #fffbe7;
-    border-bottom: 2px solid #FF9800;
-    color: #FF9800;
+    background: #bbdefb;
+    border-bottom: 2px solid #2196F3;
+    color: #2196F3;
 }
 
 /* Style for disabled tab buttons */
@@ -2962,11 +2952,11 @@ div#targetLabel.incorrect {
 
 /* Edit Interface - Matching Testing Interface */
 .sidebar-edit-interface {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+    background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
     border-radius: 12px;
     padding: 16px 20px;
-    border: 1px solid #ffcc02;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.1);
+    border: 1px solid #2196F3;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.1);
     position: relative;
     overflow: hidden;
     margin-bottom: 20px;
@@ -2980,7 +2970,7 @@ div#targetLabel.incorrect {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #FF9800, #FFC107, #FFEB3B);
+    background: linear-gradient(90deg, #2196F3, #1976D2, #1565C0);
     border-radius: 16px 16px 0 0;
 }
 
@@ -2993,7 +2983,7 @@ div#targetLabel.incorrect {
 .edit-header h3 {
     font-size: 18px;
     font-weight: 700;
-    color: #E65100;
+    color: #1976D2;
     margin: 0;
     display: flex;
     align-items: center;
@@ -3003,7 +2993,7 @@ div#targetLabel.incorrect {
 
 .edit-header h3 i {
     font-size: 1.1em;
-    color: #FF9800;
+    color: #2196F3;
 }
 
 .edit-content {
@@ -3020,7 +3010,7 @@ div#targetLabel.incorrect {
 }
 
 .edit-content .edit-tools button {
-    font-size: min(max(2vw, 12px), 20px);
+    font-size: min(max(2vw, 12px), 14px);
     border: 2px solid #e0e0e0;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 12px;
@@ -3038,14 +3028,16 @@ div#targetLabel.incorrect {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     flex: 1;
     align-items: center;
+    padding: 10px;
+    font-weight: 500;
 }
 
 .edit-content .edit-tools button:hover:not(:disabled) {
-    background: #fff8e1;
-    border-color: #FF9800;
-    color: #BF360C;
+    background: #e3f2fd;
+    border-color: #2196F3;
+    color: #1976D2;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
 }
 
 .edit-content .edit-tools button:active {
@@ -3073,9 +3065,9 @@ div#targetLabel.incorrect {
 
 .edit-content .edit-tools button.active,
 .edit-content .edit-tools button[aria-pressed="true"] {
-    background: #FF9800;
+    background: #2196F3;
     color: white;
-    border-color: #BF360C;
+    border-color: #1976D2;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 
@@ -3084,7 +3076,7 @@ div#targetLabel.incorrect {
     flex-direction: column;
     background-color: #ffffff;
     border-radius: 12px;
-    border: 2px solid #f89f20;
+    border: 2px solid #2196F3;
     flex: 1;
 }
 
@@ -3103,7 +3095,7 @@ div#targetLabel.incorrect {
     .sidebar-tabs {
         display: flex;
         flex-direction: column;
-    }
+    } 
 
     .tab-panel {
         display: none !important;
@@ -3113,6 +3105,10 @@ div#targetLabel.incorrect {
 
     .loadsave-content {
         flex-direction: row;
+    }
+
+    .edit-content .edit-tools button {
+        padding: 0px;
     }
 
     /* CSS-only tab switching using radio inputs - more specific selectors */
@@ -3166,6 +3162,7 @@ div#targetLabel.incorrect {
         grid-template-columns: .5fr .5fr;
         grid-template-rows: .5fr .5fr;
         flex: 1;
+        gap: 6px;
     }
 
     @media (max-width: 499px) {
@@ -3181,6 +3178,7 @@ div#targetLabel.incorrect {
         .edit-content .edit-tools .otherButtonContainer button {
             flex-direction: row;
             border-radius: 6px;
+            padding: 6px;
         }
 
         .loadsave-content {
@@ -3200,8 +3198,8 @@ button#addBtn[aria-pressed="true"] {
 
 /* Add Button Header */
 .add-button-header {
-    font-size: min(max(2vw, 12px), 20px);
-    background: rgb(255 204 130 / 70%);
+    font-size: min(max(2vw, 12px), 14px);
+    background: rgb(33 150 243 / 20%);
     border-radius: 12px;
     user-select: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3218,13 +3216,15 @@ button#addBtn[aria-pressed="true"] {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
-    border-bottom: 2px solid #f89f20;
+    border-bottom: 2px solid #2196F3;
+    padding: 4px;
+    font-weight: 500;
 }
 
 .add-button-header.active {
-    background: #FF9800;
+    background: #2196F3;
     color: white;
-    border-color: #BF360C;
+    border-color: #1976D2;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 
