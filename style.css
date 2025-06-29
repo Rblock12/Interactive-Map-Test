@@ -347,7 +347,7 @@ button#addBtn[aria-pressed="true"] {
 
 .test-mode-buttons {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 10px;
 }
 
@@ -3152,6 +3152,11 @@ div#targetLabel.incorrect {
 
     .loadsave-content button {
         padding: 12px 16px;
+        flex-direction: row;
+    }
+
+    .test-mode-buttons {
+        flex-direction: row;
     }
 
     .test-mode-buttons button {
@@ -3182,6 +3187,14 @@ div#targetLabel.incorrect {
         .edit-content .edit-tools .otherButtonContainer button {
             flex-direction: row;
             gap: 10px;
+        }
+
+        .loadsave-content {
+            flex-direction: column;
+        }
+
+        .test-mode-buttons {
+            flex-direction: column;
         }
     }
 }
