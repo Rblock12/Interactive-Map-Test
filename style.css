@@ -259,7 +259,7 @@ button#addBtn[aria-pressed="true"] {
     position: relative;
     overflow: hidden;
     gap: 10px;
-    padding: 10px
+    padding: 5px
 }
 
 #addSubMenu::before {
@@ -326,7 +326,6 @@ button#addBtn[aria-pressed="true"] {
     text-align: center;
     position: relative;
     display: flex;
-    margin-bottom: 12px;
 }
 
 .test-header h3 {
@@ -349,6 +348,7 @@ button#addBtn[aria-pressed="true"] {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    padding-top: 2px;
 }
 
 .test-mode-buttons button {
@@ -2853,7 +2853,6 @@ div#targetLabel.incorrect {
 }
 
 .loadsave-header {
-    margin-bottom: 12px;
     text-align: center;
 }
 
@@ -2877,6 +2876,7 @@ div#targetLabel.incorrect {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-top: 2px;
 }
 
 .loadsave-content button {
@@ -2988,7 +2988,6 @@ div#targetLabel.incorrect {
     text-align: center;
     position: relative;
     display: flex;
-    margin-bottom: 12px;
 }
 
 .edit-header h3 {
@@ -3011,6 +3010,7 @@ div#targetLabel.incorrect {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-top: 2px;
 }
 
 .edit-content .edit-tools {
@@ -3028,7 +3028,7 @@ div#targetLabel.incorrect {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: row;
-    gap: 10px;
+    gap: min(.5em, 10px);
     color: #555;
     cursor: pointer;
     justify-content: center;
@@ -3089,16 +3089,10 @@ div#targetLabel.incorrect {
 }
 
 .otherButtonContainer {
-    display: grid;
-    grid-template-columns: .5fr .5fr;
-    grid-template-rows: .5fr .5fr;
-    flex: 1;
-    gap: 12px;
-}
-
-.otherButtonContainer {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    gap: 12px;
 }
 
 @media (max-width: 1023px) {
@@ -3186,7 +3180,7 @@ div#targetLabel.incorrect {
 
         .edit-content .edit-tools .otherButtonContainer button {
             flex-direction: row;
-            gap: 10px;
+            border-radius: 6px;
         }
 
         .loadsave-content {
@@ -3206,7 +3200,6 @@ button#addBtn[aria-pressed="true"] {
 
 /* Add Button Header */
 .add-button-header {
-    padding: 8px;
     font-size: min(max(2vw, 12px), 20px);
     background: rgb(255 204 130 / 70%);
     border-radius: 12px;
@@ -3270,7 +3263,6 @@ button#addBtn[aria-pressed="true"] {
 .interface-content {
     overflow: hidden;
     max-height: 1000px;
-    /* Large enough to accommodate content */
     opacity: 1;
 }
 
@@ -3304,7 +3296,6 @@ button#addBtn[aria-pressed="true"] {
     gap: 8px;
     padding: 8px 12px;
     border-radius: 8px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loadsave-header h3,
@@ -3348,5 +3339,3 @@ button#addBtn[aria-pressed="true"] {
         background: rgba(0, 0, 0, 0.02);
     }
 }
-
-/* Removed block that forced all interfaces collapsed by default on large screens */
