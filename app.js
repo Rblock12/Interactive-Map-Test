@@ -1506,6 +1506,19 @@ mapContainer.addEventListener('click', (e) => {
             }
         }
     } else if (currentMode === 'polygon' || currentMode === 'line') {
+        // Check if user clicked on the first point of the current shape (only for polygons)
+        if (currentMode === 'polygon' && currentShapePoints.length > 0 && hasEnoughPointsForShape()) {
+            const firstPoint = currentShapePoints[0];
+            const firstPointRect = firstPoint.element.getBoundingClientRect();
+            if (isPointInRect(x, y, firstPointRect, rect.left, rect.top)) {
+                // User clicked on the first point, finish the shape
+                finishCurrentShape();
+                document.getElementById('finishDrawingInterface').style.display = 'none';
+                setSidebarButtonsEnabled(true);
+                return;
+            }
+        }
+
         const point = document.createElement('div');
         point.className = 'polygon-point';
         point.setAttribute('data-type', currentType);
