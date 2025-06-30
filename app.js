@@ -37,6 +37,9 @@ const polygons = [];
 // line structure: { points: [{x, y, element}], labelBoxEl, polyline, anchorPoint, anchorX, anchorY }
 const lines = [];
 
+// Unsaved changes tracking - stores the baseline data for comparison
+let baselineData = null;
+
 // Initialize UI state
 document.addEventListener('DOMContentLoaded', () => {
     const editTools = document.querySelector('.edit-tools');
@@ -108,6 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize collapsible interface functionality
     initializeCollapsibleInterfaces();
+    
+    // Add beforeunload event listener to warn about unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsavedChanges()) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            return e.returnValue;
+        }
+    });
 });
 
 // Collapsible Interface Functions
@@ -640,12 +652,37 @@ function updateSaveButtonState() {
     const saveButton = document.getElementById('saveElementsBtn');
     const hasData = points.length > 0 || polygons.length > 0 || lines.length > 0;
     const isDrawing = currentShapePoints && currentShapePoints.length > 0;
+    const hasChanges = hasUnsavedChanges();
 
     // Disable save button if drawing or if no data exists
     const shouldBeDisabled = isDrawing || !hasData;
     saveButton.disabled = shouldBeDisabled;
     saveButton.style.opacity = shouldBeDisabled ? '0.5' : '1';
     saveButton.style.cursor = shouldBeDisabled ? 'not-allowed' : 'pointer';
+    
+    // Update the Load & Save header to show unsaved changes indicator
+    const loadsaveHeader = document.querySelector('.loadsave-header h3');
+    if (loadsaveHeader) {
+        if (hasChanges && !shouldBeDisabled) {
+            loadsaveHeader.innerHTML = '<i class="fas fa-folder-open"></i> Load & Save <span class="unsaved-indicator">*</span>';
+            loadsaveHeader.classList.add('unsaved-changes');
+        } else {
+            loadsaveHeader.innerHTML = '<i class="fas fa-folder-open"></i> Load & Save';
+            loadsaveHeader.classList.remove('unsaved-changes');
+        }
+    }
+    
+    // Update the Load/Save tab button to show unsaved changes indicator on small screens
+    const loadsaveTabBtn = document.querySelector('.tab-btn[data-tab="loadsave"]');
+    if (loadsaveTabBtn) {
+        if (hasChanges && !shouldBeDisabled) {
+            loadsaveTabBtn.innerHTML = 'Load/Save <span class="unsaved-indicator">*</span>';
+            loadsaveTabBtn.classList.add('unsaved-changes');
+        } else {
+            loadsaveTabBtn.innerHTML = 'Load/Save';
+            loadsaveTabBtn.classList.remove('unsaved-changes');
+        }
+    }
 }
 
 // Add label at ref point with label offset
@@ -1711,6 +1748,9 @@ mapFileInput.addEventListener('change', async (e) => {
                         leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
                     }
 
+                    // Reset baseline data for unsaved changes detection
+                    baselineData = null;
+
                     // Update SVG size to match new image
                     requestAnimationFrame(() => {
                         updateSVGDimensions();
@@ -1789,17 +1829,14 @@ mapFileInput.addEventListener('change', async (e) => {
         // Handle dialog buttons
         document.getElementById('saveAndContinue').onclick = async () => {
             // Save current labels first
-            await new Promise(resolve => {
-                saveElements();
-                // Give time for the save dialog to complete
-                const checkInterval = setInterval(() => {
-                    const saveDialog = document.querySelector('input[type="file"][nwsaveas]');
-                    if (!saveDialog) {
-                        clearInterval(checkInterval);
-                        resolve();
-                    }
-                }, 100);
-            });
+            saveElements();
+            
+            // Wait a bit for the save to complete, then update baseline data
+            setTimeout(() => {
+                // Update baseline data to reflect the saved state
+                baselineData = getCurrentState();
+            }, 500);
+            
             dialog.remove();
             overlay.remove();
             try {
@@ -1887,6 +1924,12 @@ function saveElements() {
 
     // Clean up
     URL.revokeObjectURL(a.href);
+    
+    // Update baseline data after successful save
+    baselineData = JSON.parse(JSON.stringify(exportData));
+    
+    // Clear the unsaved changes indicator immediately
+    updateSaveButtonState();
 }
 
 // Load labels from JSON file
@@ -2211,6 +2254,12 @@ function loadElements() {
 
                 updateLeaderLines();
                 renderTagPanel();
+                
+                // Store the loaded data as baseline for unsaved changes detection
+                baselineData = JSON.parse(JSON.stringify(data));
+                
+                // Clear the unsaved changes indicator since we just loaded new data
+                updateSaveButtonState();
             };
             reader.readAsText(file);
         };
@@ -4790,17 +4839,14 @@ frontMapFileInput.addEventListener('change', async (e) => {
         // Handle dialog buttons
         document.getElementById('saveAndContinue').onclick = async () => {
             // Save current labels first
-            await new Promise(resolve => {
-                saveElements();
-                // Give time for the save dialog to complete
-                const checkInterval = setInterval(() => {
-                    const saveDialog = document.querySelector('input[type="file"][nwsaveas]');
-                    if (!saveDialog) {
-                        clearInterval(checkInterval);
-                        resolve();
-                    }
-                }, 100);
-            });
+            saveElements();
+            
+            // Wait a bit for the save to complete, then update baseline data
+            setTimeout(() => {
+                // Update baseline data to reflect the saved state
+                baselineData = getCurrentState();
+            }, 500);
+            
             dialog.remove();
             overlay.remove();
             try {
@@ -5172,4 +5218,82 @@ function updateAddButtonHeaderState() {
             addBtnHeader.classList.remove('active');
         }
     }
+}
+
+// Get current state in the same format as saveElements exports
+function getCurrentState() {
+    return {
+        points: points.map(point => ({
+            refX: point.relRefX,
+            refY: point.relRefY,
+            labelX: point.relLabelX,
+            labelY: point.relLabelY,
+            text: point.labelBoxEl.textContent,
+            type: point.type || 'default'
+        })),
+        polygons: polygons.map(polygon => ({
+            points: polygon.points.map(p => ({ x: p.relX, y: p.relY })),
+            anchorX: polygon.relAnchorX,
+            anchorY: polygon.relAnchorY,
+            labelX: polygon.relLabelX,
+            labelY: polygon.relLabelY,
+            text: polygon.labelBoxEl.textContent,
+            type: polygon.type || 'default'
+        })),
+        lines: lines.map(line => ({
+            points: line.points.map(p => ({ x: p.relX, y: p.relY })),
+            anchorX: line.relAnchorX,
+            anchorY: line.relAnchorY,
+            labelX: line.relLabelX,
+            labelY: line.relLabelY,
+            text: line.labelBoxEl.textContent,
+            type: line.type || 'default'
+        }))
+    };
+}
+
+// Compare two states to detect if there are unsaved changes
+function hasUnsavedChanges() {
+    if (!baselineData) {
+        // If no baseline data, check if there's any current data
+        return points.length > 0 || polygons.length > 0 || lines.length > 0;
+    }
+    
+    const currentState = getCurrentState();
+    
+    // Deep comparison of the two states
+    return !deepEqual(currentState, baselineData);
+}
+
+// Deep equality comparison for objects
+function deepEqual(obj1, obj2) {
+    if (obj1 === obj2) return true;
+    
+    if (obj1 == null || obj2 == null) return obj1 === obj2;
+    
+    if (typeof obj1 !== typeof obj2) return false;
+    
+    if (typeof obj1 !== 'object') return obj1 === obj2;
+    
+    if (Array.isArray(obj1) !== Array.isArray(obj2)) return false;
+    
+    if (Array.isArray(obj1)) {
+        if (obj1.length !== obj2.length) return false;
+        for (let i = 0; i < obj1.length; i++) {
+            if (!deepEqual(obj1[i], obj2[i])) return false;
+        }
+        return true;
+    }
+    
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    
+    if (keys1.length !== keys2.length) return false;
+    
+    for (const key of keys1) {
+        if (!keys2.includes(key)) return false;
+        if (!deepEqual(obj1[key], obj2[key])) return false;
+    }
+    
+    return true;
 }
