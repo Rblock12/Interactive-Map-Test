@@ -426,7 +426,7 @@ button#addBtn[aria-pressed="true"] {
 
 .test-input-group input {
     width: 100%;
-    padding: 8px;
+    padding: 8px 35px 8px 8px;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 14px;
@@ -440,35 +440,72 @@ button#addBtn[aria-pressed="true"] {
     box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
-#testInput.correct {
+.test-input-group #testInput.correct {
     border-color: #4CAF50;
     background-color: #e8f5e9;
+    position: relative;
 }
 
-#testInput.incorrect {
+.test-input-group #testInput.incorrect {
     border-color: #f44336;
     background-color: #ffebee;
+    position: relative;
 }
 
-#testInput.correct::after,
-#testInput.incorrect::after {
-    content: '';
+.test-input-group .feedback-icon {
     position: absolute;
-    right: 16px;
-    top: 50%;
+    right: 20px;
+    top: 55px;
     transform: translateY(-50%);
-    font-size: 1.3em;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
     pointer-events: none;
+    z-index: 10;
 }
 
-#testInput.correct::after {
-    content: '✔';
-    color: #4CAF50;
+.test-input-group .feedback-icon.correct {
+    content: '✓';
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    animation: feedbackPop 0.3s ease-out;
 }
 
-#testInput.incorrect::after {
-    content: '✗';
-    color: #f44336;
+.test-input-group .feedback-icon.correct::before {
+    content: '✓';
+}
+
+.test-input-group .feedback-icon.incorrect {
+    content: '✕';
+    background-color: #f44336;
+    color: white;
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+    animation: feedbackPop 0.3s ease-out;
+}
+
+.test-input-group .feedback-icon.incorrect::before {
+    content: '✕';
+}
+
+@keyframes feedbackPop {
+    0% {
+        transform: translateY(-50%) scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: translateY(-50%) scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-50%) scale(1);
+        opacity: 1;
+    }
 }
 
 .target-display {
@@ -476,6 +513,7 @@ button#addBtn[aria-pressed="true"] {
     border-radius: 8px;
     padding: 12px;
     border: 1px solid #e0e0e0;
+    position: relative;
 }
 
 .target-label {
@@ -490,11 +528,57 @@ button#addBtn[aria-pressed="true"] {
     font-weight: 700;
     color: #2196F3;
     background: #e3f2fd;
-    padding: 8px;
+    padding: 8px 35px;
     border-radius: 6px;
     border: 1px solid #2196F3;
     min-height: 20px;
     text-transform: uppercase;
+    position: relative;
+}
+
+#targetLabel.correct {
+    border-color: #4CAF50;
+    background-color: #e8f5e9;
+    color: #2E7D32;
+}
+
+#targetLabel.incorrect {
+    border-color: #f44336;
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+#targetLabel.correct::after,
+#targetLabel.incorrect::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    pointer-events: none;
+    animation: feedbackPop 0.3s ease-out;
+    z-index: 10;
+}
+
+#targetLabel.correct::after {
+    content: '✓';
+    background-color: #4CAF50;
+    color: white;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+#targetLabel.incorrect::after {
+    content: '✕';
+    background-color: #f44336;
+    color: white;
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
 }
 
 /* Feedback and Progress */

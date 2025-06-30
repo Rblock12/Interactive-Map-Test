@@ -108,10 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize help modal functionality
     initializeHelpModal();
-    
+
     // Initialize collapsible interface functionality
     initializeCollapsibleInterfaces();
-    
+
     // Add beforeunload event listener to warn about unsaved changes
     window.addEventListener('beforeunload', (e) => {
         if (hasUnsavedChanges()) {
@@ -133,7 +133,7 @@ function initializeCollapsibleInterfaces() {
             toggleInterface(content, toggle);
         });
     });
-    
+
     // Add event listeners to headers for click-to-toggle (only on larger screens)
     document.querySelectorAll('.loadsave-header, .test-header, .edit-header').forEach(header => {
         header.addEventListener('click', (e) => {
@@ -143,7 +143,7 @@ function initializeCollapsibleInterfaces() {
                 if (e.target.closest('button, input, select, textarea')) {
                     return;
                 }
-                
+
                 const toggle = header.querySelector('.interface-toggle');
                 const targetId = toggle.getAttribute('data-target');
                 const content = document.querySelector(`[data-interface="${targetId}"]`);
@@ -151,7 +151,7 @@ function initializeCollapsibleInterfaces() {
             }
         });
     });
-    
+
     // Add event listeners to tab buttons to expand corresponding interface
     document.querySelectorAll('.tab-btn').forEach(tabBtn => {
         tabBtn.addEventListener('click', () => {
@@ -178,7 +178,7 @@ function initializeCollapsibleInterfaces() {
             }, 50);
         });
     });
-    
+
     // Set initial state - expand the active tab's interface, collapse others
     const activeTab = document.querySelector('.tab-radio:checked');
     if (activeTab) {
@@ -200,7 +200,7 @@ function toggleInterface(content, toggle) {
     const isCollapsed = content.classList.contains('collapsed');
     const header = toggle.closest('.loadsave-header, .test-header, .edit-header');
     const isEdit = content.getAttribute('data-interface') === 'edit-content';
-    
+
     if (isCollapsed) {
         // Expand this interface and collapse all others
         expandInterface(content, toggle, header);
@@ -240,7 +240,7 @@ function collapseOtherInterfaces(currentContent) {
             const toggle = document.querySelector(`[data-target="${content.getAttribute('data-interface')}"]`);
             const header = toggle ? toggle.closest('.loadsave-header, .test-header, .edit-header') : null;
             collapseInterface(content, toggle, header);
-            
+
             // If this is the Edit Map interface being collapsed, disable edit mode on large screens
             if (content.getAttribute('data-interface') === 'edit-content' && window.innerWidth >= 1024) {
                 if (editEnabled) {
@@ -575,12 +575,12 @@ function updateLeaderLines() {
             line.setAttribute('data-for', labelBoxEl.id);
         }
         line.setAttribute('data-type', type);
-        
+
         // Hide leader line if in find mode OR if the tag is hidden
         if (shouldHideLeaderLines || tagVisibility[type] === false) {
             line.style.visibility = 'hidden';
         }
-        
+
         leaderLinesSVG.appendChild(line);
     });
 
@@ -605,12 +605,12 @@ function updateLeaderLines() {
             line.setAttribute('data-for', polygon.labelBoxEl.id);
         }
         line.setAttribute('data-type', polygon.type);
-        
+
         // Hide leader line if in find mode OR if the tag is hidden
         if (shouldHideLeaderLines || tagVisibility[polygon.type] === false) {
             line.style.visibility = 'hidden';
         }
-        
+
         leaderLinesSVG.appendChild(line);
     });
 
@@ -635,12 +635,12 @@ function updateLeaderLines() {
             line.setAttribute('data-for', lineObj.labelBoxEl.id);
         }
         line.setAttribute('data-type', lineObj.type);
-        
+
         // Hide leader line if in find mode OR if the tag is hidden
         if (shouldHideLeaderLines || tagVisibility[lineObj.type] === false) {
             line.style.visibility = 'hidden';
         }
-        
+
         leaderLinesSVG.appendChild(line);
     });
 
@@ -659,7 +659,7 @@ function updateSaveButtonState() {
     saveButton.disabled = shouldBeDisabled;
     saveButton.style.opacity = shouldBeDisabled ? '0.5' : '1';
     saveButton.style.cursor = shouldBeDisabled ? 'not-allowed' : 'pointer';
-    
+
     // Update the Load & Save header to show unsaved changes indicator
     const loadsaveHeader = document.querySelector('.loadsave-header h3');
     if (loadsaveHeader) {
@@ -671,7 +671,7 @@ function updateSaveButtonState() {
             loadsaveHeader.classList.remove('unsaved-changes');
         }
     }
-    
+
     // Update the Load/Save tab button to show unsaved changes indicator on small screens
     const loadsaveTabBtn = document.querySelector('.tab-btn[data-tab="loadsave"]');
     if (loadsaveTabBtn) {
@@ -1843,13 +1843,13 @@ mapFileInput.addEventListener('change', async (e) => {
         document.getElementById('saveAndContinue').onclick = async () => {
             // Save current labels first
             saveElements();
-            
+
             // Wait a bit for the save to complete, then update baseline data
             setTimeout(() => {
                 // Update baseline data to reflect the saved state
                 baselineData = getCurrentState();
             }, 500);
-            
+
             dialog.remove();
             overlay.remove();
             try {
@@ -1937,10 +1937,10 @@ function saveElements() {
 
     // Clean up
     URL.revokeObjectURL(a.href);
-    
+
     // Update baseline data after successful save
     baselineData = JSON.parse(JSON.stringify(exportData));
-    
+
     // Clear the unsaved changes indicator immediately
     updateSaveButtonState();
 }
@@ -2267,10 +2267,10 @@ function loadElements() {
 
                 updateLeaderLines();
                 renderTagPanel();
-                
+
                 // Store the loaded data as baseline for unsaved changes detection
                 baselineData = JSON.parse(JSON.stringify(data));
-                
+
                 // Clear the unsaved changes indicator since we just loaded new data
                 updateSaveButtonState();
             };
@@ -2570,16 +2570,19 @@ function checkAnswer(answer) {
     const correctAnswer = currentTestItem.label.dataset.correctAnswer.trim().toLowerCase();
     const userAnswer = answer.toLowerCase();
     const testInput = document.getElementById('testInput');
+    const testInputFeedback = document.getElementById('testInputFeedback');
     const targetLabel = document.getElementById('targetLabel');
 
     // Remove previous feedback classes
     testInput.classList.remove('correct', 'incorrect');
+    testInputFeedback.classList.remove('correct', 'incorrect');
     targetLabel.classList.remove('correct', 'incorrect');
 
     if (userAnswer === correctAnswer) {
         // Correct answer
         if (currentTestMode === 'ident') {
             testInput.classList.add('correct');
+            testInputFeedback.classList.add('correct');
         } else if (currentTestMode === 'find') {
             targetLabel.classList.add('correct');
         }
@@ -2591,6 +2594,7 @@ function checkAnswer(answer) {
         setTimeout(() => {
             testInput.value = '';
             testInput.classList.remove('correct', 'incorrect');
+            testInputFeedback.classList.remove('correct', 'incorrect');
             targetLabel.classList.remove('correct', 'incorrect');
             selectNextTestItem();
         }, 1500);
@@ -2598,6 +2602,7 @@ function checkAnswer(answer) {
         // Incorrect answer
         if (currentTestMode === 'ident') {
             testInput.classList.add('incorrect');
+            testInputFeedback.classList.add('incorrect');
         } else if (currentTestMode === 'find') {
             targetLabel.classList.add('incorrect');
         }
@@ -2605,6 +2610,7 @@ function checkAnswer(answer) {
         testInput.focus();
         setTimeout(() => {
             testInput.classList.remove('incorrect');
+            testInputFeedback.classList.remove('incorrect');
             targetLabel.classList.remove('incorrect');
         }, 1200);
     }
@@ -4865,13 +4871,13 @@ frontMapFileInput.addEventListener('change', async (e) => {
         document.getElementById('saveAndContinue').onclick = async () => {
             // Save current labels first
             saveElements();
-            
+
             // Wait a bit for the save to complete, then update baseline data
             setTimeout(() => {
                 // Update baseline data to reflect the saved state
                 baselineData = getCurrentState();
             }, 500);
-            
+
             dialog.remove();
             overlay.remove();
             try {
@@ -5283,9 +5289,9 @@ function hasUnsavedChanges() {
         // If no baseline data, check if there's any current data
         return points.length > 0 || polygons.length > 0 || lines.length > 0;
     }
-    
+
     const currentState = getCurrentState();
-    
+
     // Deep comparison of the two states
     return !deepEqual(currentState, baselineData);
 }
@@ -5293,15 +5299,15 @@ function hasUnsavedChanges() {
 // Deep equality comparison for objects
 function deepEqual(obj1, obj2) {
     if (obj1 === obj2) return true;
-    
+
     if (obj1 == null || obj2 == null) return obj1 === obj2;
-    
+
     if (typeof obj1 !== typeof obj2) return false;
-    
+
     if (typeof obj1 !== 'object') return obj1 === obj2;
-    
+
     if (Array.isArray(obj1) !== Array.isArray(obj2)) return false;
-    
+
     if (Array.isArray(obj1)) {
         if (obj1.length !== obj2.length) return false;
         for (let i = 0; i < obj1.length; i++) {
@@ -5309,16 +5315,16 @@ function deepEqual(obj1, obj2) {
         }
         return true;
     }
-    
+
     const keys1 = Object.keys(obj1);
     const keys2 = Object.keys(obj2);
-    
+
     if (keys1.length !== keys2.length) return false;
-    
+
     for (const key of keys1) {
         if (!keys2.includes(key)) return false;
         if (!deepEqual(obj1[key], obj2[key])) return false;
     }
-    
+
     return true;
 }
