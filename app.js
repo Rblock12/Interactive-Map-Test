@@ -2697,6 +2697,12 @@ function cleanupTest() {
     const identifyInterface = document.getElementById('identifyInterface');
     const findInterface = document.getElementById('findInterface');
 
+    // Remove testing mode class to restore interface toggles and un-gray windows
+    const mainMenu = document.getElementById('mainMenu');
+    if (mainMenu) {
+        mainMenu.classList.remove('testing-mode-active');
+    }
+
     // Hide test mode interfaces
     identifyInterface.classList.remove('active');
     findInterface.classList.remove('active');
@@ -2984,6 +2990,12 @@ function _toggleTestModeInternal(mode, selectedTags) {
 
     // Update cursor styles for test mode
     updateCursorStyles(null);
+
+    // Add testing mode class to main menu to hide interface toggles and gray out non-testing windows
+    const mainMenu = document.getElementById('mainMenu');
+    if (mainMenu) {
+        mainMenu.classList.add('testing-mode-active');
+    }
 
     // Common initialization for both modes
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {

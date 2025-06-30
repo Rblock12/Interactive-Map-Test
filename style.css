@@ -3377,3 +3377,31 @@ button#addBtn[aria-pressed="true"] {
     border-bottom: 2px solid #ff9800 !important;
     color: #ff9800 !important;
 }
+
+/* Testing Mode Styles */
+.testing-mode-active .interface-toggle {
+    display: none !important;
+}
+
+.testing-mode-active #loadMapContainer,
+.testing-mode-active #editInterface {
+    opacity: 0.3;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.testing-mode-active #testInterface {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Ensure smooth transitions for interface elements */
+#loadMapContainer,
+#editInterface,
+#testInterface {
+    transition: opacity 0.3s ease, pointer-events 0.3s ease;
+}
+
+.interface-toggle {
+    transition: display 0.3s ease;
+}
