@@ -129,20 +129,6 @@
                             <div class="addButtonContainer">
                                 <div id="addBtn" class="add-button-header">
                                     <i class="fas fa-plus"></i> Add
-                                </div>
-                                <div id="addSubMenu">
-                                    <button id="pointBtn" onclick="setMode('point')" disabled aria-pressed="false"
-                                        title="Add new point">
-                                        <i class="fas fa-thumbtack"></i> Point
-                                    </button>
-                                    <button id="polygonBtn" onclick="togglePolygonMode()" disabled aria-pressed="false"
-                                        title="Draw shape">
-                                        <i class="fas fa-draw-polygon"></i> Shape
-                                    </button>
-                                    <button id="lineBtn" onclick="toggleLineMode()" disabled aria-pressed="false"
-                                        title="Draw line">
-                                        <i class="fas fa-minus"></i> Line
-                                    </button>
                                     <!-- Finish Drawing Buttons (Hidden by default) -->
                                     <div id="finishDrawingInterface" class="finish-drawing-buttons"
                                         style="display: none;">
@@ -155,6 +141,20 @@
                                             <span class="button-text">Cancel</span>
                                         </button>
                                     </div>
+                                </div>
+                                <div id="addSubMenu">
+                                    <button id="pointBtn" class="edit-mode-btn" data-mode="point" onclick="setMode('point')" disabled aria-pressed="false"
+                                        title="Add new point">
+                                        <i class="fas fa-thumbtack"></i> Point
+                                    </button>
+                                    <button id="polygonBtn" class="edit-mode-btn" data-mode="polygon" onclick="togglePolygonMode()" disabled aria-pressed="false"
+                                        title="Draw shape">
+                                        <i class="fas fa-draw-polygon"></i> Shape
+                                    </button>
+                                    <button id="lineBtn" class="edit-mode-btn" data-mode="line" onclick="toggleLineMode()" disabled aria-pressed="false"
+                                        title="Draw line">
+                                        <i class="fas fa-minus"></i> Line
+                                    </button>
                                 </div>
                             </div>
                             <div class="otherButtonContainer">
