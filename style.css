@@ -3293,7 +3293,6 @@ button#addBtn[aria-pressed="true"] {
     margin-bottom: 0;
 }
 
-/* Only apply transitions on larger screens where twirl functionality exists */
 @media (min-width: 1024px) {
     .interface-content {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3301,6 +3300,10 @@ button#addBtn[aria-pressed="true"] {
 
     .interface-content.collapsed {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #mainMenu {
+        overflow-y: auto;
     }
 }
 
