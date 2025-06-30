@@ -539,6 +539,9 @@ function updateLeaderLines() {
         return { x: centerX, y: centerY };
     }
 
+    // Check if we should hide leader lines (in find mode)
+    const shouldHideLeaderLines = testingMode && currentTestMode === 'find';
+
     // Draw leader lines for regular labels
     points.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
         const x1 = refX;
@@ -546,56 +549,86 @@ function updateLeaderLines() {
         const center = getLabelBoxCenter(labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', x1);
         line.setAttribute('y1', y1);
         line.setAttribute('x2', x2);
         line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#2196F3');
+        line.setAttribute('stroke-width', '2');
         line.setAttribute('class', 'leader-line');
-        if (labelBoxEl.id) {
+        line.setAttribute('data-type', type);
+        if (labelBoxEl && labelBoxEl.id) {
             line.setAttribute('data-for', labelBoxEl.id);
         }
         line.setAttribute('data-type', type);
+        
+        // Hide leader line if in find mode OR if the tag is hidden
+        if (shouldHideLeaderLines || tagVisibility[type] === false) {
+            line.style.visibility = 'hidden';
+        }
+        
         leaderLinesSVG.appendChild(line);
     });
 
-    // Draw leader lines for polygon labels
+    // Draw leader lines for polygons
     polygons.forEach(polygon => {
         const x1 = polygon.anchorX;
         const y1 = polygon.anchorY;
         const center = getLabelBoxCenter(polygon.labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', x1);
         line.setAttribute('y1', y1);
         line.setAttribute('x2', x2);
         line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#2196F3');
+        line.setAttribute('stroke-width', '2');
         line.setAttribute('class', 'leader-line');
-        if (polygon.labelBoxEl.id) {
+        line.setAttribute('data-type', polygon.type);
+        if (polygon.labelBoxEl && polygon.labelBoxEl.id) {
             line.setAttribute('data-for', polygon.labelBoxEl.id);
         }
         line.setAttribute('data-type', polygon.type);
+        
+        // Hide leader line if in find mode OR if the tag is hidden
+        if (shouldHideLeaderLines || tagVisibility[polygon.type] === false) {
+            line.style.visibility = 'hidden';
+        }
+        
         leaderLinesSVG.appendChild(line);
     });
 
-    // Draw leader lines for line labels
+    // Draw leader lines for lines
     lines.forEach(lineObj => {
         const x1 = lineObj.anchorX;
         const y1 = lineObj.anchorY;
         const center = getLabelBoxCenter(lineObj.labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', x1);
         line.setAttribute('y1', y1);
         line.setAttribute('x2', x2);
         line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#2196F3');
+        line.setAttribute('stroke-width', '2');
         line.setAttribute('class', 'leader-line');
-        if (lineObj.labelBoxEl.id) {
+        line.setAttribute('data-type', lineObj.type);
+        if (lineObj.labelBoxEl && lineObj.labelBoxEl.id) {
             line.setAttribute('data-for', lineObj.labelBoxEl.id);
         }
         line.setAttribute('data-type', lineObj.type);
+        
+        // Hide leader line if in find mode OR if the tag is hidden
+        if (shouldHideLeaderLines || tagVisibility[lineObj.type] === false) {
+            line.style.visibility = 'hidden';
+        }
+        
         leaderLinesSVG.appendChild(line);
     });
 
