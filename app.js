@@ -454,9 +454,12 @@ function setMode(mode) {
             finishDrawingInterface.style.display = 'none';
         }
     }
-    if (mode == null || mode === previousMode) {
+    // Always close tag panel when switching to move, delete, or editLabelText
+    if (["move", "delete", "editLabelText"].includes(mode)) {
         toggletagPanel(false);
-    } else if (['polygon', 'line', 'point', 'changeTag'].includes(mode)) {
+    } else if (mode == null || mode === previousMode) {
+        toggletagPanel(false);
+    } else if (["polygon", "line", "point", "changeTag"].includes(mode)) {
         toggletagPanel(true);
     }
 

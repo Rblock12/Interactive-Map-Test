@@ -159,19 +159,19 @@
                                 </div>
                             </div>
                             <div class="otherButtonContainer">
-                                <button id="moveBtn" onclick="setMode('move')" disabled aria-pressed="false"
+                                <button id="moveBtn" class="edit-mode-btn" data-mode="move" onclick="setMode('move')" disabled aria-pressed="false"
                                     title="Move elements">
                                     <i class="fas fa-arrows-alt"></i> Move
                                 </button>
-                                <button id="editLabelTextBtn" onclick="setMode('editLabelText')" disabled
+                                <button id="editLabelTextBtn" class="edit-mode-btn" data-mode="editLabelText" onclick="setMode('editLabelText')" disabled
                                     aria-pressed="false" title="Edit element text">
                                     <i class="fas fa-font"></i> Rename
                                 </button>
-                                <button id="deleteBtn" onclick="setMode('delete')" disabled aria-pressed="false"
+                                <button id="deleteBtn" class="edit-mode-btn" data-mode="delete" onclick="setMode('delete')" disabled aria-pressed="false"
                                     title="Delete elements">
                                     <i class="fas fa-trash-alt"></i> Delete
                                 </button>
-                                <button id="tagPanelBtn" onclick="setMode('changeTag')" aria-pressed="false"
+                                <button id="tagPanelBtn" class="edit-mode-btn" data-mode="changeTag" onclick="setMode('changeTag')" aria-pressed="false"
                                     title="Change existing element tags">
                                     <i class="fas fa-tags"></i> Tag
                                 </button>
