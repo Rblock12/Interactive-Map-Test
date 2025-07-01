@@ -218,6 +218,13 @@ function toggleInterface(content, toggle) {
     const isCollapsed = content.classList.contains('collapsed');
     const header = toggle.closest('.loadsave-header, .test-header, .edit-header');
     const isEdit = content.getAttribute('data-interface') === 'edit-content';
+    const isTest = content.getAttribute('data-interface') === 'test-content';
+
+    // Prevent collapsing the test interface while in testing mode
+    if (!isCollapsed && isTest && testingMode) {
+        // Do nothing: block collapse
+        return;
+    }
 
     if (isCollapsed) {
         // Expand this interface and collapse all others

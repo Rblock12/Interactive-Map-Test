@@ -3281,3 +3281,9 @@ button#addBtn[aria-pressed="true"] {
 .interface-toggle {
     transition: display 0.3s ease;
 }
+
+.testing-mode-active .test-header:hover,
+.testing-mode-active .test-header:hover .interface-toggle {
+    background: none;
+    cursor: auto
+}
