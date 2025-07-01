@@ -145,6 +145,9 @@ function initializeCollapsibleInterfaces() {
             e.stopPropagation();
             const targetId = toggle.getAttribute('data-target');
             const content = document.querySelector(`[data-interface="${targetId}"]`);
+            // Also check the corresponding tab radio button
+            const tabRadio = getTabRadioForContent(targetId);
+            if (tabRadio) tabRadio.checked = true;
             toggleInterface(content, toggle);
         });
     });
@@ -152,16 +155,16 @@ function initializeCollapsibleInterfaces() {
     // Add event listeners to headers for click-to-toggle (only on larger screens)
     document.querySelectorAll('.loadsave-header, .test-header, .edit-header').forEach(header => {
         header.addEventListener('click', (e) => {
-            // Only allow header clicks on larger screens
             if (window.innerWidth >= 1024) {
-                // Don't trigger if clicking on interactive elements
                 if (e.target.closest('button, input, select, textarea')) {
                     return;
                 }
-
                 const toggle = header.querySelector('.interface-toggle');
                 const targetId = toggle.getAttribute('data-target');
                 const content = document.querySelector(`[data-interface="${targetId}"]`);
+                // Also check the corresponding tab radio button
+                const tabRadio = getTabRadioForContent(targetId);
+                if (tabRadio) tabRadio.checked = true;
                 toggleInterface(content, toggle);
             }
         });
@@ -5352,4 +5355,12 @@ function deepEqual(obj1, obj2) {
     }
 
     return true;
+}
+
+// Helper to map content id to tab radio
+function getTabRadioForContent(targetId) {
+    if (targetId === 'loadsave-content') return document.getElementById('tab-loadsave');
+    if (targetId === 'test-content') return document.getElementById('tab-test');
+    if (targetId === 'edit-content') return document.getElementById('tab-edit');
+    return null;
 }
