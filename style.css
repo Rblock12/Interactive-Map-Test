@@ -440,55 +440,18 @@ button#addBtn[aria-pressed="true"] {
     box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
-.test-input-group #testInput.correct {
+.test-feedback-element {
+    position: relative;
+}
+
+.test-feedback-element.correct #testInput {
     border-color: #4CAF50;
     background-color: #e8f5e9;
-    position: relative;
 }
 
-.test-input-group #testInput.incorrect {
+.test-feedback-element.incorrect #testInput {
     border-color: #f44336;
     background-color: #ffebee;
-    position: relative;
-}
-
-.test-input-group .feedback-icon {
-    position: absolute;
-    right: 20px;
-    top: 55px;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    text-align: center;
-    font-size: 14px;
-    font-weight: bold;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.test-input-group .feedback-icon.correct {
-    content: '✓';
-    background-color: #4CAF50;
-    color: white;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-    animation: feedbackPop 0.3s ease-out;
-}
-
-.test-input-group .feedback-icon.correct::before {
-    content: '✓';
-}
-
-.test-input-group .feedback-icon.incorrect {
-    content: '✕';
-    background-color: #f44336;
-    color: white;
-    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
-    animation: feedbackPop 0.3s ease-out;
-}
-
-.test-input-group .feedback-icon.incorrect::before {
-    content: '✕';
 }
 
 @keyframes feedbackPop {
@@ -548,9 +511,7 @@ button#addBtn[aria-pressed="true"] {
     color: #c62828;
 }
 
-#targetLabel.correct::after,
-#targetLabel.incorrect::after {
-    content: '';
+.test-feedback-element::after {
     position: absolute;
     right: 12px;
     top: 50%;
@@ -567,14 +528,14 @@ button#addBtn[aria-pressed="true"] {
     z-index: 10;
 }
 
-#targetLabel.correct::after {
+.test-feedback-element.correct::after {
     content: '✓';
     background-color: #4CAF50;
     color: white;
     box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 
-#targetLabel.incorrect::after {
+.test-feedback-element.incorrect::after {
     content: '✕';
     background-color: #f44336;
     color: white;

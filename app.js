@@ -734,10 +734,10 @@ function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = tru
     if (!labelBoxEl.id) {
         labelBoxEl.id = `label-${labelIdCounter++}`;
     }
-    
+
     // Add keyboard event listener for Enter/Shift+Enter handling
     labelBoxEl.addEventListener('keydown', handleLabelKeydown);
-    
+
     mapContainer.appendChild(labelBoxEl);
     // Trigger the creation animation
     requestAnimationFrame(() => labelBoxEl.classList.add('visible'));
@@ -2607,22 +2607,14 @@ function checkAnswer(answer) {
     const correctAnswer = currentTestItem.label.dataset.correctAnswer.trim().toLowerCase();
     const userAnswer = answer.toLowerCase();
     const testInput = document.getElementById('testInput');
-    const testInputFeedback = document.getElementById('testInputFeedback');
-    const targetLabel = document.getElementById('targetLabel');
+    const testInputFeedback = document.querySelector('.test-feedback-element');
 
     // Remove previous feedback classes
-    testInput.classList.remove('correct', 'incorrect');
     testInputFeedback.classList.remove('correct', 'incorrect');
-    targetLabel.classList.remove('correct', 'incorrect');
 
     if (userAnswer === correctAnswer) {
         // Correct answer
-        if (currentTestMode === 'ident') {
-            testInput.classList.add('correct');
-            testInputFeedback.classList.add('correct');
-        } else if (currentTestMode === 'find') {
-            targetLabel.classList.add('correct');
-        }
+        testInputFeedback.classList.add('correct');
 
         // Remove current item from remaining items
         remainingTestItems.shift();
@@ -2630,25 +2622,16 @@ function checkAnswer(answer) {
 
         setTimeout(() => {
             testInput.value = '';
-            testInput.classList.remove('correct', 'incorrect');
             testInputFeedback.classList.remove('correct', 'incorrect');
-            targetLabel.classList.remove('correct', 'incorrect');
             selectNextTestItem();
         }, 1500);
     } else {
         // Incorrect answer
-        if (currentTestMode === 'ident') {
-            testInput.classList.add('incorrect');
-            testInputFeedback.classList.add('incorrect');
-        } else if (currentTestMode === 'find') {
-            targetLabel.classList.add('incorrect');
-        }
+        testInputFeedback.classList.add('incorrect');
         testInput.value = '';
         testInput.focus();
         setTimeout(() => {
-            testInput.classList.remove('incorrect');
             testInputFeedback.classList.remove('incorrect');
-            targetLabel.classList.remove('incorrect');
         }, 1200);
     }
 }
