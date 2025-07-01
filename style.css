@@ -787,82 +787,6 @@ button#addBtn[aria-pressed="true"] {
     stroke-width: 1.5;
 }
 
-/* Sidebar Finish Drawing Interface */
-.sidebar-finish-drawing {
-    display: none;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 2px solid #f0f0f0;
-    display: flex;
-    gap: 8px;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.finish-drawing-btn {
-    background-color: #00C851 !important;
-    color: white !important;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer !important;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 200, 81, 0.3);
-    animation: finishButtonPulse 2s ease-in-out infinite;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-.finish-drawing-btn:hover {
-    background-color: #00A843 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 200, 81, 0.4);
-    animation: none;
-}
-
-.finish-drawing-btn:active {
-    background-color: #009639 !important;
-    transform: translateY(0);
-}
-
-.cancel-drawing-btn {
-    background-color: #f44336 !important;
-    color: white !important;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer !important;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.13);
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-.cancel-drawing-btn:hover {
-    background-color: #d32f2f !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.18);
-}
-
-.cancel-drawing-btn:active {
-    background-color: #b71c1c !important;
-    transform: translateY(0);
-}
-
 /* Tag/Type Sidebar Panel */
 #tagPanel {
     display: none;
@@ -1424,8 +1348,11 @@ button#addBtn[aria-pressed="true"] {
     transform: translateY(-1px);
 }
 
-/* Finish Drawing Buttons in Add Submenu */
-#addSubMenu .finish-drawing-buttons {
+#finishDrawingInterface {
+    gap: 10px
+}
+
+#finishDrawingInterface .finish-drawing-buttons {
     display: flex;
     justify-content: center;
     gap: 8px;
@@ -1435,13 +1362,13 @@ button#addBtn[aria-pressed="true"] {
     width: 100%;
 }
 
-#addSubMenu .finish-drawing-btn,
-#addSubMenu .cancel-drawing-btn {
+#finishDrawingInterface .finish-drawing-btn,
+#finishDrawingInterface .cancel-drawing-btn {
     flex-shrink: 0;
-    background-color: #00C851 !important;
+    background: none;
     color: white !important;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     padding: 0 8px;
     font-size: 14px;
     font-weight: 600;
@@ -1461,44 +1388,48 @@ button#addBtn[aria-pressed="true"] {
     gap: 6px;
 }
 
-#addSubMenu .finish-drawing-btn:hover {
+#finishDrawingInterface .finish-drawing-btn {
+    background-color: #00C851;
+}
+
+#finishDrawingInterface .finish-drawing-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 200, 81, 0.4);
 }
 
-#addSubMenu .cancel-drawing-btn:hover {
+#finishDrawingInterface .cancel-drawing-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
 }
 
-#addSubMenu .finish-drawing-btn:hover {
-    background-color: #00A843 !important;
+#finishDrawingInterface .finish-drawing-btn:hover {
+    background-color: #00A843;
 }
 
-#addSubMenu .finish-drawing-btn:active {
-    background-color: #009639 !important;
+#finishDrawingInterface .finish-drawing-btn:active {
+    background-color: #009639;
     transform: translateY(0);
 }
 
-#addSubMenu .cancel-drawing-btn {
-    background-color: #f44336 !important;
+#finishDrawingInterface .cancel-drawing-btn {
+    background-color: #f44336;
 }
 
-#addSubMenu .cancel-drawing-btn:hover {
-    background-color: #d32f2f !important;
+#finishDrawingInterface .cancel-drawing-btn:hover {
+    background-color: #d32f2f;
 }
 
-#addSubMenu .cancel-drawing-btn:active {
-    background-color: #b71c1c !important;
+#finishDrawingInterface .cancel-drawing-btn:active {
+    background-color: #b71c1c;
     transform: translateY(0);
 }
 
-#addSubMenu .button-text {
+#finishDrawingInterface .button-text {
     white-space: nowrap;
 }
 
-#addSubMenu .finish-drawing-btn:disabled,
-#addSubMenu .cancel-drawing-btn:disabled {
+#finishDrawingInterface .finish-drawing-btn:disabled,
+#finishDrawingInterface .cancel-drawing-btn:disabled {
     opacity: 0.5 !important;
     cursor: not-allowed !important;
     pointer-events: none !important;
@@ -1508,8 +1439,8 @@ button#addBtn[aria-pressed="true"] {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
-#addSubMenu .finish-drawing-btn:disabled:hover,
-#addSubMenu .cancel-drawing-btn:disabled:hover {
+#finishDrawingInterface .finish-drawing-btn:disabled:hover,
+#finishDrawingInterface .cancel-drawing-btn:disabled:hover {
     background-color: #f5f5f5 !important;
     border-color: #e0e0e0 !important;
     color: #999 !important;
