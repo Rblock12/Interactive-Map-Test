@@ -40,6 +40,21 @@ const lines = [];
 // Unsaved changes tracking - stores the baseline data for comparison
 let baselineData = null;
 
+// Function to handle keyboard events for label text boxes
+function handleLabelKeydown(e) {
+    if (e.key === 'Enter') {
+        if (e.shiftKey) {
+            // Shift+Enter: Allow new line (default behavior)
+            return;
+        } else {
+            // Enter: Remove focus from the text box
+            e.preventDefault();
+            e.target.blur();
+            return;
+        }
+    }
+}
+
 // Initialize UI state
 document.addEventListener('DOMContentLoaded', () => {
     const editTools = document.querySelector('.edit-tools');
@@ -719,6 +734,10 @@ function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = tru
     if (!labelBoxEl.id) {
         labelBoxEl.id = `label-${labelIdCounter++}`;
     }
+    
+    // Add keyboard event listener for Enter/Shift+Enter handling
+    labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+    
     mapContainer.appendChild(labelBoxEl);
     // Trigger the creation animation
     requestAnimationFrame(() => labelBoxEl.classList.add('visible'));
@@ -1484,6 +1503,11 @@ mapContainer.addEventListener('click', (e) => {
             const labelRect = point.labelBoxEl.getBoundingClientRect();
             if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
                 point.labelBoxEl.contentEditable = 'true';
+                // Add keyboard event listener if not already added
+                if (!point.labelBoxEl.hasAttribute('data-keydown-added')) {
+                    point.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+                    point.labelBoxEl.setAttribute('data-keydown-added', 'true');
+                }
                 point.labelBoxEl.focus();
                 return;
             }
@@ -1494,6 +1518,11 @@ mapContainer.addEventListener('click', (e) => {
             const labelRect = polygon.labelBoxEl.getBoundingClientRect();
             if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
                 polygon.labelBoxEl.contentEditable = 'true';
+                // Add keyboard event listener if not already added
+                if (!polygon.labelBoxEl.hasAttribute('data-keydown-added')) {
+                    polygon.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+                    polygon.labelBoxEl.setAttribute('data-keydown-added', 'true');
+                }
                 polygon.labelBoxEl.focus();
                 return;
             }
@@ -1504,6 +1533,11 @@ mapContainer.addEventListener('click', (e) => {
             const labelRect = line.labelBoxEl.getBoundingClientRect();
             if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
                 line.labelBoxEl.contentEditable = 'true';
+                // Add keyboard event listener if not already added
+                if (!line.labelBoxEl.hasAttribute('data-keydown-added')) {
+                    line.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+                    line.labelBoxEl.setAttribute('data-keydown-added', 'true');
+                }
                 line.labelBoxEl.focus();
                 return;
             }
@@ -4167,6 +4201,11 @@ function addLabel(x, y) {
     updateLeaderLines();
     // Always make label editable and focus after a short delay to ensure keyboard opens
     labelBoxEl.contentEditable = 'true';
+    // Add keyboard event listener if not already added
+    if (!labelBoxEl.hasAttribute('data-keydown-added')) {
+        labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+        labelBoxEl.setAttribute('data-keydown-added', 'true');
+    }
     setTimeout(() => {
         labelBoxEl.focus();
         // Place cursor at end
