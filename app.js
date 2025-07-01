@@ -37,23 +37,32 @@ const polygons = [];
 // line structure: { points: [{x, y, element}], labelBoxEl, polyline, anchorPoint, anchorX, anchorY }
 const lines = [];
 
+// Unsaved changes tracking - stores the baseline data for comparison
+let baselineData = null;
+
+// Function to handle keyboard events for label text boxes
+function handleLabelKeydown(e) {
+    if (e.key === 'Enter') {
+        if (e.shiftKey) {
+            // Shift+Enter: Allow new line (default behavior)
+            return;
+        } else {
+            // Enter: Remove focus from the text box
+            e.preventDefault();
+            e.target.blur();
+            return;
+        }
+    }
+}
+
 // Initialize UI state
 document.addEventListener('DOMContentLoaded', () => {
     const editTools = document.querySelector('.edit-tools');
     editTools.classList.remove('visible');
-    const editToggle = document.getElementById('editToggle');
-    editToggle.setAttribute('aria-pressed', 'false');
-    editToggle.classList.remove('active');
     editEnabled = false;
 
     // Ensure all edit buttons are disabled initially
-    ['addBtn', 'deleteBtn', 'moveBtn', 'polygonBtn', 'lineBtn', 'editLabelTextBtn', 'tagPanelBtn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            btn.disabled = true;
-            btn.setAttribute('aria-disabled', 'true');
-        }
-    });
+    setEditButtonsEnabled(false);
 
     // Initialize SVG size to match container
     updateSVGDimensions();
@@ -114,7 +123,158 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize help modal functionality
     initializeHelpModal();
+
+    // Initialize collapsible interface functionality
+    initializeCollapsibleInterfaces();
+
+    // Add beforeunload event listener to warn about unsaved changes
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsavedChanges()) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            return e.returnValue;
+        }
+    });
 });
+
+// Collapsible Interface Functions
+function initializeCollapsibleInterfaces() {
+    // Add event listeners to toggle buttons
+    document.querySelectorAll('.interface-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetId = toggle.getAttribute('data-target');
+            const content = document.querySelector(`[data-interface="${targetId}"]`);
+            // Also check the corresponding tab radio button
+            const tabRadio = getTabRadioForContent(targetId);
+            if (tabRadio) tabRadio.checked = true;
+            toggleInterface(content, toggle);
+        });
+    });
+
+    // Add event listeners to headers for click-to-toggle (only on larger screens)
+    document.querySelectorAll('.loadsave-header, .test-header, .edit-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            if (window.innerWidth >= 1024) {
+                if (e.target.closest('button, input, select, textarea')) {
+                    return;
+                }
+                const toggle = header.querySelector('.interface-toggle');
+                const targetId = toggle.getAttribute('data-target');
+                const content = document.querySelector(`[data-interface="${targetId}"]`);
+                // Also check the corresponding tab radio button
+                const tabRadio = getTabRadioForContent(targetId);
+                if (tabRadio) tabRadio.checked = true;
+                toggleInterface(content, toggle);
+            }
+        });
+    });
+
+    // Add event listeners to tab buttons to expand corresponding interface
+    document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+        tabBtn.addEventListener('click', () => {
+            // Wait a bit for the tab switch to complete
+            setTimeout(() => {
+                const activeTab = document.querySelector('.tab-radio:checked');
+                if (activeTab) {
+                    const tabName = activeTab.id.replace('tab-', '');
+                    const targetContent = document.querySelector(`[data-interface="${tabName}-content"]`);
+                    const toggle = document.querySelector(`[data-target="${tabName}-content"]`);
+                    if (targetContent && toggle) {
+                        expandInterface(targetContent, toggle, toggle.closest('.loadsave-header, .test-header, .edit-header'));
+                        collapseOtherInterfaces(targetContent);
+                    }
+                    // On small screens, enable edit mode when Edit tab is selected
+                    if (window.innerWidth < 1024) {
+                        if (tabName === 'edit') {
+                            if (!editEnabled) toggleEditMode(true);
+                        } else {
+                            if (editEnabled) toggleEditMode(false);
+                        }
+                    }
+                }
+            }, 50);
+        });
+    });
+
+    // Set initial state - expand the active tab's interface, collapse others
+    const activeTab = document.querySelector('.tab-radio:checked');
+    if (activeTab) {
+        const tabName = activeTab.id.replace('tab-', '');
+        const targetContent = document.querySelector(`[data-interface="${tabName}-content"]`);
+        const toggle = document.querySelector(`[data-target="${tabName}-content"]`);
+        if (targetContent && toggle) {
+            expandInterface(targetContent, toggle, toggle.closest('.loadsave-header, .test-header, .edit-header'));
+            collapseOtherInterfaces(targetContent);
+        }
+        // On small screens, enable edit mode if Edit tab is selected
+        if (window.innerWidth < 1024 && tabName === 'edit') {
+            if (!editEnabled) toggleEditMode(true);
+        }
+    }
+}
+
+function toggleInterface(content, toggle) {
+    const isCollapsed = content.classList.contains('collapsed');
+    const header = toggle.closest('.loadsave-header, .test-header, .edit-header');
+    const isEdit = content.getAttribute('data-interface') === 'edit-content';
+    const isTest = content.getAttribute('data-interface') === 'test-content';
+
+    // Prevent collapsing the test interface while in testing mode
+    if (!isCollapsed && isTest && testingMode) {
+        // Do nothing: block collapse
+        return;
+    }
+
+    if (isCollapsed) {
+        // Expand this interface and collapse all others
+        expandInterface(content, toggle, header);
+        collapseOtherInterfaces(content);
+        // On large screens, enable edit mode if Edit Map is twirled open
+        if (window.innerWidth >= 1024 && isEdit && !editEnabled) {
+            toggleEditMode(true);
+        }
+    } else {
+        // Collapse this interface
+        collapseInterface(content, toggle, header);
+        // On large screens, disable edit mode if Edit Map is twirled closed
+        if (window.innerWidth >= 1024 && isEdit && editEnabled) {
+            toggleEditMode(false);
+        }
+    }
+}
+
+function expandInterface(content, toggle, header) {
+    content.classList.remove('collapsed');
+    toggle.classList.remove('collapsed');
+    if (header) header.classList.remove('collapsed');
+    toggle.setAttribute('title', 'Collapse interface');
+}
+
+function collapseInterface(content, toggle, header) {
+    content.classList.add('collapsed');
+    toggle.classList.add('collapsed');
+    if (header) header.classList.add('collapsed');
+    toggle.setAttribute('title', 'Expand interface');
+}
+
+function collapseOtherInterfaces(currentContent) {
+    // Find all other interface contents and collapse them
+    document.querySelectorAll('.interface-content').forEach(content => {
+        if (content !== currentContent) {
+            const toggle = document.querySelector(`[data-target="${content.getAttribute('data-interface')}"]`);
+            const header = toggle ? toggle.closest('.loadsave-header, .test-header, .edit-header') : null;
+            collapseInterface(content, toggle, header);
+
+            // If this is the Edit Map interface being collapsed, disable edit mode on large screens
+            if (content.getAttribute('data-interface') === 'edit-content' && window.innerWidth >= 1024) {
+                if (editEnabled) {
+                    toggleEditMode(false);
+                }
+            }
+        }
+    });
+}
 
 // Help Modal Functions
 function initializeHelpModal() {
@@ -160,55 +320,10 @@ function updateSVGDimensions() {
     shapesLayer.setAttribute('height', containerRect.height);
 }
 
-// Toggle Add submenu
+// Toggle Add submenu - now just updates the header state
 function toggleAddMenu() {
-    const addBtn = document.getElementById('addBtn');
-    const addSubMenu = document.getElementById('addSubMenu');
-    const isVisible = addSubMenu.style.display === 'flex';
-
-    if (isVisible) {
-        // If Add submenu is visible, hide it and deactivate Add mode
-        addSubMenu.style.display = 'none';
-        addBtn.setAttribute('aria-pressed', 'false');
-        addBtn.classList.remove('active');
-
-        // Turn off current mode if it's a drawing mode
-        if (currentMode === 'point' || currentMode === 'polygon' || currentMode === 'line') {
-            currentMode = null;
-            currentShape = null;
-            // Clear any remaining points
-            if (currentShapePoints.length > 0) {
-                currentShapePoints.forEach(point => {
-                    if (point.element && point.element.parentNode) {
-                        point.element.remove();
-                    }
-                });
-                currentShapePoints = [];
-            }
-            // Remove preview line if it exists
-            const previewLine = document.getElementById('previewLine');
-            if (previewLine) previewLine.remove();
-
-            // Reset button text
-            const polygonBtn = document.getElementById('polygonBtn');
-            const lineBtn = document.getElementById('lineBtn');
-            polygonBtn.textContent = 'Shape';
-            polygonBtn.title = 'Draw shape';
-            lineBtn.textContent = 'Line';
-            lineBtn.title = 'Draw line';
-
-            // Reset cursor
-            mapContainer.classList.remove('point-mode', 'polygon-mode', 'line-mode');
-            mapContainer.style.cursor = 'default';
-        }
-        updateButtons();
-    } else {
-        setMode(currentMode);
-        // If Add submenu is hidden, show it but don't activate any mode
-        addSubMenu.style.display = 'flex';
-        addBtn.setAttribute('aria-pressed', 'true');
-        addBtn.classList.add('active');
-    }
+    // The add submenu is now always visible, so we just update the header state
+    updateAddButtonHeaderState();
 }
 
 // Helper function to update cursor styles based on current mode
@@ -355,25 +470,6 @@ function setMode(mode) {
         if (previewLine) previewLine.remove();
     }
 
-    // Handle Add submenu and button state
-    const addSubMenu = document.getElementById('addSubMenu');
-    const addBtn = document.getElementById('addBtn');
-
-    // Only hide Add submenu if explicitly switching to a non-Add mode
-    // Keep it open when finishing shapes/lines
-    if (mode !== null && mode !== 'point' && mode !== 'polygon' && mode !== 'line') {
-        addSubMenu.style.display = 'none';
-        addBtn.setAttribute('aria-pressed', 'false');
-        addBtn.classList.remove('active');
-    }
-
-    // If switching to Add mode, show Add submenu and activate Add button
-    if (mode === 'point') {
-        addSubMenu.style.display = 'flex';
-        addBtn.setAttribute('aria-pressed', 'true');
-        addBtn.classList.add('active');
-    }
-
     // If clicking the same mode button again, deactivate the mode
     if (mode === previousMode) {
         currentMode = null;
@@ -383,46 +479,42 @@ function setMode(mode) {
             finishDrawingInterface.style.display = 'none';
         }
     }
-    if (mode == null || mode === previousMode) {
+    // Always close tag panel when switching to move, delete, or editLabelText
+    if (["move", "delete", "editLabelText"].includes(mode)) {
         toggletagPanel(false);
-    } else if (['polygon', 'line', 'point', 'changeTag'].includes(mode)) {
+    } else if (mode == null || mode === previousMode) {
+        toggletagPanel(false);
+    } else if (["polygon", "line", "point", "changeTag"].includes(mode)) {
         toggletagPanel(true);
     }
 
     // Update all button states
     updateButtons();
+
+    // Update add button header state
+    updateAddButtonHeaderState();
 }
 
 // Update toggleEditMode to use the new cursor style helper
-function toggleEditMode() {
-    editEnabled = !editEnabled;
-    document.getElementById('editToggle').setAttribute('aria-pressed', editEnabled);
+function toggleEditMode(forceState) {
+    // If forceState is provided, set editEnabled to that value
+    if (typeof forceState === 'boolean') {
+        if (editEnabled === forceState) return;
+        editEnabled = forceState;
+    } else {
+        editEnabled = !editEnabled;
+    }
 
     // Toggle visibility of edit tools
     const editTools = document.querySelector('.edit-tools');
     if (editEnabled) {
         editTools.classList.add('visible');
-        // Enable edit tool buttons
-        ['addBtn', 'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'pointBtn', 'polygonBtn', 'lineBtn', 'tagPanelBtn'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) {
-                btn.disabled = false;
-                btn.setAttribute('aria-disabled', 'false');
-                btn.classList.remove('active');
-                btn.setAttribute('aria-pressed', 'false');
-            }
-        });
-        // Don't call showReferencePoints() here - let updateTagVisibilityOnMap() handle it
+        setEditButtonsEnabled(true);
     } else {
         editTools.classList.remove('visible');
-        // Reset current mode when exiting edit mode
         currentMode = null;
         currentShape = null;
-
-        // Hide finish drawing interface
         document.getElementById('finishDrawingInterface').style.display = 'none';
-
-        // Clear any in-progress shape points
         if (currentShapePoints.length > 0) {
             currentShapePoints.forEach(point => {
                 if (point.element && point.element.parentNode) {
@@ -431,32 +523,10 @@ function toggleEditMode() {
             });
             currentShapePoints = [];
         }
-
-        // Remove preview line if it exists
         const previewLine = document.getElementById('previewLine');
         if (previewLine) previewLine.remove();
-
-        // Reset all buttons to inactive state
-        document.querySelectorAll('.menu button').forEach(btn => {
-            btn.setAttribute('aria-pressed', 'false');
-            btn.classList.remove('active');
-            // Only disable certain buttons
-            if (btn.id !== 'editToggle' &&
-                btn.id !== 'identPointBtn' &&
-                btn.id !== 'findPointBtn' &&
-                btn.id !== 'editLabelTextBtn') {
-                btn.disabled = true;
-                btn.setAttribute('aria-disabled', 'true');
-            }
-        });
-
-        // Reset Add submenu
-        const addSubMenu = document.getElementById('addSubMenu');
-        addSubMenu.style.display = 'none';
-        const addBtn = document.getElementById('addBtn');
-        addBtn.setAttribute('aria-pressed', 'false');
-        addBtn.classList.remove('active');
-
+        setEditButtonsEnabled(false);
+        updateButtons();
         // Close the tag type panel if open
         const tagPanel = document.getElementById('tagPanel');
         if (tagPanel && tagPanel.style.display !== 'none') {
@@ -465,37 +535,31 @@ function toggleEditMode() {
             setTimeout(() => { tagPanel.style.display = 'none'; }, 300);
         }
     }
-
-    // Update cursor styles based on edit mode state
     updateCursorStyles(currentMode);
-
-    // Update tag visibility based on user preferences and edit mode
     updateTagVisibilityOnMap();
-
-    // Toggle visibility of shape strokes and fills
     document.querySelectorAll('.polygon-path').forEach(polygon => {
         polygon.setAttribute('stroke', editEnabled ? 'blue' : 'none');
         polygon.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
     });
-
-    // Toggle visibility of line strokes
     document.querySelectorAll('.line-path').forEach(line => {
         line.setAttribute('stroke', editEnabled ? 'blue' : 'none');
     });
+    updateAddButtonHeaderState();
 }
 
 function updateButtons() {
-    ['moveBtn', 'deleteBtn', 'pointBtn', 'polygonBtn', 'lineBtn', 'editLabelTextBtn', 'tagPanelBtn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            const btnMode = id === 'pointBtn' ? 'point' : id.replace('Btn', '');
+    // Update all edit mode buttons
+    document.querySelectorAll('.edit-mode-btn').forEach(btn => {
+        const btnMode = btn.getAttribute('data-mode');
+        if (btnMode) {
             const active = (btnMode === currentMode);
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', active);
         }
     });
 
-    document.getElementById('editToggle').setAttribute('aria-checked', editEnabled);
+    // Update add button header state
+    updateAddButtonHeaderState();
 }
 
 // Draw leader lines connecting ref points and label boxes
@@ -515,6 +579,9 @@ function updateLeaderLines() {
         return { x: centerX, y: centerY };
     }
 
+    // Check if we should hide leader lines (in find mode)
+    const shouldHideLeaderLines = testingMode && currentTestMode === 'find';
+
     // Draw leader lines for regular labels
     points.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
         const x1 = refX;
@@ -522,56 +589,86 @@ function updateLeaderLines() {
         const center = getLabelBoxCenter(labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', x1);
         line.setAttribute('y1', y1);
         line.setAttribute('x2', x2);
         line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#2196F3');
+        line.setAttribute('stroke-width', '2');
         line.setAttribute('class', 'leader-line');
-        if (labelBoxEl.id) {
+        line.setAttribute('data-type', type);
+        if (labelBoxEl && labelBoxEl.id) {
             line.setAttribute('data-for', labelBoxEl.id);
         }
         line.setAttribute('data-type', type);
+
+        // Hide leader line if in find mode OR if the tag is hidden
+        if (shouldHideLeaderLines || tagVisibility[type] === false) {
+            line.style.visibility = 'hidden';
+        }
+
         leaderLinesSVG.appendChild(line);
     });
 
-    // Draw leader lines for polygon labels
+    // Draw leader lines for polygons
     polygons.forEach(polygon => {
         const x1 = polygon.anchorX;
         const y1 = polygon.anchorY;
         const center = getLabelBoxCenter(polygon.labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', x1);
         line.setAttribute('y1', y1);
         line.setAttribute('x2', x2);
         line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#2196F3');
+        line.setAttribute('stroke-width', '2');
         line.setAttribute('class', 'leader-line');
-        if (polygon.labelBoxEl.id) {
+        line.setAttribute('data-type', polygon.type);
+        if (polygon.labelBoxEl && polygon.labelBoxEl.id) {
             line.setAttribute('data-for', polygon.labelBoxEl.id);
         }
         line.setAttribute('data-type', polygon.type);
+
+        // Hide leader line if in find mode OR if the tag is hidden
+        if (shouldHideLeaderLines || tagVisibility[polygon.type] === false) {
+            line.style.visibility = 'hidden';
+        }
+
         leaderLinesSVG.appendChild(line);
     });
 
-    // Draw leader lines for line labels
+    // Draw leader lines for lines
     lines.forEach(lineObj => {
         const x1 = lineObj.anchorX;
         const y1 = lineObj.anchorY;
         const center = getLabelBoxCenter(lineObj.labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', x1);
         line.setAttribute('y1', y1);
         line.setAttribute('x2', x2);
         line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#2196F3');
+        line.setAttribute('stroke-width', '2');
         line.setAttribute('class', 'leader-line');
-        if (lineObj.labelBoxEl.id) {
+        line.setAttribute('data-type', lineObj.type);
+        if (lineObj.labelBoxEl && lineObj.labelBoxEl.id) {
             line.setAttribute('data-for', lineObj.labelBoxEl.id);
         }
         line.setAttribute('data-type', lineObj.type);
+
+        // Hide leader line if in find mode OR if the tag is hidden
+        if (shouldHideLeaderLines || tagVisibility[lineObj.type] === false) {
+            line.style.visibility = 'hidden';
+        }
+
         leaderLinesSVG.appendChild(line);
     });
 
@@ -583,12 +680,37 @@ function updateSaveButtonState() {
     const saveButton = document.getElementById('saveElementsBtn');
     const hasData = points.length > 0 || polygons.length > 0 || lines.length > 0;
     const isDrawing = currentShapePoints && currentShapePoints.length > 0;
+    const hasChanges = hasUnsavedChanges();
 
     // Disable save button if drawing or if no data exists
     const shouldBeDisabled = isDrawing || !hasData;
     saveButton.disabled = shouldBeDisabled;
     saveButton.style.opacity = shouldBeDisabled ? '0.5' : '1';
     saveButton.style.cursor = shouldBeDisabled ? 'not-allowed' : 'pointer';
+
+    // Update the Load & Save header to show unsaved changes indicator
+    const loadsaveHeader = document.querySelector('.loadsave-header h3');
+    if (loadsaveHeader) {
+        if (hasChanges && !shouldBeDisabled) {
+            loadsaveHeader.innerHTML = '<i class="fas fa-folder-open"></i> Load & Save <span class="unsaved-indicator">*</span>';
+            loadsaveHeader.classList.add('unsaved-changes');
+        } else {
+            loadsaveHeader.innerHTML = '<i class="fas fa-folder-open"></i> Load & Save';
+            loadsaveHeader.classList.remove('unsaved-changes');
+        }
+    }
+
+    // Update the Load/Save tab button to show unsaved changes indicator on small screens
+    const loadsaveTabBtn = document.querySelector('.tab-btn[data-tab="loadsave"]');
+    if (loadsaveTabBtn) {
+        if (hasChanges && !shouldBeDisabled) {
+            loadsaveTabBtn.innerHTML = 'Load/Save <span class="unsaved-indicator">*</span>';
+            loadsaveTabBtn.classList.add('unsaved-changes');
+        } else {
+            loadsaveTabBtn.innerHTML = 'Load/Save';
+            loadsaveTabBtn.classList.remove('unsaved-changes');
+        }
+    }
 }
 
 // Add label at ref point with label offset
@@ -622,6 +744,10 @@ function createLabel(refX, refY, labelX, labelY, text = '', createRefPoint = tru
     if (!labelBoxEl.id) {
         labelBoxEl.id = `label-${labelIdCounter++}`;
     }
+
+    // Add keyboard event listener for Enter/Shift+Enter handling
+    labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+
     mapContainer.appendChild(labelBoxEl);
     // Trigger the creation animation
     requestAnimationFrame(() => labelBoxEl.classList.add('visible'));
@@ -1387,6 +1513,11 @@ mapContainer.addEventListener('click', (e) => {
             const labelRect = point.labelBoxEl.getBoundingClientRect();
             if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
                 point.labelBoxEl.contentEditable = 'true';
+                // Add keyboard event listener if not already added
+                if (!point.labelBoxEl.hasAttribute('data-keydown-added')) {
+                    point.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+                    point.labelBoxEl.setAttribute('data-keydown-added', 'true');
+                }
                 point.labelBoxEl.focus();
                 return;
             }
@@ -1397,6 +1528,11 @@ mapContainer.addEventListener('click', (e) => {
             const labelRect = polygon.labelBoxEl.getBoundingClientRect();
             if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
                 polygon.labelBoxEl.contentEditable = 'true';
+                // Add keyboard event listener if not already added
+                if (!polygon.labelBoxEl.hasAttribute('data-keydown-added')) {
+                    polygon.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+                    polygon.labelBoxEl.setAttribute('data-keydown-added', 'true');
+                }
                 polygon.labelBoxEl.focus();
                 return;
             }
@@ -1407,11 +1543,29 @@ mapContainer.addEventListener('click', (e) => {
             const labelRect = line.labelBoxEl.getBoundingClientRect();
             if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
                 line.labelBoxEl.contentEditable = 'true';
+                // Add keyboard event listener if not already added
+                if (!line.labelBoxEl.hasAttribute('data-keydown-added')) {
+                    line.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+                    line.labelBoxEl.setAttribute('data-keydown-added', 'true');
+                }
                 line.labelBoxEl.focus();
                 return;
             }
         }
     } else if (currentMode === 'polygon' || currentMode === 'line') {
+        // Check if user clicked on the first point of the current shape (only for polygons)
+        if (currentMode === 'polygon' && currentShapePoints.length > 0 && hasEnoughPointsForShape()) {
+            const firstPoint = currentShapePoints[0];
+            const firstPointRect = firstPoint.element.getBoundingClientRect();
+            if (isPointInRect(x, y, firstPointRect, rect.left, rect.top)) {
+                // User clicked on the first point, finish the shape
+                finishCurrentShape();
+                document.getElementById('finishDrawingInterface').style.display = 'none';
+                setSidebarButtonsEnabled(true);
+                return;
+            }
+        }
+
         const point = document.createElement('div');
         point.className = 'polygon-point';
         point.setAttribute('data-type', currentType);
@@ -1617,6 +1771,12 @@ mapFileInput.addEventListener('change', async (e) => {
                     document.getElementById('saveElementsBtn').style.display = 'inline-block';
                     document.getElementById('loadElementsBtn').style.display = 'inline-block';
 
+                    // Hide the front load map container
+                    const frontLoadMapContainer = document.getElementById('frontLoadMapContainer');
+                    if (frontLoadMapContainer) {
+                        frontLoadMapContainer.classList.add('hidden');
+                    }
+
                     // Clear all existing data
                     points.forEach(point => {
                         if (point.refPointEl) point.refPointEl.remove();
@@ -1647,6 +1807,9 @@ mapFileInput.addEventListener('change', async (e) => {
                     while (leaderLinesSVG.firstChild) {
                         leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
                     }
+
+                    // Reset baseline data for unsaved changes detection
+                    baselineData = null;
 
                     // Update SVG size to match new image
                     requestAnimationFrame(() => {
@@ -1726,17 +1889,14 @@ mapFileInput.addEventListener('change', async (e) => {
         // Handle dialog buttons
         document.getElementById('saveAndContinue').onclick = async () => {
             // Save current labels first
-            await new Promise(resolve => {
-                saveElements();
-                // Give time for the save dialog to complete
-                const checkInterval = setInterval(() => {
-                    const saveDialog = document.querySelector('input[type="file"][nwsaveas]');
-                    if (!saveDialog) {
-                        clearInterval(checkInterval);
-                        resolve();
-                    }
-                }, 100);
-            });
+            saveElements();
+
+            // Wait a bit for the save to complete, then update baseline data
+            setTimeout(() => {
+                // Update baseline data to reflect the saved state
+                baselineData = getCurrentState();
+            }, 500);
+
             dialog.remove();
             overlay.remove();
             try {
@@ -1824,6 +1984,12 @@ function saveElements() {
 
     // Clean up
     URL.revokeObjectURL(a.href);
+
+    // Update baseline data after successful save
+    baselineData = JSON.parse(JSON.stringify(exportData));
+
+    // Clear the unsaved changes indicator immediately
+    updateSaveButtonState();
 }
 
 // Load labels from JSON file
@@ -2148,6 +2314,12 @@ function loadElements() {
 
                 updateLeaderLines();
                 renderTagPanel();
+
+                // Store the loaded data as baseline for unsaved changes detection
+                baselineData = JSON.parse(JSON.stringify(data));
+
+                // Clear the unsaved changes indicator since we just loaded new data
+                updateSaveButtonState();
             };
             reader.readAsText(file);
         };
@@ -2356,7 +2528,7 @@ function selectNextTestItem() {
     if (!testingMode) {
         return;
     }
-    
+
     // Remove highlight from previous item and its label if exists
     if (currentTestItem) {
         currentTestItem.element.classList.remove('highlight-test');
@@ -2444,34 +2616,33 @@ function selectNextTestItem() {
 function checkAnswer(answer) {
     const correctAnswer = currentTestItem.label.dataset.correctAnswer.trim().toLowerCase();
     const userAnswer = answer.toLowerCase();
-    const feedback = document.querySelector('#testInterface .feedback');
     const testInput = document.getElementById('testInput');
+    const testInputFeedback = document.querySelector('.test-feedback-element');
+
+    // Remove previous feedback classes
+    testInputFeedback.classList.remove('correct', 'incorrect');
 
     if (userAnswer === correctAnswer) {
         // Correct answer
-        feedback.textContent = 'Correct!';
-        feedback.className = 'feedback correct';
+        testInputFeedback.classList.add('correct');
 
         // Remove current item from remaining items
-        remainingTestItems.shift();  // Remove the first item since we know it's the current one
-        console.log(`After removal, remaining items: ${remainingTestItems.length}`);
-
-        // Update progress first
+        remainingTestItems.shift();
         updateTestProgress();
 
-        // Clear input and select next item
         setTimeout(() => {
             testInput.value = '';
-            feedback.textContent = '';
-            feedback.className = 'feedback';
+            testInputFeedback.classList.remove('correct', 'incorrect');
             selectNextTestItem();
         }, 1500);
     } else {
         // Incorrect answer
-        feedback.textContent = 'Try again!';
-        feedback.className = 'feedback incorrect';
+        testInputFeedback.classList.add('incorrect');
         testInput.value = '';
         testInput.focus();
+        setTimeout(() => {
+            testInputFeedback.classList.remove('incorrect');
+        }, 1200);
     }
 }
 
@@ -2562,6 +2733,12 @@ function cleanupTest() {
     const identifyInterface = document.getElementById('identifyInterface');
     const findInterface = document.getElementById('findInterface');
 
+    // Remove testing mode class to restore interface toggles and un-gray windows
+    const mainMenu = document.getElementById('mainMenu');
+    if (mainMenu) {
+        mainMenu.classList.remove('testing-mode-active');
+    }
+
     // Hide test mode interfaces
     identifyInterface.classList.remove('active');
     findInterface.classList.remove('active');
@@ -2589,14 +2766,9 @@ function cleanupTest() {
     identBtn.style.cursor = 'pointer';
     findBtn.style.cursor = 'pointer';
 
-    // Re-enable edit toggle
-    editToggle.disabled = false;
-    editToggle.style.opacity = '1';
-    editToggle.style.cursor = 'pointer';
-
     // Re-enable and reset all menu buttons
     document.querySelectorAll('.menu button').forEach(button => {
-        if (button.id !== 'stopTestBtn') {
+        if (button.id !== 'stopTestBtn' && button.id !== 'addBtn') {
             button.disabled = false;
             button.style.opacity = '1';
             button.style.cursor = 'pointer';
@@ -2620,6 +2792,98 @@ function cleanupTest() {
                 element.style.pointerEvents = 'auto';
             }
         });
+    }
+
+    // Show all label text and reset point visibility
+    document.querySelectorAll('.label-box').forEach(label => {
+        if (label.dataset.correctAnswer) {
+            label.textContent = label.dataset.correctAnswer;
+            delete label.dataset.correctAnswer;
+        }
+        // Reset any test-related styles
+        label.classList.remove('highlight-test');
+        label.style.animation = 'none';
+        label.style.backgroundColor = '';
+        label.style.color = '';
+        label.style.borderColor = '';
+        label.style.boxShadow = '';
+        label.style.filter = '';
+    });
+
+    // Reset reference point visibility and styles
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
+        point.style.visibility = 'hidden';
+        point.classList.remove('highlight-test');
+        point.style.animation = 'none';
+        point.style.backgroundColor = '';
+        point.style.borderColor = '';
+        point.style.transform = 'translate(-50%, -50%) scale(1)';
+        point.style.boxShadow = '';
+        point.style.filter = '';
+    });
+
+    // Reset any highlighted shapes (polygons and lines)
+    document.querySelectorAll('.polygon-path, .line-path').forEach(shape => {
+        shape.classList.remove('highlight-test');
+        shape.style.animation = 'none';
+        shape.setAttribute('stroke', 'none');
+        shape.setAttribute('stroke-width', '2');
+        shape.style.filter = '';
+        if (shape.classList.contains('polygon-path')) {
+            shape.setAttribute('fill', 'none');
+        }
+    });
+
+    // Reset leader lines
+    document.querySelectorAll('.leader-line').forEach(line => {
+        line.classList.remove('highlight-test');
+        line.style.animation = 'none';
+        line.setAttribute('stroke', 'rgba(0, 0, 0, 0.4)');
+        line.setAttribute('stroke-width', '1');
+        line.setAttribute('stroke-dasharray', '4,3');
+        line.style.filter = '';
+    });
+
+    // Force a reflow to ensure animations are properly reset
+    void document.documentElement.offsetHeight;
+
+    // Remove animation: none after reflow to allow future animations
+    document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor, .polygon-path, .line-path, .leader-line').forEach(element => {
+        element.style.animation = '';
+    });
+
+    // Clear any remaining test items
+    testItems = [];
+    remainingTestItems = [];
+    currentTestItem = null;
+
+    // Restore element visibility after Identify Elements mode
+    restoreIdentifyTestVisibility();
+
+    // Restore tag visibility based on user preferences
+    updateTagVisibilityOnMap();
+
+    // After restoreIdentifyTestVisibility();
+    if (!editEnabled) {
+        document.querySelectorAll('.ref-point').forEach(point => {
+            point.style.visibility = 'hidden';
+        });
+    }
+
+    // Re-enable the load/save tab when test ends
+    const loadsaveTabRadio = document.getElementById('tab-loadsave');
+    const loadsaveTabBtn = document.querySelector('label[for="tab-loadsave"]');
+    if (loadsaveTabRadio && loadsaveTabBtn) {
+        loadsaveTabRadio.disabled = false;
+        loadsaveTabBtn.classList.remove('disabled');
+    }
+
+    // Re-enable the edit tab when test ends
+    const editTabRadio = document.getElementById('tab-edit');
+    const editTabBtn = document.querySelector('label[for="tab-edit"]');
+    if (editTabRadio && editTabBtn) {
+        editTabRadio.disabled = false;
+        editTabBtn.classList.remove('disabled');
     }
 
     // Show all label text and reset point visibility
@@ -2734,7 +2998,6 @@ function toggleTestMode(mode) {
 function _toggleTestModeInternal(mode, selectedTags) {
     const identBtn = document.getElementById('identPointBtn');
     const findBtn = document.getElementById('findPointBtn');
-    const editToggle = document.getElementById('editToggle');
     const stopTestBtn = document.getElementById('stopTestBtn');
     const editTools = document.querySelector('.edit-tools');
     const addSubMenu = document.getElementById('addSubMenu');
@@ -2745,34 +3008,16 @@ function _toggleTestModeInternal(mode, selectedTags) {
     // If we're in a different test mode, stop it first
     if (testingMode) {
         endTest(false); // false indicates this is not a natural completion
-        restoreVisibility(); // Make sure everything is visible before starting new mode
+        // Only restore visibility if we're not entering find mode (where we want to hide elements)
+        if (mode !== 'find') {
+            restoreVisibility(); // Make sure everything is visible before starting new mode
+        }
     }
 
     // If we're in edit mode, disable it
     if (editEnabled) {
-        editEnabled = false;
-        editToggle.setAttribute('aria-pressed', 'false');
-        editToggle.classList.remove('active');
-        editTools.classList.remove('visible');
-        addSubMenu.style.display = 'none';
-
-        // Reset all edit-related states
-        currentMode = null;
-        currentShape = null;
-
-        // Hide finish drawing interface
-        document.getElementById('finishDrawingInterface').style.display = 'none';
-
-        if (currentShapePoints.length > 0) {
-            currentShapePoints.forEach(point => {
-                if (point.element && point.element.parentNode) {
-                    point.element.remove();
-                }
-            });
-            currentShapePoints = [];
-        }
-        const previewLine = document.getElementById('previewLine');
-        if (previewLine) previewLine.remove();
+        // Call toggleEditMode to properly close edit mode and update all UI states
+        toggleEditMode(false);
     }
 
     // Start the test mode
@@ -2781,6 +3026,12 @@ function _toggleTestModeInternal(mode, selectedTags) {
 
     // Update cursor styles for test mode
     updateCursorStyles(null);
+
+    // Add testing mode class to main menu to hide interface toggles and gray out non-testing windows
+    const mainMenu = document.getElementById('mainMenu');
+    if (mainMenu) {
+        mainMenu.classList.add('testing-mode-active');
+    }
 
     // Common initialization for both modes
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
@@ -2882,10 +3133,10 @@ function _toggleTestModeInternal(mode, selectedTags) {
     // Select the first test item after UI is ready
     selectNextTestItem();
 
-    // Disable edit toggle during test
-    editToggle.disabled = true;
-    editToggle.style.opacity = '0.5';
-    editToggle.style.cursor = 'not-allowed';
+    // Disable edit mode during test (no longer need to disable editToggle button)
+    if (editEnabled) {
+        toggleEditMode(false);
+    }
 
     // Update button states and disable all menu buttons
     identBtn.classList.toggle('test-active', mode === 'ident');
@@ -2923,6 +3174,22 @@ function _toggleTestModeInternal(mode, selectedTags) {
         });
     }
 
+    // Disable the load/save tab when test is active
+    const loadsaveTabRadio = document.getElementById('tab-loadsave');
+    const loadsaveTabBtn = document.querySelector('label[for="tab-loadsave"]');
+    if (loadsaveTabRadio && loadsaveTabBtn) {
+        loadsaveTabRadio.disabled = true;
+        loadsaveTabBtn.classList.add('disabled');
+    }
+
+    // Disable the edit tab when test is active
+    const editTabRadio = document.getElementById('tab-edit');
+    const editTabBtn = document.querySelector('label[for="tab-edit"]');
+    if (editTabRadio && editTabBtn) {
+        editTabRadio.disabled = true;
+        editTabBtn.classList.add('disabled');
+    }
+
     // Close the tag type panel if open
     const tagPanel = document.getElementById('tagPanel');
     if (tagPanel && tagPanel.style.display !== 'none') {
@@ -2938,7 +3205,6 @@ function _toggleTestModeInternal(mode, selectedTags) {
             currentTestItem.element.style.visibility = 'visible';
         }
     }
-
 }
 
 let currentTestMode = null;
@@ -2961,9 +3227,7 @@ function resetUIState() {
     // Exit edit mode if active
     if (editEnabled) {
         editEnabled = false;
-        const editToggle = document.getElementById('editToggle');
-        editToggle.setAttribute('aria-pressed', 'false');
-        editToggle.classList.remove('active');
+        // Removed editToggle references
         const editTools = document.querySelector('.edit-tools');
         editTools.classList.remove('visible');
     }
@@ -2973,8 +3237,7 @@ function resetUIState() {
         btn.setAttribute('aria-pressed', 'false');
         btn.classList.remove('active');
         // Only disable certain buttons
-        if (btn.id !== 'editToggle' &&
-            btn.id !== 'identPointBtn' &&
+        if (btn.id !== 'identPointBtn' &&
             btn.id !== 'findPointBtn' &&
             btn.id !== 'editLabelTextBtn') {  // Don't disable edit text button
             btn.disabled = true;
@@ -2984,7 +3247,6 @@ function resetUIState() {
 
     // Hide Add submenu
     const addSubMenu = document.getElementById('addSubMenu');
-    addSubMenu.style.display = 'none';
     const addBtn = document.getElementById('addBtn');
     addBtn.setAttribute('aria-pressed', 'false');
     addBtn.classList.remove('active');
@@ -3079,24 +3341,13 @@ function handleFindModeClick(e) {
 
     if (isCorrect) {
         // Correct click
-        feedback.textContent = 'Correct!';
-        feedback.className = 'feedback correct';
-
-        // Remove current item from remaining items
+        const targetLabel = document.getElementById('targetLabel');
+        targetLabel.classList.add('correct');
         remainingTestItems.shift();
-        console.log(`After removal, remaining items: ${remainingTestItems.length}`);
-
-        // Update progress
         updateTestProgress();
-
-        // Disable click handler until next point is loaded
         mapContainer.removeEventListener('click', handleFindModeClick);
-
-        // Clear feedback and select next item after delay
         setTimeout(() => {
-            feedback.textContent = '';
-            feedback.className = 'feedback';
-            // Re-enable click handler if there are more items
+            targetLabel.classList.remove('correct', 'incorrect');
             if (remainingTestItems.length > 0) {
                 mapContainer.addEventListener('click', handleFindModeClick);
             }
@@ -3104,12 +3355,11 @@ function handleFindModeClick(e) {
         }, 1500);
     } else {
         // Incorrect click
-        feedback.textContent = 'Try again!';
-        feedback.className = 'feedback incorrect';
+        const targetLabel = document.getElementById('targetLabel');
+        targetLabel.classList.add('incorrect');
         setTimeout(() => {
-            feedback.textContent = '';
-            feedback.className = 'feedback';
-        }, 1500);
+            targetLabel.classList.remove('incorrect');
+        }, 1200);
     }
 }
 
@@ -3118,7 +3368,7 @@ function selectNextTestItem() {
     if (!testingMode) {
         return;
     }
-    
+
     // Remove highlight from previous item and its label if exists
     if (currentTestItem) {
         currentTestItem.element.classList.remove('highlight-test');
@@ -3474,27 +3724,27 @@ function renderTagPanel() {
         li.style.color = (tag === currentType) ? 'white' : '#333';
         li.style.cursor = 'pointer';
         li.style.transition = 'background-color 0.2s ease';
-        
+
         // Add hover effect for better UX
         li.addEventListener('pointerenter', () => {
             if (tag !== currentType) {
                 li.style.background = 'rgba(33, 150, 243, 0.1)';
             }
         });
-        
+
         li.addEventListener('pointerleave', () => {
             if (tag !== currentType) {
                 li.style.background = 'transparent';
             }
         });
-        
+
         // Add click handler to the entire li element
         li.addEventListener('click', (e) => {
             // Don't trigger if clicking on interactive elements (buttons, etc.)
             if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
                 return;
             }
-            
+
             currentType = tag;
             if (tagVisibility[tag] === false) {
                 setTagVisibility(tag, true);
@@ -3506,7 +3756,7 @@ function renderTagPanel() {
 
         li.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-          });
+        });
 
         // --- Visibility toggle ---
         const visBtn = document.createElement('button');
@@ -3606,7 +3856,7 @@ function renderTagPanel() {
 
         li.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-          });
+        });
 
         li.appendChild(tagSpan);
         // Edit/Delete buttons (only in edit mode)
@@ -3820,10 +4070,10 @@ function addNewTag() {
     const input = document.getElementById('newTagInput');
     const errorElement = document.getElementById('newTagError');
     const val = input.value.trim();
-    
+
     // Clear any existing error message
     clearTagError();
-    
+
     if (val) {
         if (tags.includes(val)) {
             // Show error message for duplicate tag
@@ -3854,12 +4104,12 @@ function saveEditTag() {
     const newName = document.getElementById('editTagInput').value.trim();
     const errorElement = document.getElementById('editTagError');
     const input = document.getElementById('editTagInput');
-    
+
     // Clear any existing error message
     clearEditTagError();
-    
+
     if (!newName) return;
-    
+
     if (tags.includes(newName)) {
         // Show error message for duplicate tag
         errorElement.style.display = 'block';
@@ -3870,7 +4120,7 @@ function saveEditTag() {
         }, 500);
         return;
     }
-    
+
     // Update tag in tags array
     const idx = tags.indexOf(tagToEdit);
     if (idx !== -1) tags[idx] = newName;
@@ -3944,6 +4194,11 @@ function addLabel(x, y) {
     updateLeaderLines();
     // Always make label editable and focus after a short delay to ensure keyboard opens
     labelBoxEl.contentEditable = 'true';
+    // Add keyboard event listener if not already added
+    if (!labelBoxEl.hasAttribute('data-keydown-added')) {
+        labelBoxEl.addEventListener('keydown', handleLabelKeydown);
+        labelBoxEl.setAttribute('data-keydown-added', 'true');
+    }
     setTimeout(() => {
         labelBoxEl.focus();
         // Place cursor at end
@@ -3977,22 +4232,22 @@ function showTestTagTypeModal(testMode, callback) {
     const modal = document.getElementById('testTagTypeModal');
     const form = document.getElementById('testTagTypeForm');
     form.innerHTML = '';
-    
+
     // Get element counts for each tag
     const tagElementCounts = {};
     tags.forEach(tag => {
         tagElementCounts[tag] = getElementCountForTag(tag);
     });
-    
+
     // Check if any tags have elements
     const hasAnyElements = Object.values(tagElementCounts).some(count => count > 0);
-    
+
     tags.forEach(tag => {
         const id = `testTagType_${tag}`;
         const div = document.createElement('div');
         const elementCount = tagElementCounts[tag];
         const isDisabled = elementCount === 0;
-        
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = id;
@@ -4000,13 +4255,13 @@ function showTestTagTypeModal(testMode, callback) {
         checkbox.checked = !isDisabled; // Only check if not disabled
         checkbox.disabled = isDisabled;
         checkbox.className = isDisabled ? 'disabled-checkbox' : '';
-        
+
         div.appendChild(checkbox);
         const label = document.createElement('label');
         label.htmlFor = id;
         label.textContent = tag;
         label.className = isDisabled ? 'disabled-label' : '';
-        
+
         // Add element count badge
         const countBadge = createElementCountBadge(elementCount);
         if (isDisabled) {
@@ -4014,31 +4269,31 @@ function showTestTagTypeModal(testMode, callback) {
             countBadge.title = 'No elements with this tag type';
         }
         label.appendChild(countBadge);
-        
+
         label.style.marginLeft = '8px';
         label.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-       
+
         // Add highlighting for both mouse and touch events (only if not disabled)
         if (!isDisabled) {
             let highlightTimeout;
-            
+
             // Mouse events for desktop
             div.addEventListener('pointerenter', () => {
                 highlightElementsWithTag(tag);
             });
-            
+
             div.addEventListener('pointerleave', () => {
                 removeElementHighlighting();
             });
 
             div.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-              });
+            });
         }
-        
+
         div.appendChild(label);
         form.appendChild(div);
-        
+
         // Add click event listener to the entire div to toggle checkbox
         if (!isDisabled) {
             div.addEventListener('click', (e) => {
@@ -4053,40 +4308,40 @@ function showTestTagTypeModal(testMode, callback) {
             });
         }
     });
-    
+
     modal.style.display = 'block';
-    
+
     // Add select/deselect all logic
     setTimeout(() => {
         const selectAllBtn = document.getElementById('selectAllTestTagsBtn');
         const deselectAllBtn = document.getElementById('deselectAllTestTagsBtn');
-        
+
         if (selectAllBtn) {
             selectAllBtn.onclick = function () {
                 const form = document.getElementById('testTagTypeForm');
-                form.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(cb => { 
-                    cb.checked = true; 
+                form.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(cb => {
+                    cb.checked = true;
                 });
                 updateStartTestButtonState();
             };
         }
-        
+
         if (deselectAllBtn) {
             deselectAllBtn.onclick = function () {
                 const form = document.getElementById('testTagTypeForm');
-                form.querySelectorAll('input[type=checkbox]').forEach(cb => { 
-                    cb.checked = false; 
+                form.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                    cb.checked = false;
                 });
                 updateStartTestButtonState();
             };
         }
-        
+
         // Add change listeners to checkboxes to update button state
         const checkboxes = form.querySelectorAll('input[type=checkbox]:not(:disabled)');
         checkboxes.forEach(cb => {
             cb.addEventListener('change', updateStartTestButtonState);
         });
-        
+
         updateStartTestButtonState();
     }, 0);
 }
@@ -4098,14 +4353,14 @@ function closeTestTagTypeModal() {
 function confirmTestTagTypeModal() {
     const form = document.getElementById('testTagTypeForm');
     const checked = Array.from(form.querySelectorAll('input[type=checkbox]:checked:not(:disabled)')).map(cb => cb.value);
-    
+
     // Sync tag visibility with the selected tags for testing
     // Set visibility to true for selected tags, false for unselected tags
     tags.forEach(tag => {
         const isSelected = checked.includes(tag);
         setTagVisibility(tag, isSelected);
     });
-    
+
     if (pendingTestModeCallback) {
         pendingTestModeCallback(checked);
     }
@@ -4237,21 +4492,21 @@ mapContainer.addEventListener('click', function (e) {
         if (changedLabelBox && changedLabelBox.id) {
             const line = document.querySelector(`.leader-line[data-for="${changedLabelBox.id}"]`);
             if (line) line.setAttribute('data-type', currentType);
-            
+
             // Visual indication: highlight the changed element and ALL its related components
             changedLabelBox.classList.add('tag-changed');
-            
+
             // Also highlight the reference point if it exists (for points)
             const refPoint = changedLabelBox.previousElementSibling;
             if (refPoint && refPoint.classList.contains('ref-point')) {
                 refPoint.classList.add('tag-changed');
             }
-            
+
             // Also highlight the leader line if it exists
             if (line) {
                 line.classList.add('tag-changed');
             }
-            
+
             // Find and highlight the associated polygon or line elements
             // Check if this is a polygon label
             const polygon = polygons.find(p => p.labelBoxEl === changedLabelBox);
@@ -4271,7 +4526,7 @@ mapContainer.addEventListener('click', function (e) {
                     polygon.anchorPoint.element.classList.add('tag-changed');
                 }
             }
-            
+
             // Check if this is a line label
             const lineObj = lines.find(l => l.labelBoxEl === changedLabelBox);
             if (lineObj) {
@@ -4290,7 +4545,7 @@ mapContainer.addEventListener('click', function (e) {
                     lineObj.anchorPoint.classList.add('tag-changed');
                 }
             }
-            
+
             // Remove highlighting after 700ms
             setTimeout(() => {
                 changedLabelBox.classList.remove('tag-changed');
@@ -4300,7 +4555,7 @@ mapContainer.addEventListener('click', function (e) {
                 if (line) {
                     line.classList.remove('tag-changed');
                 }
-                
+
                 // Remove highlighting from polygon elements
                 if (polygon) {
                     if (polygon.svgPath) {
@@ -4315,7 +4570,7 @@ mapContainer.addEventListener('click', function (e) {
                         polygon.anchorPoint.element.classList.remove('tag-changed');
                     }
                 }
-                
+
                 // Remove highlighting from line elements
                 if (lineObj) {
                     if (lineObj.polyline) {
@@ -4486,6 +4741,213 @@ loadMapButton.addEventListener('click', () => {
     document.getElementById('mapFileInput').click();
 });
 
+// Front load map button functionality
+const frontLoadMapButton = document.getElementById('frontLoadMapButton');
+const frontMapFileInput = document.getElementById('frontMapFileInput');
+const frontLoadMapContainer = document.getElementById('frontLoadMapContainer');
+
+frontLoadMapButton.addEventListener('click', () => {
+    frontMapFileInput.click();
+});
+
+frontMapFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Use the same file loading logic as the original button
+    const mapFileInput = document.getElementById('mapFileInput');
+    const errorMessage = document.getElementById('errorMessage');
+    const pageContainer = document.querySelector('.page-container');
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        errorMessage.textContent = 'Please select a valid image file.';
+        errorMessage.style.display = 'block';
+        frontMapFileInput.value = '';
+        return;
+    }
+
+    // Check if there are any existing labels, polygons, or lines
+    const hasExistingData = points.length > 0 || polygons.length > 0 || lines.length > 0;
+
+    const loadNewMap = () => {
+        return new Promise((resolve, reject) => {
+            errorMessage.style.display = 'none';
+
+            // Reset all UI states
+            resetUIState();
+
+            // Hide save/load buttons while loading
+            document.getElementById('saveElementsBtn').style.display = 'none';
+            document.getElementById('loadElementsBtn').style.display = 'none';
+
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const img = new Image();
+
+                img.onload = () => {
+                    console.log('Image loaded successfully:', img.width, 'x', img.height);
+                    mapImage.src = img.src;
+                    pageContainer.style.opacity = '1';
+                    document.getElementById('saveElementsBtn').style.display = 'inline-block';
+                    document.getElementById('loadElementsBtn').style.display = 'inline-block';
+
+                    // Hide the front load map container
+                    frontLoadMapContainer.classList.add('hidden');
+
+                    // Clear all existing data
+                    points.forEach(point => {
+                        if (point.refPointEl) point.refPointEl.remove();
+                        if (point.labelBoxEl) point.labelBoxEl.remove();
+                    });
+                    points.length = 0;
+
+                    polygons.forEach(polygon => {
+                        polygon.points.forEach(p => p.element.remove());
+                        polygon.labelBoxEl.remove();
+                        polygon.svgPath.remove();
+                        polygon.anchorPoint.element.remove();
+                    });
+                    polygons.length = 0;
+
+                    lines.forEach(line => {
+                        line.points.forEach(p => p.element.remove());
+                        line.labelBoxEl.remove();
+                        line.polyline.remove();
+                        line.anchorPoint.remove();
+                    });
+                    lines.length = 0;
+
+                    // Clear SVG layers
+                    while (shapesLayer.firstChild) {
+                        shapesLayer.removeChild(shapesLayer.firstChild);
+                    }
+                    while (leaderLinesSVG.firstChild) {
+                        leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
+                    }
+
+                    // Update SVG size to match new image
+                    requestAnimationFrame(() => {
+                        updateSVGDimensions();
+                        // Reset file input to allow selecting the same file again
+                        frontMapFileInput.value = '';
+                        // Update save button state after clearing data
+                        updateSaveButtonState();
+                        resolve();
+                    });
+                };
+
+                img.onerror = () => {
+                    console.error('Failed to load image');
+                    errorMessage.textContent = 'Failed to load the image. Please try another file.';
+                    errorMessage.style.display = 'block';
+                    // Keep save/load buttons hidden
+                    document.getElementById('saveElementsBtn').style.display = 'none';
+                    document.getElementById('loadElementsBtn').style.display = 'none';
+                    // Reset file input to allow selecting the same file again
+                    frontMapFileInput.value = '';
+                    reject(new Error('Failed to load image'));
+                };
+
+                // Set image source from FileReader result
+                img.src = e.target.result;
+            };
+
+            reader.onerror = () => {
+                console.error('Failed to read file');
+                errorMessage.textContent = 'Error reading the file. Please try again.';
+                errorMessage.style.display = 'block';
+                // Keep save/load buttons hidden
+                document.getElementById('saveElementsBtn').style.display = 'none';
+                document.getElementById('loadElementsBtn').style.display = 'none';
+                // Reset file input to allow selecting the same file again
+                frontMapFileInput.value = '';
+                reject(new Error('Failed to read file'));
+            };
+
+            reader.readAsDataURL(file);
+        });
+    };
+
+    if (hasExistingData) {
+        // Create and show the confirmation dialog
+        const dialog = document.createElement('div');
+        dialog.className = 'warning-modal';
+        dialog.innerHTML = `
+            <div class="warning-modal-content">
+                <div class="warning-modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Warning</h3>
+                </div>
+                <div class="warning-modal-body">
+                    <p>Loading a new map will delete any unsaved elements. Would you like to:</p>
+                    <div class="warning-modal-buttons">
+                        <button id="saveAndContinue" class="warning-btn warning-btn-primary">
+                            <i class="fas fa-save"></i> Save & Continue
+                        </button>
+                        <button id="continueWithoutSaving" class="warning-btn warning-btn-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Continue Without Saving
+                        </button>
+                        <button id="cancelLoad" class="warning-btn warning-btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'warning-modal-overlay';
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(dialog);
+
+        // Handle dialog buttons
+        document.getElementById('saveAndContinue').onclick = async () => {
+            // Save current labels first
+            saveElements();
+
+            // Wait a bit for the save to complete, then update baseline data
+            setTimeout(() => {
+                // Update baseline data to reflect the saved state
+                baselineData = getCurrentState();
+            }, 500);
+
+            dialog.remove();
+            overlay.remove();
+            try {
+                await loadNewMap();
+            } catch (error) {
+                console.error('Failed to load new map:', error);
+            }
+        };
+
+        document.getElementById('continueWithoutSaving').onclick = async () => {
+            dialog.remove();
+            overlay.remove();
+            try {
+                await loadNewMap();
+            } catch (error) {
+                console.error('Failed to load new map:', error);
+            }
+        };
+
+        document.getElementById('cancelLoad').onclick = () => {
+            dialog.remove();
+            overlay.remove();
+            // Reset the file input
+            frontMapFileInput.value = '';
+        };
+    } else {
+        // If no existing data, load the new map directly
+        try {
+            await loadNewMap();
+        } catch (error) {
+            console.error('Failed to load new map:', error);
+        }
+    }
+});
+
 // Helper to enable/disable the Start Test button
 function updateStartTestButtonState() {
     const form = document.getElementById('testTagTypeForm');
@@ -4494,7 +4956,7 @@ function updateStartTestButtonState() {
     if (startBtn) {
         startBtn.disabled = checked.length === 0;
         startBtn.style.opacity = checked.length === 0 ? '0.5' : '1';
-        startBtn.style.cursor = checked.length === 0 ? 'not-allowed' : 'pointer'; 
+        startBtn.style.cursor = checked.length === 0 ? 'not-allowed' : 'pointer';
     }
 }
 
@@ -4520,12 +4982,33 @@ function updateInProgressShapePositions() {
 function setSidebarButtonsEnabled(enabled) {
     // Only enable/disable sidebar drawing and edit buttons, not finish/cancel
     const ids = [
-        'editToggle', 'addBtn', 'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
+        'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
         'pointBtn', 'polygonBtn', 'lineBtn',
         'findPointBtn', 'identPointBtn',
         'loadMapButton', 'saveElementsBtn', 'loadElementsBtn'
     ];
     ids.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.disabled = !enabled;
+            btn.style.opacity = enabled ? '1' : '0.5';
+            btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+        }
+    });
+
+    // If enabling buttons, update save button state based on whether there are elements
+    if (enabled) {
+        updateSaveButtonState();
+    }
+}
+
+// Function to enable/disable only edit buttons (excluding editToggle)
+function setEditButtonsEnabled(enabled) {
+    const editButtonIds = [
+        'moveBtn', 'editLabelTextBtn', 'deleteBtn', 'tagPanelBtn',
+        'pointBtn', 'polygonBtn', 'lineBtn'
+    ];
+    editButtonIds.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
             btn.disabled = !enabled;
@@ -4688,18 +5171,18 @@ function showFileTypeWarningModal(fileType, expectedType) {
 }
 
 // Add event listener to clear error message when user starts typing
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const newTagInput = document.getElementById('newTagInput');
     if (newTagInput) {
-        newTagInput.addEventListener('input', function() {
+        newTagInput.addEventListener('input', function () {
             clearTagError();
         });
     }
-    
+
     // Add event listener for edit tag input
     const editTagInput = document.getElementById('editTagInput');
     if (editTagInput) {
-        editTagInput.addEventListener('input', function() {
+        editTagInput.addEventListener('input', function () {
             clearEditTagError();
         });
     }
@@ -4719,4 +5202,172 @@ function clearEditTagError() {
     if (errorElement) {
         errorElement.style.display = 'none';
     }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Sidebar tab switching
+    const tabBtns = document.querySelectorAll('.sidebar-tab-bar .tab-btn');
+    const sidebarTabs = document.querySelector('.sidebar-tabs');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            tabBtns.forEach(b => b.setAttribute('aria-selected', 'false'));
+            btn.setAttribute('aria-selected', 'true');
+            sidebarTabs.setAttribute('data-active-tab', btn.getAttribute('data-tab'));
+        });
+    });
+
+    // Show front load map container if no map is loaded
+    const mapImage = document.getElementById('mapImage');
+    const frontLoadMapContainer = document.getElementById('frontLoadMapContainer');
+
+    if (mapImage && frontLoadMapContainer) {
+        // Check if map image has a source
+        if (!mapImage.src || mapImage.src === window.location.href) {
+            // No map loaded, show the front load container
+            frontLoadMapContainer.classList.remove('hidden');
+        } else {
+            // Map is loaded, hide the front load container
+            frontLoadMapContainer.classList.add('hidden');
+        }
+    }
+});
+
+// Edit tab functionality - automatically enable/disable edit mode
+const editTabRadio = document.getElementById('tab-edit');
+
+editTabRadio.addEventListener('change', () => {
+    if (editTabRadio.checked) {
+        // Enable edit mode when edit tab is selected
+        if (!editEnabled) {
+            toggleEditMode(true);
+        }
+    } else {
+        // Disable edit mode when other tabs are selected
+        if (editEnabled) {
+            toggleEditMode(false);
+        }
+    }
+});
+
+// Also handle when other tabs are selected to disable edit mode
+const loadsaveTabRadio = document.getElementById('tab-loadsave');
+const testTabRadio = document.getElementById('tab-test');
+
+loadsaveTabRadio.addEventListener('change', () => {
+    if (loadsaveTabRadio.checked && editEnabled) {
+        toggleEditMode(false);
+    }
+});
+
+testTabRadio.addEventListener('change', () => {
+    if (testTabRadio.checked && editEnabled) {
+        toggleEditMode(false);
+    }
+});
+
+// Function to update add button header active state
+function updateAddButtonHeaderState() {
+    const addBtnHeader = document.getElementById('addBtn');
+    const pointBtn = document.getElementById('pointBtn');
+    const polygonBtn = document.getElementById('polygonBtn');
+    const lineBtn = document.getElementById('lineBtn');
+
+    // Check if any submenu item is active
+    const isAnySubmenuActive = (pointBtn && pointBtn.getAttribute('aria-pressed') === 'true') ||
+        (polygonBtn && polygonBtn.getAttribute('aria-pressed') === 'true') ||
+        (lineBtn && lineBtn.getAttribute('aria-pressed') === 'true');
+
+    if (addBtnHeader) {
+        if (isAnySubmenuActive) {
+            addBtnHeader.classList.add('active');
+        } else {
+            addBtnHeader.classList.remove('active');
+        }
+    }
+}
+
+// Get current state in the same format as saveElements exports
+function getCurrentState() {
+    return {
+        points: points.map(point => ({
+            refX: point.relRefX,
+            refY: point.relRefY,
+            labelX: point.relLabelX,
+            labelY: point.relLabelY,
+            text: point.labelBoxEl.textContent,
+            type: point.type || 'default'
+        })),
+        polygons: polygons.map(polygon => ({
+            points: polygon.points.map(p => ({ x: p.relX, y: p.relY })),
+            anchorX: polygon.relAnchorX,
+            anchorY: polygon.relAnchorY,
+            labelX: polygon.relLabelX,
+            labelY: polygon.relLabelY,
+            text: polygon.labelBoxEl.textContent,
+            type: polygon.type || 'default'
+        })),
+        lines: lines.map(line => ({
+            points: line.points.map(p => ({ x: p.relX, y: p.relY })),
+            anchorX: line.relAnchorX,
+            anchorY: line.relAnchorY,
+            labelX: line.relLabelX,
+            labelY: line.relLabelY,
+            text: line.labelBoxEl.textContent,
+            type: line.type || 'default'
+        }))
+    };
+}
+
+// Compare two states to detect if there are unsaved changes
+function hasUnsavedChanges() {
+    if (!baselineData) {
+        // If no baseline data, check if there's any current data
+        return points.length > 0 || polygons.length > 0 || lines.length > 0;
+    }
+
+    const currentState = getCurrentState();
+
+    // Deep comparison of the two states
+    return !deepEqual(currentState, baselineData);
+}
+
+// Deep equality comparison for objects
+function deepEqual(obj1, obj2) {
+    if (obj1 === obj2) return true;
+
+    if (obj1 == null || obj2 == null) return obj1 === obj2;
+
+    if (typeof obj1 !== typeof obj2) return false;
+
+    if (typeof obj1 !== 'object') return obj1 === obj2;
+
+    if (Array.isArray(obj1) !== Array.isArray(obj2)) return false;
+
+    if (Array.isArray(obj1)) {
+        if (obj1.length !== obj2.length) return false;
+        for (let i = 0; i < obj1.length; i++) {
+            if (!deepEqual(obj1[i], obj2[i])) return false;
+        }
+        return true;
+    }
+
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    if (keys1.length !== keys2.length) return false;
+
+    for (const key of keys1) {
+        if (!keys2.includes(key)) return false;
+        if (!deepEqual(obj1[key], obj2[key])) return false;
+    }
+
+    return true;
+}
+
+// Helper to map content id to tab radio
+function getTabRadioForContent(targetId) {
+    if (targetId === 'loadsave-content') return document.getElementById('tab-loadsave');
+    if (targetId === 'test-content') return document.getElementById('tab-test');
+    if (targetId === 'edit-content') return document.getElementById('tab-edit');
+    return null;
 }
