@@ -2596,17 +2596,17 @@ function selectNextTestItem() {
         const elementRect = currentTestItem.element.getBoundingClientRect();
         const labelRect = currentTestItem.label.getBoundingClientRect();
 
-        // Calculate the midpoint between the element and its label
-        const midpointY = (elementRect.top + labelRect.top) / 2;
+        // Get the map viewport element
+        const mapViewport = document.querySelector('.map-viewport');
+        const viewportRect = mapViewport.getBoundingClientRect();
 
-        // Get the viewport height
-        const viewportHeight = window.innerHeight;
+        // Calculate the midpoint between the element and its label (relative to the viewport)
+        const midpointY = ((elementRect.top + labelRect.top) / 2) - viewportRect.top;
+        // Center the midpoint in the viewport
+        const idealScrollTop = mapViewport.scrollTop + midpointY - (mapViewport.clientHeight / 2);
 
-        // Calculate the ideal scroll position that centers the midpoint
-        const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
-
-        // Scroll smoothly to the calculated position
-        window.scrollTo({
+        // Scroll the map viewport smoothly to the calculated position
+        mapViewport.scrollTo({
             top: idealScrollTop,
             behavior: 'smooth'
         });
@@ -3436,17 +3436,17 @@ function selectNextTestItem() {
         const elementRect = currentTestItem.element.getBoundingClientRect();
         const labelRect = currentTestItem.label.getBoundingClientRect();
 
-        // Calculate the midpoint between the element and its label
-        const midpointY = (elementRect.top + labelRect.top) / 2;
+        // Get the map viewport element
+        const mapViewport = document.querySelector('.map-viewport');
+        const viewportRect = mapViewport.getBoundingClientRect();
 
-        // Get the viewport height
-        const viewportHeight = window.innerHeight;
+        // Calculate the midpoint between the element and its label (relative to the viewport)
+        const midpointY = ((elementRect.top + labelRect.top) / 2) - viewportRect.top;
+        // Center the midpoint in the viewport
+        const idealScrollTop = mapViewport.scrollTop + midpointY - (mapViewport.clientHeight / 2);
 
-        // Calculate the ideal scroll position that centers the midpoint
-        const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
-
-        // Scroll smoothly to the calculated position
-        window.scrollTo({
+        // Scroll the map viewport smoothly to the calculated position
+        mapViewport.scrollTo({
             top: idealScrollTop,
             behavior: 'smooth'
         });
