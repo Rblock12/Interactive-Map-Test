@@ -543,10 +543,10 @@ button#addBtn[aria-pressed="true"] {
     opacity: 1;
 }
 
-/* Progress Container */
 .progress-container {
-    margin-top: 0px;
-    padding-top: 10px;
+    margin-bottom: 10px;
+    padding-top: 5px;
+    border-top: 2px solid #f0f0f0;
 }
 
 .progress-container .progress {
@@ -633,7 +633,6 @@ button#addBtn[aria-pressed="true"] {
     }
 }
 
-/* Test Footer */
 .test-footer {
     border-top: 1px solid #e0e0e0;
     display: none;
@@ -674,7 +673,6 @@ button#addBtn[aria-pressed="true"] {
     box-shadow: 0 4px 15px rgba(244, 67, 54, 0.2);
     display: block;
 }
-
 
 .stop-test-btn:active {
     transform: translateY(0);
@@ -718,7 +716,6 @@ button#addBtn[aria-pressed="true"] {
     transition: opacity 0.2s ease, fill 0.2s ease;
 }
 
-
 .line-path {
     fill: none;
     stroke: #2196F3;
@@ -730,8 +727,6 @@ button#addBtn[aria-pressed="true"] {
     transition: opacity 0.2s ease, stroke-width 0.2s ease;
 }
 
-
-
 .leader-line {
     stroke: rgba(0, 0, 0, 0.4);
     stroke-width: 1;
@@ -740,7 +735,6 @@ button#addBtn[aria-pressed="true"] {
     opacity: 1;
     transition: opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
 }
-
 
 /* Tag/Type Sidebar Panel */
 #tagPanel {
@@ -1178,14 +1172,6 @@ button#addBtn[aria-pressed="true"] {
 /* Tooltip styles for better UX */
 #testTagTypeForm div[title] {
     position: relative;
-}
-
-
-/* Progress Container */
-.progress-container {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 2px solid #f0f0f0;
 }
 
 .sidebar-congrats {
