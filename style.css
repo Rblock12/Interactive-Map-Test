@@ -3289,3 +3289,20 @@ button#addBtn[aria-pressed="true"] {
     background: none;
     cursor: auto
 }
+
+/* Dimming overlay for map during highlight */
+.map-dim-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.15);
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.map-dim-overlay.active {
+    opacity: 1;
+}
