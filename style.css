@@ -258,7 +258,11 @@ button#addBtn[aria-pressed="true"] {
     position: relative;
     overflow: hidden;
     gap: 10px;
-    padding: 5px
+    padding: 5px;
+    border: 2px solid #2196F3;
+    border-top: 0px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
 }
 
 #addSubMenu::before {
@@ -2966,7 +2970,6 @@ div#targetLabel.incorrect {
     flex-direction: column;
     background-color: #ffffff;
     border-radius: 12px;
-    border: 2px solid #2196F3;
     flex: 1;
 }
 
@@ -3110,7 +3113,7 @@ button#addBtn[aria-pressed="true"] {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
-    border-bottom: 2px solid #2196F3;
+    border: 2px solid #2196F3;
     padding: 4px;
     font-weight: 500;
 }
@@ -3118,7 +3121,6 @@ button#addBtn[aria-pressed="true"] {
 .add-button-header.active {
     background: #2196F3;
     color: white;
-    border-color: #1976D2;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 
