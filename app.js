@@ -2544,6 +2544,12 @@ function selectNextTestItem() {
         if (currentTestItem.type === 'point') {
             currentTestItem.element.style.visibility = 'hidden';
         }
+
+        // Remove map dim overlay if present
+        const mapDimOverlay = document.querySelector('.map-dim-overlay');
+        if (mapDimOverlay) {
+            mapDimOverlay.classList.remove('active');
+        }
     }
 
     // Log remaining items for debugging
@@ -2576,6 +2582,12 @@ function selectNextTestItem() {
         if (currentTestItem.type === 'point') {
             currentTestItem.element.style.visibility = 'visible';
         }
+
+        // Activate map dim overlay
+        const mapDimOverlay = document.querySelector('.map-dim-overlay');
+        if (mapDimOverlay) {
+            mapDimOverlay.classList.add('active');
+        }
     } else {
         // In find mode, only make shapes visible, not reference points
         if (currentTestItem.type === 'polygon') {
@@ -2584,6 +2596,11 @@ function selectNextTestItem() {
             currentTestItem.element.style.visibility = 'visible';
         }
         // Reference points (label type) stay hidden in find mode
+        // Remove map dim overlay if present
+        const mapDimOverlay = document.querySelector('.map-dim-overlay');
+        if (mapDimOverlay) {
+            mapDimOverlay.classList.remove('active');
+        }
     }
 
     // Update the target label in find mode
@@ -2596,17 +2613,17 @@ function selectNextTestItem() {
         const elementRect = currentTestItem.element.getBoundingClientRect();
         const labelRect = currentTestItem.label.getBoundingClientRect();
 
-        // Calculate the midpoint between the element and its label
-        const midpointY = (elementRect.top + labelRect.top) / 2;
+        // Get the map viewport element
+        const mapViewport = document.querySelector('.map-viewport');
+        const viewportRect = mapViewport.getBoundingClientRect();
 
-        // Get the viewport height
-        const viewportHeight = window.innerHeight;
+        // Calculate the midpoint between the element and its label (relative to the viewport)
+        const midpointY = ((elementRect.top + labelRect.top) / 2) - viewportRect.top;
+        // Center the midpoint in the viewport
+        const idealScrollTop = mapViewport.scrollTop + midpointY - (mapViewport.clientHeight / 2);
 
-        // Calculate the ideal scroll position that centers the midpoint
-        const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
-
-        // Scroll smoothly to the calculated position
-        window.scrollTo({
+        // Scroll the map viewport smoothly to the calculated position
+        mapViewport.scrollTo({
             top: idealScrollTop,
             behavior: 'smooth'
         });
@@ -2960,6 +2977,12 @@ function cleanupTest() {
         document.querySelectorAll('.ref-point').forEach(point => {
             point.style.visibility = 'hidden';
         });
+    }
+
+    // Remove map dim overlay if present
+    const mapDimOverlay = document.querySelector('.map-dim-overlay');
+    if (mapDimOverlay) {
+        mapDimOverlay.classList.remove('active');
     }
 }
 
@@ -3384,6 +3407,12 @@ function selectNextTestItem() {
         if (currentTestItem.type === 'point') {
             currentTestItem.element.style.visibility = 'hidden';
         }
+
+        // Remove map dim overlay if present
+        const mapDimOverlay = document.querySelector('.map-dim-overlay');
+        if (mapDimOverlay) {
+            mapDimOverlay.classList.remove('active');
+        }
     }
 
     // Log remaining items for debugging
@@ -3416,6 +3445,12 @@ function selectNextTestItem() {
         if (currentTestItem.type === 'point') {
             currentTestItem.element.style.visibility = 'visible';
         }
+
+        // Activate map dim overlay
+        const mapDimOverlay = document.querySelector('.map-dim-overlay');
+        if (mapDimOverlay) {
+            mapDimOverlay.classList.add('active');
+        }
     } else {
         // In find mode, only make shapes visible, not reference points
         if (currentTestItem.type === 'polygon') {
@@ -3424,6 +3459,11 @@ function selectNextTestItem() {
             currentTestItem.element.style.visibility = 'visible';
         }
         // Reference points (label type) stay hidden in find mode
+        // Remove map dim overlay if present
+        const mapDimOverlay = document.querySelector('.map-dim-overlay');
+        if (mapDimOverlay) {
+            mapDimOverlay.classList.remove('active');
+        }
     }
 
     // Update the target label in find mode
@@ -3436,17 +3476,17 @@ function selectNextTestItem() {
         const elementRect = currentTestItem.element.getBoundingClientRect();
         const labelRect = currentTestItem.label.getBoundingClientRect();
 
-        // Calculate the midpoint between the element and its label
-        const midpointY = (elementRect.top + labelRect.top) / 2;
+        // Get the map viewport element
+        const mapViewport = document.querySelector('.map-viewport');
+        const viewportRect = mapViewport.getBoundingClientRect();
 
-        // Get the viewport height
-        const viewportHeight = window.innerHeight;
+        // Calculate the midpoint between the element and its label (relative to the viewport)
+        const midpointY = ((elementRect.top + labelRect.top) / 2) - viewportRect.top;
+        // Center the midpoint in the viewport
+        const idealScrollTop = mapViewport.scrollTop + midpointY - (mapViewport.clientHeight / 2);
 
-        // Calculate the ideal scroll position that centers the midpoint
-        const idealScrollTop = window.scrollY + midpointY - (viewportHeight / 2);
-
-        // Scroll smoothly to the calculated position
-        window.scrollTo({
+        // Scroll the map viewport smoothly to the calculated position
+        mapViewport.scrollTo({
             top: idealScrollTop,
             behavior: 'smooth'
         });

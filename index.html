@@ -91,6 +91,14 @@
                                 <i class="fas fa-map-pin"></i> Identify Elements
                             </button>
                         </div>
+                        <!-- Progress Indicator (Hidden by default) -->
+                        <div id="progressContainer" class="progress-container" style="display: none;">
+                            <div class="progress-text">
+                                <span class="progress-label">Progress</span>
+                                <span class="progress-numbers">0/0</span>
+                            </div>
+                            <div class="progress"></div>
+                        </div>
                         <!-- Test Mode Interfaces (Hidden by default) -->
                         <div id="identifyInterface" class="test-mode-interface">
                             <div class="test-input-group">
@@ -105,14 +113,6 @@
                                 <div class="target-label">Find:</div>
                                 <div id="targetLabel" class="target-text test-feedback-element"><span></span></div>
                             </div>
-                        </div>
-                        <!-- Progress Indicator (Hidden by default) -->
-                        <div id="progressContainer" class="progress-container" style="display: none;">
-                            <div class="progress-text">
-                                <span class="progress-label">Progress</span>
-                                <span class="progress-numbers">0/0</span>
-                            </div>
-                            <div class="progress"></div>
                         </div>
                     </div>
                 </div>
@@ -145,34 +145,36 @@
                                     </div>
                                 </div>
                                 <div id="addSubMenu">
-                                    <button id="pointBtn" class="edit-mode-btn" data-mode="point" onclick="setMode('point')" disabled aria-pressed="false"
-                                        title="Add new point">
+                                    <button id="pointBtn" class="edit-mode-btn" data-mode="point"
+                                        onclick="setMode('point')" disabled aria-pressed="false" title="Add new point">
                                         <i class="fas fa-thumbtack"></i> Point
                                     </button>
-                                    <button id="polygonBtn" class="edit-mode-btn" data-mode="polygon" onclick="togglePolygonMode()" disabled aria-pressed="false"
-                                        title="Draw shape">
+                                    <button id="polygonBtn" class="edit-mode-btn" data-mode="polygon"
+                                        onclick="togglePolygonMode()" disabled aria-pressed="false" title="Draw shape">
                                         <i class="fas fa-draw-polygon"></i> Shape
                                     </button>
-                                    <button id="lineBtn" class="edit-mode-btn" data-mode="line" onclick="toggleLineMode()" disabled aria-pressed="false"
-                                        title="Draw line">
+                                    <button id="lineBtn" class="edit-mode-btn" data-mode="line"
+                                        onclick="toggleLineMode()" disabled aria-pressed="false" title="Draw line">
                                         <i class="fas fa-minus"></i> Line
                                     </button>
                                 </div>
                             </div>
                             <div class="otherButtonContainer">
-                                <button id="moveBtn" class="edit-mode-btn" data-mode="move" onclick="setMode('move')" disabled aria-pressed="false"
-                                    title="Move elements">
+                                <button id="moveBtn" class="edit-mode-btn" data-mode="move" onclick="setMode('move')"
+                                    disabled aria-pressed="false" title="Move elements">
                                     <i class="fas fa-arrows-alt"></i> Move
                                 </button>
-                                <button id="editLabelTextBtn" class="edit-mode-btn" data-mode="editLabelText" onclick="setMode('editLabelText')" disabled
-                                    aria-pressed="false" title="Edit element text">
+                                <button id="editLabelTextBtn" class="edit-mode-btn" data-mode="editLabelText"
+                                    onclick="setMode('editLabelText')" disabled aria-pressed="false"
+                                    title="Edit element text">
                                     <i class="fas fa-font"></i> Rename
                                 </button>
-                                <button id="deleteBtn" class="edit-mode-btn" data-mode="delete" onclick="setMode('delete')" disabled aria-pressed="false"
-                                    title="Delete elements">
+                                <button id="deleteBtn" class="edit-mode-btn" data-mode="delete"
+                                    onclick="setMode('delete')" disabled aria-pressed="false" title="Delete elements">
                                     <i class="fas fa-trash-alt"></i> Delete
                                 </button>
-                                <button id="tagPanelBtn" class="edit-mode-btn" data-mode="changeTag" onclick="setMode('changeTag')" aria-pressed="false"
+                                <button id="tagPanelBtn" class="edit-mode-btn" data-mode="changeTag"
+                                    onclick="setMode('changeTag')" aria-pressed="false"
                                     title="Change existing element tags">
                                     <i class="fas fa-tags"></i> Tag
                                 </button>
@@ -186,6 +188,7 @@
         <div class="content-wrapper">
             <div class="map-viewport">
                 <div id="mapContainer" tabindex="0" aria-label="Map with annotated elements" style="outline:none;">
+                    <div class="map-dim-overlay"></div>
                     <img id="mapImage" alt="Map" />
                     <svg id="shapesLayer" aria-hidden="true"></svg>
                     <svg id="leaderLines" aria-hidden="true"></svg>
