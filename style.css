@@ -1305,17 +1305,25 @@ button#addBtn[aria-pressed="true"] {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
-
-
-/* Essential Map and Element Styles */
 .map-viewport {
+    width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 #mapContainer {
     position: relative;
     user-select: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #mapContainer.point-mode {
@@ -1333,9 +1341,13 @@ button#addBtn[aria-pressed="true"] {
 #mapImage {
     display: block;
     max-width: 100%;
+    max-height: 100%;
+    width: auto;
     height: auto;
+    object-fit: contain;
     -webkit-user-drag: none;
     user-select: none;
+    margin: auto;
 }
 
 /* Map Elements */
