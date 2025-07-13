@@ -1310,12 +1310,13 @@ button#addBtn[aria-pressed="true"] {
 /* Essential Map and Element Styles */
 .map-viewport {
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 #mapContainer {
     position: relative;
     user-select: none;
+    cursor: grab;
 }
 
 #mapContainer.point-mode {

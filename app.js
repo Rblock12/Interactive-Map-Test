@@ -332,11 +332,11 @@ function updateCursorStyles(mode) {
 
     // Reset all cursor-related classes first
     mapContainer.classList.remove('point-mode', 'polygon-mode', 'line-mode');
-    mapContainer.style.cursor = 'default';
+    mapContainer.style.cursor = '';
 
     // Reset all element cursor styles
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
-        element.style.cursor = 'default';
+        element.style.cursor = '';
         element.classList.remove('movable', 'deletable', 'editable');
     });
 
@@ -348,7 +348,7 @@ function updateCursorStyles(mode) {
 
     if (testingMode) {
         // Test mode cursor styles
-        mapContainer.style.cursor = 'default';
+        mapContainer.style.cursor = '';
         document.querySelectorAll('.label-box').forEach(label => {
             label.style.cursor = 'default';
         });
@@ -363,21 +363,21 @@ function updateCursorStyles(mode) {
             mapContainer.style.cursor = 'crosshair';
             break;
         case 'move':
-            mapContainer.style.cursor = 'default';
+            mapContainer.style.cursor = '';
             document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
                 element.classList.add('movable');
                 element.style.cursor = 'move';
             });
             break;
         case 'delete':
-            mapContainer.style.cursor = 'default';
+            mapContainer.style.cursor = '';
             document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
                 element.classList.add('deletable');
                 element.style.cursor = 'no-drop';
             });
             break;
         case 'editLabelText':
-            mapContainer.style.cursor = 'default';
+            mapContainer.style.cursor = '';
             document.querySelectorAll('.label-box').forEach(element => {
                 element.classList.add('editable');
                 element.style.cursor = 'text';
@@ -385,7 +385,7 @@ function updateCursorStyles(mode) {
             break;
         default:
             // No specific mode or null mode
-            mapContainer.style.cursor = 'default';
+            mapContainer.style.cursor = '';
             break;
     }
 }
@@ -983,6 +983,7 @@ function onPointerDown(e) {
             dragOffsetX = x - parseInt(point.refPointEl.style.left);
             dragOffsetY = y - parseInt(point.refPointEl.style.top);
             e.preventDefault();
+            e.stopPropagation(); // prevents the map pan listener from kicking in
             return;
         }
 
@@ -991,6 +992,7 @@ function onPointerDown(e) {
             dragOffsetX = x - parseInt(point.labelBoxEl.style.left);
             dragOffsetY = y - parseInt(point.labelBoxEl.style.top);
             e.preventDefault();
+            e.stopPropagation(); // prevents the map pan listener from kicking in
             return;
         }
     }
@@ -1011,6 +1013,7 @@ function onPointerDown(e) {
                 dragOffsetX = x - parseInt(point.element.style.left);
                 dragOffsetY = y - parseInt(point.element.style.top);
                 e.preventDefault();
+                e.stopPropagation(); // prevents the map pan listener from kicking in
                 return;
             }
         }
@@ -1021,6 +1024,7 @@ function onPointerDown(e) {
             dragOffsetX = x - polygon.anchorX;
             dragOffsetY = y - polygon.anchorY;
             e.preventDefault();
+            e.stopPropagation(); // prevents the map pan listener from kicking in
             return;
         }
 
@@ -1030,6 +1034,7 @@ function onPointerDown(e) {
             dragOffsetX = x - parseInt(polygon.labelBoxEl.style.left);
             dragOffsetY = y - parseInt(polygon.labelBoxEl.style.top);
             e.preventDefault();
+            e.stopPropagation(); // prevents the map pan listener from kicking in
             return;
         }
     }
@@ -1050,6 +1055,7 @@ function onPointerDown(e) {
                 dragOffsetX = x - parseInt(point.element.style.left);
                 dragOffsetY = y - parseInt(point.element.style.top);
                 e.preventDefault();
+                e.stopPropagation(); // prevents the map pan listener from kicking in
                 return;
             }
         }
@@ -1060,6 +1066,7 @@ function onPointerDown(e) {
             dragOffsetX = x - line.anchorX;
             dragOffsetY = y - line.anchorY;
             e.preventDefault();
+            e.stopPropagation(); // prevents the map pan listener from kicking in
             return;
         }
 
@@ -1069,6 +1076,7 @@ function onPointerDown(e) {
             dragOffsetX = x - parseInt(line.labelBoxEl.style.left);
             dragOffsetY = y - parseInt(line.labelBoxEl.style.top);
             e.preventDefault();
+            e.stopPropagation(); // prevents the map pan listener from kicking in
             return;
         }
     }
@@ -5411,3 +5419,69 @@ function getTabRadioForContent(targetId) {
     if (targetId === 'edit-content') return document.getElementById('tab-edit');
     return null;
 }
+let mapScale = 1;
+let mapPos = { x:0, y:0 };
+let dragStart = null;
+const mapViewport = document.querySelector('.map-viewport');
+
+function _updateMapTranslate() {
+    // TODO: following contraints commented out until the relation between scaling, the container, and viewport can be worked out.
+    // mapPos = {
+    //     x: Math.max(Math.min(mapPos.x, 0), mapViewport.offsetWidth - (mapContainer.offsetWidth * mapScale)),
+    //     y: Math.max(Math.min(mapPos.y, 0), mapViewport.offsetHeight - (mapContainer.offsetHeight * mapScale))
+    // }
+    mapContainer.style.translate = `${mapPos.x}px ${mapPos.y}px`;
+}
+
+function moveMapToPoint(x, y) {
+    // TODO: Not implemented until the relation between scaling, the container, and the mouse clientX/Y can be worked out.
+}
+
+mapViewport.addEventListener('wheel', e => {
+    e.preventDefault();
+    const target = {
+        x: (e.clientX - mapPos.x) / mapScale,
+        y: (e.clientY - mapPos.y) / mapScale
+    };
+
+    const dir = e.deltaY < 0 ? 1 : -1;
+
+    const minZoom = Math.min(mapViewport.offsetWidth / mapContainer.offsetWidth, mapViewport.offsetHeight / mapContainer.offsetHeight);
+    mapScale = Math.max(mapScale * (1 + dir * 0.15), minZoom);
+    mapContainer.style.scale = mapScale;
+
+    // TODO: brokey, but works well enough to _mostly_ keep the map in view when zooming.
+    //  should be replaced with moveMapToPoint() call when that's all working
+    mapPos = {
+        x: -target.x * mapScale + e.clientX,
+        y: -target.y * mapScale + e.clientY
+    };
+    _updateMapTranslate();
+});
+
+mapViewport.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    mapContainer.style.cursor = 'grabbing';
+
+    dragStart = {
+        x: e.clientX - mapPos.x,
+        y: e.clientY - mapPos.y
+    };
+})
+window.addEventListener('pointermove', e => {
+    if(!dragStart) return;
+
+    e.preventDefault();
+
+    mapPos = {
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+    };
+    _updateMapTranslate();
+});
+window.addEventListener('pointerup', e => {
+    if(!dragStart) return;
+
+    dragStart = null;
+    mapContainer.style.cursor = '';
+});
