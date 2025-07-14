@@ -64,18 +64,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure all edit buttons are disabled initially
     setEditButtonsEnabled(false);
 
-    // Initialize SVG size to match container
+    // Initialize OpenLayers map system
+    olMapSystem = new OLMapSystem();
+
+    // Initialize SVG size to match container (for backward compatibility)
     updateSVGDimensions();
 
-    // Initialize leader lines
+    // Initialize leader lines (for backward compatibility)
     updateLeaderLines();
+
+    // Load tags after OpenLayers system is initialized
+    loadTags();
+    loadTagVisibility();
+    // Automatically select the first tag on initial load
+    selectFirstTag();
 
     // Add event listener for finish drawing button
     const finishDrawingBtn = document.getElementById('finishDrawingBtn');
     const cancelDrawingBtn = document.getElementById('cancelDrawingBtn');
 
     finishDrawingBtn.addEventListener('click', () => {
-        if (currentMode === 'polygon' || currentMode === 'line') {
+        if (olMapSystem) {
+            olMapSystem.finishCurrentDrawing();
+        } else if (currentMode === 'polygon' || currentMode === 'line') {
             finishCurrentShape();
             document.getElementById('finishDrawingInterface').style.display = 'none';
             setSidebarButtonsEnabled(true);
@@ -83,9 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     cancelDrawingBtn.addEventListener('click', () => {
-        abortCurrentDrawing();
-        document.getElementById('finishDrawingInterface').style.display = 'none';
-        setSidebarButtonsEnabled(true);
+        if (olMapSystem) {
+            olMapSystem.cancelCurrentDrawing();
+        } else {
+            abortCurrentDrawing();
+            document.getElementById('finishDrawingInterface').style.display = 'none';
+            setSidebarButtonsEnabled(true);
+        }
     });
 
     function abortCurrentDrawing() {
@@ -311,13 +326,17 @@ function initializeHelpModal() {
     });
 }
 
-// Function to update SVG dimensions to match container
+// Function to update SVG dimensions to match container (disabled - now handled by OpenLayers)
 function updateSVGDimensions() {
-    const containerRect = mapContainer.getBoundingClientRect();
-    leaderLinesSVG.setAttribute('width', containerRect.width);
-    leaderLinesSVG.setAttribute('height', containerRect.height);
-    shapesLayer.setAttribute('width', containerRect.width);
-    shapesLayer.setAttribute('height', containerRect.height);
+    // SVG elements no longer exist in OpenLayers version
+    // This function is kept for backward compatibility
+    if (mapContainer && leaderLinesSVG && shapesLayer) {
+        const containerRect = mapContainer.getBoundingClientRect();
+        leaderLinesSVG.setAttribute('width', containerRect.width);
+        leaderLinesSVG.setAttribute('height', containerRect.height);
+        shapesLayer.setAttribute('width', containerRect.width);
+        shapesLayer.setAttribute('height', containerRect.height);
+    }
 }
 
 // Toggle Add submenu - now just updates the header state
@@ -330,24 +349,32 @@ function toggleAddMenu() {
 function updateCursorStyles(mode) {
     const mapContainer = document.getElementById('mapContainer');
 
-    // Reset all cursor-related classes first
+    if (!mapContainer) return;
+
+    // Remove all custom cursor classes
     mapContainer.classList.remove('point-mode', 'polygon-mode', 'line-mode');
     mapContainer.style.cursor = 'default';
 
-    // Reset all element cursor styles
+    // Remove all custom cursor classes from elements
     document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
         element.style.cursor = 'default';
-        element.classList.remove('movable', 'deletable', 'editable');
+        element.classList.remove('movable', 'deletable', 'editable', 'pointerable', 'contextable');
     });
 
-    // Set appropriate cursor and classes based on mode
+    // Remove any previous event listeners for hover (to avoid stacking)
+    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
+        element.onpointerenter = null;
+        element.onpointerleave = null;
+    });
+
+    // Remove mapContainer drag state
+    mapContainer.classList.remove('dragging');
+
     if (!editEnabled && !testingMode) {
-        // Default state - no edit mode or test mode
         return;
     }
 
     if (testingMode) {
-        // Test mode cursor styles
         mapContainer.style.cursor = 'default';
         document.querySelectorAll('.label-box').forEach(label => {
             label.style.cursor = 'default';
@@ -359,14 +386,42 @@ function updateCursorStyles(mode) {
         case 'point':
         case 'polygon':
         case 'line':
+        case 'add':
             mapContainer.classList.add(`${mode}-mode`);
             mapContainer.style.cursor = 'crosshair';
             break;
         case 'move':
-            mapContainer.style.cursor = 'default';
+            mapContainer.style.cursor = 'move';
             document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor, .label-box').forEach(element => {
                 element.classList.add('movable');
-                element.style.cursor = 'move';
+                element.style.cursor = 'grab';
+                // Hover: grab, Active: grabbing
+                element.onpointerdown = (e) => {
+                    element.style.cursor = 'grabbing';
+                    mapContainer.classList.add('dragging');
+                };
+                element.onpointerup = (e) => {
+                    element.style.cursor = 'grab';
+                    mapContainer.classList.remove('dragging');
+                };
+                element.onpointerleave = (e) => {
+                    if (!mapContainer.classList.contains('dragging')) {
+                        element.style.cursor = 'grab';
+                    }
+                };
+                element.onpointerenter = (e) => {
+                    if (!mapContainer.classList.contains('dragging')) {
+                        element.style.cursor = 'grab';
+                    }
+                };
+            });
+            break;
+        case 'editLabelText':
+        case 'rename':
+            mapContainer.style.cursor = 'default';
+            document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor').forEach(element => {
+                element.classList.add('pointerable');
+                element.style.cursor = 'pointer';
             });
             break;
         case 'delete':
@@ -376,15 +431,15 @@ function updateCursorStyles(mode) {
                 element.style.cursor = 'no-drop';
             });
             break;
-        case 'editLabelText':
+        case 'tag':
             mapContainer.style.cursor = 'default';
-            document.querySelectorAll('.label-box').forEach(element => {
-                element.classList.add('editable');
-                element.style.cursor = 'text';
+            document.querySelectorAll('.label-box, .ref-point, .polygon-point, .polygon-anchor').forEach(element => {
+                element.classList.add('contextable');
+                element.style.cursor = 'context-menu';
             });
             break;
+        case 'neutral':
         default:
-            // No specific mode or null mode
             mapContainer.style.cursor = 'default';
             break;
     }
@@ -431,12 +486,19 @@ function setMode(mode) {
     // Update cursor styles for the new mode
     updateCursorStyles(mode);
 
-    if (mode === 'point') {
-        mapContainer.classList.add('point-mode');
-    } else if (mode === 'polygon') {
-        mapContainer.classList.add('polygon-mode');
-    } else if (mode === 'line') {
-        mapContainer.classList.add('line-mode');
+    // Update OpenLayers map mode
+    if (olMapSystem) {
+        olMapSystem.setMode(mode);
+    }
+
+    if (mapContainer) {
+        if (mode === 'point') {
+            mapContainer.classList.add('point-mode');
+        } else if (mode === 'polygon') {
+            mapContainer.classList.add('polygon-mode');
+        } else if (mode === 'line') {
+            mapContainer.classList.add('line-mode');
+        }
     }
 
     // Handle drawing mode transitions
@@ -473,7 +535,12 @@ function setMode(mode) {
     // If clicking the same mode button again, deactivate the mode
     if (mode === previousMode) {
         currentMode = null;
+        mode = null; // Set mode to null so the final UI state management works correctly
         updateCursorStyles(null);
+        // Update OpenLayers map mode to null as well
+        if (olMapSystem) {
+            olMapSystem.setMode(null);
+        }
         // Hide finish drawing interface when deactivating drawing mode
         if (previousMode === 'polygon' || previousMode === 'line') {
             finishDrawingInterface.style.display = 'none';
@@ -488,10 +555,15 @@ function setMode(mode) {
         toggletagPanel(true);
     }
 
-    // Update all button states
-    updateButtons();
+    // Update our UI state management to match the actual mode
+    if (mode === 'neutral' || mode === null) {
+        uiCurrentMode = 'neutral';
+    } else {
+        uiCurrentMode = mode;
+    }
+    updateModeButtonUI(uiCurrentMode);
 
-    // Update add button header state
+    // Update add button header state (after button UI is updated)
     updateAddButtonHeaderState();
 }
 
@@ -552,7 +624,8 @@ function updateButtons() {
     document.querySelectorAll('.edit-mode-btn').forEach(btn => {
         const btnMode = btn.getAttribute('data-mode');
         if (btnMode) {
-            const active = (btnMode === currentMode);
+            // Handle null/neutral mode - no button should be active
+            const active = currentMode && (btnMode === currentMode);
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', active);
         }
@@ -562,8 +635,12 @@ function updateButtons() {
     updateAddButtonHeaderState();
 }
 
-// Draw leader lines connecting ref points and label boxes
+// Draw leader lines connecting ref points and label boxes (disabled - now handled by OpenLayers)
 function updateLeaderLines() {
+    // Leader lines are now handled by OpenLayers styling
+    // This function is kept for backward compatibility
+    if (!leaderLinesSVG) return;
+
     // Clear previous lines
     leaderLinesSVG.innerHTML = '';
 
@@ -678,7 +755,15 @@ function updateLeaderLines() {
 // Function to update save button state
 function updateSaveButtonState() {
     const saveButton = document.getElementById('saveElementsBtn');
-    const hasData = points.length > 0 || polygons.length > 0 || lines.length > 0;
+    let hasData;
+
+    if (olMapSystem) {
+        const annotations = olMapSystem.getAnnotations();
+        hasData = annotations.points.length > 0 || annotations.polygons.length > 0 || annotations.lines.length > 0;
+    } else {
+        hasData = points.length > 0 || polygons.length > 0 || lines.length > 0;
+    }
+
     const isDrawing = currentShapePoints && currentShapePoints.length > 0;
     const hasChanges = hasUnsavedChanges();
 
@@ -803,7 +888,8 @@ function addLabel(x, y) {
         relLabelY: relLabelCoords.y,
         correctText: '',
         userGuess: '',
-        type: currentType || tags[0] || ''
+        type: currentType || tags[0] || '',
+        id: `point-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
 
     points.push(labelObj);
@@ -1401,7 +1487,8 @@ function finishCurrentShape() {
             relAnchorY: relAnchorCoords.y,
             relLabelX: relLabelCoords.x,
             relLabelY: relLabelCoords.y,
-            type: currentType || tags[0] || ''
+            type: currentType || tags[0] || '',
+            id: `line-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         });
 
         type = currentType;
@@ -1462,7 +1549,8 @@ function finishCurrentShape() {
             relAnchorY: relCentroidCoords.y,
             relLabelX: relLabelCoords.x,
             relLabelY: relLabelCoords.y,
-            type: currentShape === 'polygon' ? currentType || tags[0] || '' : 'default'
+            type: currentShape === 'polygon' ? currentType || tags[0] || '' : 'default',
+            id: `polygon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         });
     }
 
@@ -1495,7 +1583,8 @@ function getPolygonCentroid(points) {
     };
 }
 
-// Update click handler
+// Update click handler (disabled - now handled by OpenLayers)
+/*
 mapContainer.addEventListener('click', (e) => {
     if (!editEnabled) return;
 
@@ -1616,11 +1705,12 @@ mapContainer.addEventListener('click', (e) => {
         updateLeaderLines();
     }
 });
+*/
 
-// Dragging events
-mapContainer.addEventListener('pointerdown', onPointerDown);
-window.addEventListener('pointermove', onPointerMove);
-window.addEventListener('pointerup', onPointerUp);
+// Dragging events (disabled - now handled by OpenLayers)
+// mapContainer.addEventListener('pointerdown', onPointerDown);
+// window.addEventListener('pointermove', onPointerMove);
+// window.addEventListener('pointerup', onPointerUp);
 
 // Initial disable buttons
 toggleEditMode();
@@ -1766,7 +1856,13 @@ mapFileInput.addEventListener('change', async (e) => {
 
                 img.onload = () => {
                     console.log('Image loaded successfully:', img.width, 'x', img.height);
-                    mapImage.src = img.src;
+
+                    // Load image into OpenLayers map
+                    if (olMapSystem) {
+                        olMapSystem.loadMapImage(img.src);
+                        olMapSystem.clearAnnotations();
+                    }
+
                     pageContainer.style.opacity = '1';
                     document.getElementById('saveElementsBtn').style.display = 'inline-block';
                     document.getElementById('loadElementsBtn').style.display = 'inline-block';
@@ -1777,7 +1873,7 @@ mapFileInput.addEventListener('change', async (e) => {
                         frontLoadMapContainer.classList.add('hidden');
                     }
 
-                    // Clear all existing data
+                    // Clear all existing DOM data (for backward compatibility)
                     points.forEach(point => {
                         if (point.refPointEl) point.refPointEl.remove();
                         if (point.labelBoxEl) point.labelBoxEl.remove();
@@ -1800,16 +1896,8 @@ mapFileInput.addEventListener('change', async (e) => {
                     });
                     lines.length = 0;
 
-                    // Clear SVG layers
-                    while (shapesLayer.firstChild) {
-                        shapesLayer.removeChild(shapesLayer.firstChild);
-                    }
-                    while (leaderLinesSVG.firstChild) {
-                        leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
-                    }
-
                     // Reset baseline data for unsaved changes detection
-                    baselineData = null;
+                    baselineData = getCurrentState();
 
                     // Update SVG size to match new image
                     requestAnimationFrame(() => {
@@ -1818,6 +1906,8 @@ mapFileInput.addEventListener('change', async (e) => {
                         mapFileInput.value = '';
                         // Update save button state after clearing data
                         updateSaveButtonState();
+                        // Automatically select the first tag
+                        selectFirstTag();
                         resolve();
                     });
                 };
@@ -1932,43 +2022,15 @@ mapFileInput.addEventListener('change', async (e) => {
     }
 });
 
-// Add image error handler
-mapImage.addEventListener('error', (e) => {
-    console.error('Error loading image:', e);
-    const errorMessage = document.getElementById('errorMessage');
-    errorMessage.textContent = 'Failed to display the image. Please try another file.';
-    errorMessage.style.display = 'block';
-});
-
 // Save labels to JSON file
 function saveElements() {
-    const exportData = {
-        points: points.map(point => ({
-            refX: point.relRefX,
-            refY: point.relRefY,
-            labelX: point.relLabelX,
-            labelY: point.relLabelY,
-            text: point.labelBoxEl.textContent,
-            type: point.type || 'default'
-        })),
-        polygons: polygons.map(polygon => ({
-            points: polygon.points.map(p => ({ x: p.relX, y: p.relY })),
-            anchorX: polygon.relAnchorX,
-            anchorY: polygon.relAnchorY,
-            labelX: polygon.relLabelX,
-            labelY: polygon.relLabelY,
-            text: polygon.labelBoxEl.textContent,
-            type: polygon.type || 'default'
-        })),
-        lines: lines.map(line => ({
-            points: line.points.map(p => ({ x: p.relX, y: p.relY })),
-            anchorX: line.relAnchorX,
-            anchorY: line.relAnchorY,
-            labelX: line.relLabelX,
-            labelY: line.relLabelY,
-            text: line.labelBoxEl.textContent,
-            type: line.type || 'default'
-        }))
+    let exportData;
+    const annotations = olMapSystem.getAnnotations();
+
+    exportData = {
+        points: annotations.points,
+        polygons: annotations.polygons,
+        lines: annotations.lines
     };
 
     // Create a Blob containing the JSON data
@@ -2020,306 +2082,389 @@ function loadElements() {
                 // Reset the file input so the same file can be loaded again
                 input.value = '';
 
-                // Collect all tag types from the file
-                const foundTags = new Set();
-                (data.points || []).forEach(point => { if (point.type) foundTags.add(point.type); });
-                (data.polygons || []).forEach(polygon => { if (polygon.type) foundTags.add(polygon.type); });
-                (data.lines || []).forEach(line => { if (line.type) foundTags.add(line.type); });
-                tags = Array.from(foundTags);
-                // Automatically select the first tag as active
-                if (tags.length > 0) {
-                    currentType = tags[0];
+                // Load data into OpenLayers map if available
+                if (olMapSystem) {
+                    olMapSystem.loadFromSaveFormat(data);
+
+                    // Collect all tag types from the file
+                    const foundTags = new Set();
+                    (data.points || []).forEach(point => { if (point.type) foundTags.add(point.type); });
+                    (data.polygons || []).forEach(polygon => { if (polygon.type) foundTags.add(polygon.type); });
+                    (data.lines || []).forEach(line => { if (line.type) foundTags.add(line.type); });
+                    tags = Array.from(foundTags);
+                    // Automatically select the first tag as active
+                    selectFirstTag();
+                    // Make all tags visible and remove any not present in the file
+                    tagVisibility = {};
+                    tags.forEach(tag => { tagVisibility[tag] = true; });
                     saveTags();
-                }
-                // Make all tags visible and remove any not present in the file
-                tagVisibility = {};
-                tags.forEach(tag => { tagVisibility[tag] = true; });
-                saveTags();
-                saveTagVisibility();
-                updateTagVisibilityOnMap();
-                renderTagPanel();
+                    saveTagVisibility();
+                    updateTagVisibilityOnMap();
+                    renderTagPanel();
 
-                // Clear existing labels
-                points.forEach(point => {
-                    if (point.refPointEl) point.refPointEl.remove();
-                    if (point.labelBoxEl) point.labelBoxEl.remove();
-                });
-                points.length = 0;
+                    // Set baseline data to the loaded data to prevent false "unsaved changes" detection
+                    baselineData = getCurrentState();
 
-                // Clear existing polygons
-                polygons.forEach(polygon => {
-                    polygon.points.forEach(p => p.element.remove());
-                    polygon.labelBoxEl.remove();
-                    polygon.svgPath.remove();
-                    polygon.anchorPoint.element.remove();
-                });
-                polygons.length = 0;
+                    // Update save button state after loading
+                    updateSaveButtonState();
+                } else {
+                    // Legacy DOM system - clear existing elements first
+                    // Clear existing labels
+                    points.forEach(point => {
+                        if (point.refPointEl) point.refPointEl.remove();
+                        if (point.labelBoxEl) point.labelBoxEl.remove();
+                    });
+                    points.length = 0;
 
-                // Clear existing lines
-                lines.forEach(line => {
-                    line.points.forEach(p => p.element.remove());
-                    line.labelBoxEl.remove();
-                    line.polyline.remove();
-                    line.anchorPoint.remove();
-                });
-                lines.length = 0;
+                    // Clear existing polygons
+                    polygons.forEach(polygon => {
+                        polygon.points.forEach(p => p.element.remove());
+                        polygon.labelBoxEl.remove();
+                        polygon.svgPath.remove();
+                        polygon.anchorPoint.element.remove();
+                    });
+                    polygons.length = 0;
 
-                // Clear SVG layers
-                while (shapesLayer.firstChild) {
-                    shapesLayer.removeChild(shapesLayer.firstChild);
-                }
-                while (leaderLinesSVG.firstChild) {
-                    leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
-                }
+                    // Clear existing lines
+                    lines.forEach(line => {
+                        line.points.forEach(p => p.element.remove());
+                        line.labelBoxEl.remove();
+                        line.polyline.remove();
+                        line.anchorPoint.remove();
+                    });
+                    lines.length = 0;
 
-                // Recreate labels
-                data.points?.forEach(point => {
-                    const absPos = toAbsoluteCoords(point.refX, point.refY);
-                    const absLabelPos = toAbsoluteCoords(point.labelX, point.labelY);
-                    const { refPointEl, labelBoxEl } = createLabel(
-                        absPos.x,
-                        absPos.y,
-                        absLabelPos.x,
-                        absLabelPos.y,
-                        point.text,
-                        true,  // createRefPoint
-                        false  // shouldFocus
-                    );
-
-                    // Set initial visibility based on edit mode
-                    refPointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
-
-                    // Add appropriate classes based on current mode
-                    if (currentMode === 'move') {
-                        refPointEl.classList.add('movable');
-                        labelBoxEl.classList.add('movable');
-                    } else if (currentMode === 'delete') {
-                        refPointEl.classList.add('deletable');
-                        labelBoxEl.classList.add('deletable');
-                    } else if (currentMode === 'editLabelText') {
-                        refPointEl.classList.add('editable');
-                        labelBoxEl.classList.add('editable');
+                    // Clear SVG layers
+                    while (shapesLayer.firstChild) {
+                        shapesLayer.removeChild(shapesLayer.firstChild);
+                    }
+                    while (leaderLinesSVG.firstChild) {
+                        leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
                     }
 
-                    points.push({
-                        refPointEl,
-                        labelBoxEl,
-                        refX: absPos.x,
-                        refY: absPos.y,
-                        labelX: absLabelPos.x,
-                        labelY: absLabelPos.y,
-                        relRefX: point.refX,
-                        relRefY: point.refY,
-                        relLabelX: point.labelX,
-                        relLabelY: point.labelY,
-                        type: point.type || 'default'
-                    });
-                });
+                    // Collect all tag types from the file
+                    const foundTags = new Set();
+                    (data.points || []).forEach(point => { if (point.type) foundTags.add(point.type); });
+                    (data.polygons || []).forEach(polygon => { if (polygon.type) foundTags.add(polygon.type); });
+                    (data.lines || []).forEach(line => { if (line.type) foundTags.add(line.type); });
+                    tags = Array.from(foundTags);
+                    // Automatically select the first tag as active
+                    selectFirstTag();
+                    // Make all tags visible and remove any not present in the file
+                    tagVisibility = {};
+                    tags.forEach(tag => { tagVisibility[tag] = true; });
+                    saveTags();
+                    saveTagVisibility();
+                    updateTagVisibilityOnMap();
+                    renderTagPanel();
 
-                // Recreate polygons
-                data.polygons?.forEach(polygon => {
-                    // Create points
-                    const points = polygon.points.map(p => {
-                        const absPos = toAbsoluteCoords(p.x, p.y);
-                        const pointEl = document.createElement('div');
-                        pointEl.className = 'polygon-point visible';
-                        pointEl.setAttribute('data-type', polygon.type || 'default');
-                        // Add appropriate classes based on current mode
-                        if (currentMode === 'move') {
-                            pointEl.classList.add('movable');
-                        } else if (currentMode === 'delete') {
-                            pointEl.classList.add('deletable');
-                        } else if (currentMode === 'editLabelText') {
-                            pointEl.classList.add('editable');
+                    // Recreate labels
+                    data.points?.forEach(point => {
+                        // Handle both old and new format
+                        let refX, refY, labelX, labelY;
+
+                        if (point.coordinates && point.labelPosition) {
+                            // New format
+                            refX = point.coordinates[0];
+                            refY = point.coordinates[1];
+                            labelX = point.labelPosition[0];
+                            labelY = point.labelPosition[1];
+                        } else {
+                            // Old format (backward compatibility)
+                            refX = point.refX;
+                            refY = point.refY;
+                            labelX = point.labelX;
+                            labelY = point.labelY;
                         }
 
-                        pointEl.style.left = absPos.x + 'px';
-                        pointEl.style.top = absPos.y + 'px';
-                        pointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
-                        mapContainer.appendChild(pointEl);
-                        return {
-                            x: absPos.x,
-                            y: absPos.y,
-                            relX: p.x,
-                            relY: p.y,
-                            element: pointEl
-                        };
-                    });
+                        const absPos = toAbsoluteCoords(refX, refY);
+                        const absLabelPos = toAbsoluteCoords(labelX, labelY);
+                        const { refPointEl, labelBoxEl } = createLabel(
+                            absPos.x,
+                            absPos.y,
+                            absLabelPos.x,
+                            absLabelPos.y,
+                            point.text,
+                            true,  // createRefPoint
+                            false  // shouldFocus
+                        );
 
-                    // Create SVG path
-                    const svgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    const pathData = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
-                    svgPath.setAttribute('d', pathData);
-                    svgPath.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
-                    svgPath.setAttribute('stroke', editEnabled ? 'blue' : 'none');
-                    svgPath.setAttribute('stroke-width', '2');
-                    svgPath.setAttribute('class', 'polygon-path');
-                    svgPath.style.pointerEvents = 'none';
-                    svgPath.setAttribute('data-type', polygon.type || 'default');
-                    shapesLayer.appendChild(svgPath);
+                        // Set initial visibility based on edit mode
+                        refPointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
 
-                    // Create anchor point
-                    const absAnchorPos = toAbsoluteCoords(polygon.anchorX, polygon.anchorY);
-                    const anchorPoint = document.createElement('div');
-                    anchorPoint.className = 'polygon-anchor visible';
-
-                    // Add appropriate classes based on current mode
-                    if (currentMode === 'move') {
-                        anchorPoint.classList.add('movable');
-                    } else if (currentMode === 'delete') {
-                        anchorPoint.classList.add('deletable');
-                    } else if (currentMode === 'editLabelText') {
-                        anchorPoint.classList.add('editable');
-                    }
-
-                    anchorPoint.style.left = absAnchorPos.x + 'px';
-                    anchorPoint.style.top = absAnchorPos.y + 'px';
-                    anchorPoint.style.visibility = editEnabled ? 'visible' : 'hidden';
-                    mapContainer.appendChild(anchorPoint);
-                    anchorPoint.setAttribute('data-type', polygon.type || 'default');
-
-                    // Create label
-                    const absLabelPos = toAbsoluteCoords(polygon.labelX, polygon.labelY);
-                    const { labelBoxEl } = createLabel(
-                        absAnchorPos.x,
-                        absAnchorPos.y,
-                        absLabelPos.x,
-                        absLabelPos.y,
-                        polygon.text,
-                        false,  // createRefPoint
-                        false   // shouldFocus
-                    );
-
-                    // Add appropriate classes to label based on current mode
-                    if (currentMode === 'move') {
-                        labelBoxEl.classList.add('movable');
-                    } else if (currentMode === 'delete') {
-                        labelBoxEl.classList.add('deletable');
-                    } else if (currentMode === 'editLabelText') {
-                        labelBoxEl.classList.add('editable');
-                    }
-
-                    polygons.push({
-                        points,
-                        labelBoxEl,
-                        svgPath,
-                        anchorPoint: { element: anchorPoint },
-                        anchorX: absAnchorPos.x,
-                        anchorY: absAnchorPos.y,
-                        relAnchorX: polygon.anchorX,
-                        relAnchorY: polygon.anchorY,
-                        relLabelX: polygon.labelX,
-                        relLabelY: polygon.labelY,
-                        type: polygon.type || 'default'
-                    });
-                });
-
-                // Recreate lines
-                data.lines?.forEach(line => {
-                    // Create points
-                    const points = line.points.map(p => {
-                        const absPos = toAbsoluteCoords(p.x, p.y);
-                        const pointEl = document.createElement('div');
-                        pointEl.className = 'polygon-point visible';
-                        pointEl.setAttribute('data-type', line.type || 'default');
                         // Add appropriate classes based on current mode
                         if (currentMode === 'move') {
-                            pointEl.classList.add('movable');
+                            refPointEl.classList.add('movable');
+                            labelBoxEl.classList.add('movable');
                         } else if (currentMode === 'delete') {
-                            pointEl.classList.add('deletable');
+                            refPointEl.classList.add('deletable');
+                            labelBoxEl.classList.add('deletable');
                         } else if (currentMode === 'editLabelText') {
-                            pointEl.classList.add('editable');
+                            refPointEl.classList.add('editable');
+                            labelBoxEl.classList.add('editable');
                         }
 
-                        pointEl.style.left = absPos.x + 'px';
-                        pointEl.style.top = absPos.y + 'px';
-                        pointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
-                        mapContainer.appendChild(pointEl);
-                        return {
-                            x: absPos.x,
-                            y: absPos.y,
-                            relX: p.x,
-                            relY: p.y,
-                            element: pointEl
-                        };
+                        points.push({
+                            refPointEl,
+                            labelBoxEl,
+                            refX: absPos.x,
+                            refY: absPos.y,
+                            labelX: absLabelPos.x,
+                            labelY: absLabelPos.y,
+                            relRefX: refX,
+                            relRefY: refY,
+                            relLabelX: labelX,
+                            relLabelY: labelY,
+                            id: point.id,
+                            type: point.type || 'default'
+                        });
                     });
 
-                    // Create polyline
-                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-                    const pointsStr = points.map(p => `${p.x},${p.y}`).join(' ');
-                    polyline.setAttribute('points', pointsStr);
-                    polyline.setAttribute('fill', 'none');
-                    polyline.setAttribute('stroke', editEnabled ? 'blue' : 'none');
-                    polyline.setAttribute('stroke-width', '2');
-                    polyline.setAttribute('class', 'line-path');
-                    polyline.style.pointerEvents = 'none';
-                    polyline.setAttribute('data-type', line.type || 'default');
-                    shapesLayer.appendChild(polyline);
+                    // Recreate polygons
+                    data.polygons?.forEach(polygon => {
+                        // Handle both old and new format
+                        let coordinates, anchorX, anchorY, labelX, labelY;
 
-                    // Create anchor point
-                    const absAnchorPos = toAbsoluteCoords(line.anchorX, line.anchorY);
-                    const anchorPoint = document.createElement('div');
-                    anchorPoint.className = 'polygon-anchor visible';
+                        if (polygon.coordinates && polygon.labelPosition) {
+                            // New format
+                            coordinates = polygon.coordinates;
+                            labelX = polygon.labelPosition[0];
+                            labelY = polygon.labelPosition[1];
+                            anchorX = polygon.anchorPosition ? polygon.anchorPosition[0] : null;
+                            anchorY = polygon.anchorPosition ? polygon.anchorPosition[1] : null;
+                        } else {
+                            // Old format (backward compatibility)
+                            coordinates = polygon.points.map(p => [p.x, p.y]);
+                            labelX = polygon.labelX;
+                            labelY = polygon.labelY;
+                            anchorX = polygon.anchorX;
+                            anchorY = polygon.anchorY;
+                        }
 
-                    // Add appropriate classes based on current mode
-                    if (currentMode === 'move') {
-                        anchorPoint.classList.add('movable');
-                    } else if (currentMode === 'delete') {
-                        anchorPoint.classList.add('deletable');
-                    } else if (currentMode === 'editLabelText') {
-                        anchorPoint.classList.add('editable');
-                    }
+                        // Create points
+                        const points = coordinates.map(coord => {
+                            const absPos = toAbsoluteCoords(coord[0], coord[1]);
+                            const pointEl = document.createElement('div');
+                            pointEl.className = 'polygon-point visible';
+                            pointEl.setAttribute('data-type', polygon.type || 'default');
+                            // Add appropriate classes based on current mode
+                            if (currentMode === 'move') {
+                                pointEl.classList.add('movable');
+                            } else if (currentMode === 'delete') {
+                                pointEl.classList.add('deletable');
+                            } else if (currentMode === 'editLabelText') {
+                                pointEl.classList.add('editable');
+                            }
 
-                    anchorPoint.style.left = absAnchorPos.x + 'px';
-                    anchorPoint.style.top = absAnchorPos.y + 'px';
-                    anchorPoint.style.visibility = editEnabled ? 'visible' : 'hidden';
-                    mapContainer.appendChild(anchorPoint);
-                    anchorPoint.setAttribute('data-type', line.type || 'default');
+                            pointEl.style.left = absPos.x + 'px';
+                            pointEl.style.top = absPos.y + 'px';
+                            pointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
+                            mapContainer.appendChild(pointEl);
+                            return {
+                                x: absPos.x,
+                                y: absPos.y,
+                                relX: coord[0],
+                                relY: coord[1],
+                                element: pointEl
+                            };
+                        });
 
-                    // Create label
-                    const absLabelPos = toAbsoluteCoords(line.labelX, line.labelY);
-                    const { labelBoxEl } = createLabel(
-                        absAnchorPos.x,
-                        absAnchorPos.y,
-                        absLabelPos.x,
-                        absLabelPos.y,
-                        line.text,
-                        false,  // createRefPoint
-                        false   // shouldFocus
-                    );
+                        // Create SVG path
+                        const svgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        const pathData = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
+                        svgPath.setAttribute('d', pathData);
+                        svgPath.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
+                        svgPath.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+                        svgPath.setAttribute('stroke-width', '2');
+                        svgPath.setAttribute('class', 'polygon-path');
+                        svgPath.style.pointerEvents = 'none';
+                        svgPath.setAttribute('data-type', polygon.type || 'default');
+                        shapesLayer.appendChild(svgPath);
 
-                    // Add appropriate classes to label based on current mode
-                    if (currentMode === 'move') {
-                        labelBoxEl.classList.add('movable');
-                    } else if (currentMode === 'delete') {
-                        labelBoxEl.classList.add('deletable');
-                    } else if (currentMode === 'editLabelText') {
-                        labelBoxEl.classList.add('editable');
-                    }
+                        // Create anchor point
+                        const absAnchorPos = toAbsoluteCoords(anchorX, anchorY);
+                        const anchorPoint = document.createElement('div');
+                        anchorPoint.className = 'polygon-anchor visible';
 
-                    lines.push({
-                        points,
-                        labelBoxEl,
-                        polyline,
-                        anchorPoint,
-                        anchorX: absAnchorPos.x,
-                        anchorY: absAnchorPos.y,
-                        relAnchorX: line.anchorX,
-                        relAnchorY: line.anchorY,
-                        relLabelX: line.labelX,
-                        relLabelY: line.labelY,
-                        type: line.type || 'default'
+                        // Add appropriate classes based on current mode
+                        if (currentMode === 'move') {
+                            anchorPoint.classList.add('movable');
+                        } else if (currentMode === 'delete') {
+                            anchorPoint.classList.add('deletable');
+                        } else if (currentMode === 'editLabelText') {
+                            anchorPoint.classList.add('editable');
+                        }
+
+                        anchorPoint.style.left = absAnchorPos.x + 'px';
+                        anchorPoint.style.top = absAnchorPos.y + 'px';
+                        anchorPoint.style.visibility = editEnabled ? 'visible' : 'hidden';
+                        mapContainer.appendChild(anchorPoint);
+                        anchorPoint.setAttribute('data-type', polygon.type || 'default');
+
+                        // Create label
+                        const absLabelPos = toAbsoluteCoords(labelX, labelY);
+                        const { labelBoxEl } = createLabel(
+                            absAnchorPos.x,
+                            absAnchorPos.y,
+                            absLabelPos.x,
+                            absLabelPos.y,
+                            polygon.text,
+                            false,  // createRefPoint
+                            false   // shouldFocus
+                        );
+
+                        // Add appropriate classes to label based on current mode
+                        if (currentMode === 'move') {
+                            labelBoxEl.classList.add('movable');
+                        } else if (currentMode === 'delete') {
+                            labelBoxEl.classList.add('deletable');
+                        } else if (currentMode === 'editLabelText') {
+                            labelBoxEl.classList.add('editable');
+                        }
+
+                        polygons.push({
+                            points,
+                            labelBoxEl,
+                            svgPath,
+                            anchorPoint: { element: anchorPoint },
+                            anchorX: absAnchorPos.x,
+                            anchorY: absAnchorPos.y,
+                            relAnchorX: anchorX,
+                            relAnchorY: anchorY,
+                            relLabelX: labelX,
+                            relLabelY: labelY,
+                            id: polygon.id,
+                            type: polygon.type || 'default'
+                        });
                     });
-                });
 
-                updateLeaderLines();
-                renderTagPanel();
+                    // Recreate lines
+                    data.lines?.forEach(line => {
+                        // Handle both old and new format
+                        let coordinates, anchorX, anchorY, labelX, labelY;
 
-                // Store the loaded data as baseline for unsaved changes detection
-                baselineData = JSON.parse(JSON.stringify(data));
+                        if (line.coordinates && line.labelPosition) {
+                            // New format
+                            coordinates = line.coordinates;
+                            labelX = line.labelPosition[0];
+                            labelY = line.labelPosition[1];
+                            anchorX = line.anchorPosition ? line.anchorPosition[0] : null;
+                            anchorY = line.anchorPosition ? line.anchorPosition[1] : null;
+                        } else {
+                            // Old format (backward compatibility)
+                            coordinates = line.points.map(p => [p.x, p.y]);
+                            labelX = line.labelX;
+                            labelY = line.labelY;
+                            anchorX = line.anchorX;
+                            anchorY = line.anchorY;
+                        }
 
-                // Clear the unsaved changes indicator since we just loaded new data
-                updateSaveButtonState();
+                        // Create points
+                        const points = coordinates.map(coord => {
+                            const absPos = toAbsoluteCoords(coord[0], coord[1]);
+                            const pointEl = document.createElement('div');
+                            pointEl.className = 'line-point visible';
+                            pointEl.setAttribute('data-type', line.type || 'default');
+                            // Add appropriate classes based on current mode
+                            if (currentMode === 'move') {
+                                pointEl.classList.add('movable');
+                            } else if (currentMode === 'delete') {
+                                pointEl.classList.add('deletable');
+                            } else if (currentMode === 'editLabelText') {
+                                pointEl.classList.add('editable');
+                            }
+
+                            pointEl.style.left = absPos.x + 'px';
+                            pointEl.style.top = absPos.y + 'px';
+                            pointEl.style.visibility = editEnabled ? 'visible' : 'hidden';
+                            mapContainer.appendChild(pointEl);
+                            return {
+                                x: absPos.x,
+                                y: absPos.y,
+                                relX: coord[0],
+                                relY: coord[1],
+                                element: pointEl
+                            };
+                        });
+
+                        // Create polyline
+                        const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                        const pointsAttr = points.map(p => `${p.x},${p.y}`).join(' ');
+                        polyline.setAttribute('points', pointsAttr);
+                        polyline.setAttribute('fill', 'none');
+                        polyline.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+                        polyline.setAttribute('stroke-width', '2');
+                        polyline.setAttribute('class', 'line-path');
+                        polyline.style.pointerEvents = 'none';
+                        polyline.setAttribute('data-type', line.type || 'default');
+                        shapesLayer.appendChild(polyline);
+
+                        // Create anchor point
+                        const absAnchorPos = toAbsoluteCoords(anchorX, anchorY);
+                        const anchorPoint = document.createElement('div');
+                        anchorPoint.className = 'line-anchor visible';
+
+                        // Add appropriate classes based on current mode
+                        if (currentMode === 'move') {
+                            anchorPoint.classList.add('movable');
+                        } else if (currentMode === 'delete') {
+                            anchorPoint.classList.add('deletable');
+                        } else if (currentMode === 'editLabelText') {
+                            anchorPoint.classList.add('editable');
+                        }
+
+                        anchorPoint.style.left = absAnchorPos.x + 'px';
+                        anchorPoint.style.top = absAnchorPos.y + 'px';
+                        anchorPoint.style.visibility = editEnabled ? 'visible' : 'hidden';
+                        mapContainer.appendChild(anchorPoint);
+                        anchorPoint.setAttribute('data-type', line.type || 'default');
+
+                        // Create label
+                        const absLabelPos = toAbsoluteCoords(labelX, labelY);
+                        const { labelBoxEl } = createLabel(
+                            absAnchorPos.x,
+                            absAnchorPos.y,
+                            absLabelPos.x,
+                            absLabelPos.y,
+                            line.text,
+                            false,  // createRefPoint
+                            false   // shouldFocus
+                        );
+
+                        // Add appropriate classes to label based on current mode
+                        if (currentMode === 'move') {
+                            labelBoxEl.classList.add('movable');
+                        } else if (currentMode === 'delete') {
+                            labelBoxEl.classList.add('deletable');
+                        } else if (currentMode === 'editLabelText') {
+                            labelBoxEl.classList.add('editable');
+                        }
+
+                        lines.push({
+                            points,
+                            labelBoxEl,
+                            polyline,
+                            anchorPoint,
+                            anchorX: absAnchorPos.x,
+                            anchorY: absAnchorPos.y,
+                            relAnchorX: anchorX,
+                            relAnchorY: anchorY,
+                            relLabelX: labelX,
+                            relLabelY: labelY,
+                            id: line.id,
+                            type: line.type || 'default'
+                        });
+                    });
+
+                    // Update leader lines after recreating all elements
+                    updateLeaderLines();
+
+                    // Set baseline data to the loaded data to prevent false "unsaved changes" detection
+                    baselineData = getCurrentState();
+
+                    // Update save button state after loading
+                    updateSaveButtonState();
+                }
             };
             reader.readAsText(file);
         };
@@ -3700,8 +3845,8 @@ function showReferencePoints() {
     });
 }
 
-// Add image load handler to update overlays after image loads
-mapImage.addEventListener('load', updateAllPositions);
+// Add image load handler to update overlays after image loads (disabled - now handled by OpenLayers)
+// mapImage.addEventListener('load', updateAllPositions);
 
 // Tag/Type Management
 let tags = [];
@@ -3710,27 +3855,33 @@ let tagToEdit = null;
 let tagToDelete = null;
 
 function loadTags() {
-    const stored = localStorage.getItem('mapTags');
-    if (stored) {
-        try {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-                tags = parsed;
-            } else {
+    if (olMapSystem) {
+        // Use OpenLayers tag system
+        tags = olMapSystem.getTags();
+        currentType = olMapSystem.getCurrentType();
+    } else {
+        // Fallback to DOM-based system
+        const stored = localStorage.getItem('mapTags');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    tags = parsed;
+                } else {
+                    tags = ['Fix', 'Navaid', 'Warning Area', 'Airway', 'Sector'];
+                }
+            } catch (e) {
                 tags = ['Fix', 'Navaid', 'Warning Area', 'Airway', 'Sector'];
             }
-        } catch (e) {
+        } else {
             tags = ['Fix', 'Navaid', 'Warning Area', 'Airway', 'Sector'];
         }
-    } else {
-        tags = ['Fix', 'Navaid', 'Warning Area', 'Airway', 'Sector'];
+        currentType = localStorage.getItem('currentType') || tags[0];
     }
-    currentType = localStorage.getItem('currentType') || tags[0];
 }
 
 function saveTags() {
-    localStorage.setItem('mapTags', JSON.stringify(tags));
-    localStorage.setItem('currentType', currentType);
+    olMapSystem.setCurrentType(currentType);
 }
 
 // Track the last tag order for FLIP animation
@@ -3947,13 +4098,9 @@ function renderTagPanel() {
                 delBtn.onclick = function (e) {
                     e.stopPropagation();
                     tagToDelete = tag;
-                    // Check if any elements use this tag
-                    const usedBy = [
-                        ...points.filter(l => l.type === tag),
-                        ...polygons.filter(p => p.type === tag),
-                        ...lines.filter(l => l.type === tag)
-                    ];
-                    if (usedBy.length === 0) {
+                    // Check if any elements use this tag using the unified function
+                    const usedByCount = getElementCountForTag(tag);
+                    if (usedByCount === 0) {
                         tags = tags.filter(t => t !== tag);
                         if (currentType === tag) currentType = tags[0] || '';
                         saveTags();
@@ -3964,7 +4111,7 @@ function renderTagPanel() {
                     const modal = document.getElementById('deleteTagModal');
                     const prevDropdown = document.getElementById('deleteTagDropdown');
                     if (prevDropdown) prevDropdown.remove();
-                    msg.innerHTML = `There are <b>${usedBy.length}</b> elements using the tag "${tag}".<br>Please select a new tag type to reassign them to before deleting.`;
+                    msg.innerHTML = `There are <b>${usedByCount}</b> elements using the tag "${tag}".<br>Please select a new tag type to reassign them to before deleting.`;
                     const select = document.createElement('select');
                     select.id = 'deleteTagDropdown';
                     select.style.margin = '16px 0 0 0';
@@ -4164,10 +4311,51 @@ function saveEditTag() {
     // Update tag in tags array
     const idx = tags.indexOf(tagToEdit);
     if (idx !== -1) tags[idx] = newName;
+
     // Update all elements using this tag
-    points.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
-    polygons.forEach(p => { if (p.type === tagToEdit) p.type = newName; });
-    lines.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
+    if (olMapSystem) {
+        // Update OpenLayers features
+        const features = olMapSystem.vectorSource.getFeatures();
+        features.forEach(feature => {
+            const properties = feature.getProperties();
+            if (properties.tagType === tagToEdit && properties.type !== 'leader-line') {
+                feature.set('tagType', newName);
+                // Update the feature style to reflect the new tag
+                feature.setStyle(olMapSystem.createStyleFunction()(feature));
+            }
+        });
+
+        // Update tag visibility - transfer visibility from old tag to new tag
+        if (olMapSystem.tagVisibility[tagToEdit] !== undefined) {
+            olMapSystem.tagVisibility[newName] = olMapSystem.tagVisibility[tagToEdit];
+            delete olMapSystem.tagVisibility[tagToEdit];
+            olMapSystem.saveTagVisibility();
+        }
+
+        // Update the map to reflect changes
+        olMapSystem.updateTagVisibilityOnMap();
+    } else {
+        // Fallback to DOM-based system
+        points.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
+        polygons.forEach(p => { if (p.type === tagToEdit) p.type = newName; });
+        lines.forEach(l => { if (l.type === tagToEdit) l.type = newName; });
+
+        // Update tag visibility - transfer visibility from old tag to new tag
+        if (tagVisibility[tagToEdit] !== undefined) {
+            tagVisibility[newName] = tagVisibility[tagToEdit];
+            delete tagVisibility[tagToEdit];
+            saveTagVisibility();
+        }
+
+        // Update DOM elements with data-type attributes
+        document.querySelectorAll(`[data-type="${tagToEdit}"]`).forEach(el => {
+            el.setAttribute('data-type', newName);
+        });
+
+        // Update the map display to reflect changes
+        updateTagVisibilityOnMap();
+    }
+
     // Update currentType if needed
     if (currentType === tagToEdit) currentType = newName;
     saveTags();
@@ -4192,9 +4380,29 @@ function confirmDeleteTag() {
         fallback = dropdown.value;
     }
     // Update all elements using this tag to the selected fallback
-    points.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
-    polygons.forEach(p => { if (p.type === tagToDelete) p.type = fallback; });
-    lines.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
+    if (olMapSystem) {
+        // Update OpenLayers features
+        const features = olMapSystem.vectorSource.getFeatures();
+        features.forEach(feature => {
+            const properties = feature.getProperties();
+            if (properties.tagType === tagToDelete && properties.type !== 'leader-line') {
+                feature.set('tagType', fallback);
+                // Update the feature style to reflect the new tag
+                feature.setStyle(olMapSystem.createStyleFunction()(feature));
+            }
+        });
+        // Update tag visibility for the new tag if it wasn't visible before
+        if (olMapSystem.tagVisibility[fallback] === false) {
+            olMapSystem.setTagVisibility(fallback, true);
+        }
+        // Update the map to reflect changes
+        olMapSystem.updateTagVisibilityOnMap();
+    } else {
+        // Fallback to DOM-based system
+        points.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
+        polygons.forEach(p => { if (p.type === tagToDelete) p.type = fallback; });
+        lines.forEach(l => { if (l.type === tagToDelete) l.type = fallback; });
+    }
     // Update currentType if needed
     if (currentType === tagToDelete) currentType = fallback;
     saveTags();
@@ -4305,7 +4513,7 @@ function showTestTagTypeModal(testMode, callback) {
         // Add element count badge
         const countBadge = createElementCountBadge(elementCount);
         if (isDisabled) {
-            countBadge.className = 'element-count-badge disabled-badge';
+            countBadge.className = '`element-count-badge` disabled-badge';
             countBadge.title = 'No elements with this tag type';
         }
         label.appendChild(countBadge);
@@ -4437,7 +4645,7 @@ function toggleChangeTagMode() {
     btn.setAttribute('aria-pressed', changeTagMode);
     // Change cursor for feedback
     if (changeTagMode) {
-        mapContainer.style.cursor = 'normal';
+        mapContainer.style.cursor = 'pointer';
     } else {
         updateCursorStyles(currentMode);
     }
@@ -4456,7 +4664,8 @@ toggleEditMode = function () {
     origToggleEditMode.apply(this, arguments);
 };
 
-// Change tag on click in changeTag mode
+// Change tag on click in changeTag mode (disabled - now handled by OpenLayers)
+/*
 mapContainer.addEventListener('click', function (e) {
     if (!editEnabled || currentMode !== 'changeTag') return;
     const rect = mapContainer.getBoundingClientRect();
@@ -4586,6 +4795,26 @@ mapContainer.addEventListener('click', function (e) {
                 }
             }
 
+            // --- Ensure all element types get the highlight ---
+            // For points: highlight the refPointEl
+            const pointObj = points.find(pt => pt.labelBoxEl === changedLabelBox);
+            if (pointObj && pointObj.refPointEl) {
+                pointObj.refPointEl.classList.add('tag-changed');
+            }
+            // For polygons: highlight svgPath and all points/anchor
+            if (polygon) {
+                if (polygon.svgPath) polygon.svgPath.classList.add('tag-changed');
+                if (polygon.points) polygon.points.forEach(pt => pt.element && pt.element.classList.add('tag-changed'));
+                if (polygon.anchorPoint && polygon.anchorPoint.element) polygon.anchorPoint.element.classList.add('tag-changed');
+            }
+            // For lines: highlight polyline and all points/anchor
+            if (lineObj) {
+                if (lineObj.polyline) lineObj.polyline.classList.add('tag-changed');
+                if (lineObj.points) lineObj.points.forEach(pt => pt.element && pt.element.classList.add('tag-changed'));
+                if (lineObj.anchorPoint) lineObj.anchorPoint.classList.add('tag-changed');
+            }
+            // --- End ensure ---
+
             // Remove highlighting after 700ms
             setTimeout(() => {
                 changedLabelBox.classList.remove('tag-changed');
@@ -4625,11 +4854,17 @@ mapContainer.addEventListener('click', function (e) {
                         lineObj.anchorPoint.classList.remove('tag-changed');
                     }
                 }
+
+                // Remove from pointObj
+                if (pointObj && pointObj.refPointEl) {
+                    pointObj.refPointEl.classList.remove('tag-changed');
+                }
             }, 700);
         }
         updateTagVisibilityOnMap();
     }
 });
+*/
 
 // --- Integrate changeTag mode into setMode ---
 // (Add this at the end of setMode)
@@ -4644,7 +4879,6 @@ mapContainer.addEventListener('click', function (e) {
             tagPanelBtn.classList.toggle('active', currentMode === 'changeTag');
             tagPanelBtn.setAttribute('aria-pressed', currentMode === 'changeTag');
             if (currentMode === 'changeTag') {
-                mapContainer.style.cursor = 'normal';
                 // Open the tag panel if not already open
                 toggletagPanel(true);
             } else {
@@ -4657,68 +4891,87 @@ mapContainer.addEventListener('click', function (e) {
 // --- Tag Visibility State ---
 let tagVisibility = {};
 function loadTagVisibility() {
-    try {
-        tagVisibility = JSON.parse(localStorage.getItem('tagVisibility') || '{}');
-    } catch { tagVisibility = {}; }
-    // Ensure all tags have a value
-    tags.forEach(tag => { if (!(tag in tagVisibility)) tagVisibility[tag] = true; });
+    if (olMapSystem) {
+        // Use OpenLayers tag system
+        tagVisibility = olMapSystem.getTagVisibility();
+    } else {
+        // Fallback to DOM-based system
+        try {
+            tagVisibility = JSON.parse(localStorage.getItem('tagVisibility') || '{}');
+        } catch { tagVisibility = {}; }
+        // Ensure all tags have a value
+        tags.forEach(tag => { if (!(tag in tagVisibility)) tagVisibility[tag] = true; });
+    }
 }
 function saveTagVisibility() {
     localStorage.setItem('tagVisibility', JSON.stringify(tagVisibility));
 }
 function setTagVisibility(tag, visible) {
-    tagVisibility[tag] = visible;
-    saveTagVisibility();
-    updateTagVisibilityOnMap();
+    if (olMapSystem) {
+        // Use OpenLayers tag system
+        olMapSystem.setTagVisibility(tag, visible);
+        tagVisibility = olMapSystem.getTagVisibility();
+    } else {
+        // Fallback to DOM-based system
+        tagVisibility[tag] = visible;
+        saveTagVisibility();
+        updateTagVisibilityOnMap();
+    }
     renderTagPanel();
 }
 function updateTagVisibilityOnMap() {
-    // Labels
-    points.forEach(l => {
-        l.labelBoxEl.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
-        // Reference points should be visible in edit mode only if the tag is not hidden
-        if (l.refPointEl) {
-            const shouldBeVisible = editEnabled && tagVisibility[l.type] !== false;
-            l.refPointEl.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
-        }
-    });
-    // Polygons
-    polygons.forEach(p => {
-        if (p.labelBoxEl) p.labelBoxEl.style.visibility = tagVisibility[p.type] !== false ? 'visible' : 'hidden';
-        if (p.svgPath) p.svgPath.style.visibility = tagVisibility[p.type] !== false ? 'visible' : 'hidden';
-        if (p.points) p.points.forEach(pt => {
-            if (pt.element) {
-                const shouldBeVisible = editEnabled && tagVisibility[p.type] !== false;
-                pt.element.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+    if (olMapSystem) {
+        // Use OpenLayers tag system
+        olMapSystem.updateTagVisibilityOnMap();
+    } else {
+        // Fallback to DOM-based system
+        // Labels
+        points.forEach(l => {
+            l.labelBoxEl.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
+            // Reference points should be visible in edit mode only if the tag is not hidden
+            if (l.refPointEl) {
+                const shouldBeVisible = editEnabled && tagVisibility[l.type] !== false;
+                l.refPointEl.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
             }
         });
-    });
-    // Lines
-    lines.forEach(l => {
-        if (l.labelBoxEl) l.labelBoxEl.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
-        if (l.polyline) l.polyline.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
-        if (l.anchorPoint) {
-            const shouldBeVisible = editEnabled && tagVisibility[l.type] !== false;
-            l.anchorPoint.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
-        }
-    });
-    // Leader lines
-    document.querySelectorAll('.leader-line').forEach(line => {
-        const type = line.getAttribute('data-type');
-        line.style.visibility = tagVisibility[type] !== false ? 'visible' : 'hidden';
-    });
-    // Polygon/line points, anchors, and paths
-    document.querySelectorAll('.polygon-point, .polygon-anchor, .polygon-path, .line-path').forEach(el => {
-        const type = el.getAttribute('data-type');
-        if (el.classList.contains('polygon-point') || el.classList.contains('polygon-anchor')) {
-            // Points and anchors should be visible in edit mode only if the tag is not hidden
-            const shouldBeVisible = editEnabled && tagVisibility[type] !== false;
-            el.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
-        } else {
-            // Paths should be visible if the tag is not hidden
-            el.style.visibility = tagVisibility[type] !== false ? 'visible' : 'hidden';
-        }
-    });
+        // Polygons
+        polygons.forEach(p => {
+            if (p.labelBoxEl) p.labelBoxEl.style.visibility = tagVisibility[p.type] !== false ? 'visible' : 'hidden';
+            if (p.svgPath) p.svgPath.style.visibility = tagVisibility[p.type] !== false ? 'visible' : 'hidden';
+            if (p.points) p.points.forEach(pt => {
+                if (pt.element) {
+                    const shouldBeVisible = editEnabled && tagVisibility[p.type] !== false;
+                    pt.element.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+                }
+            });
+        });
+        // Lines
+        lines.forEach(l => {
+            if (l.labelBoxEl) l.labelBoxEl.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
+            if (l.polyline) l.polyline.style.visibility = tagVisibility[l.type] !== false ? 'visible' : 'hidden';
+            if (l.anchorPoint) {
+                const shouldBeVisible = editEnabled && tagVisibility[l.type] !== false;
+                l.anchorPoint.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+            }
+        });
+        // Leader lines
+        document.querySelectorAll('.leader-line').forEach(line => {
+            const type = line.getAttribute('data-type');
+            line.style.visibility = tagVisibility[type] !== false ? 'visible' : 'hidden';
+        });
+        // Polygon/line points, anchors, and paths
+        document.querySelectorAll('.polygon-point, .polygon-anchor, .polygon-path, .line-path').forEach(el => {
+            const type = el.getAttribute('data-type');
+            if (el.classList.contains('polygon-point') || el.classList.contains('polygon-anchor')) {
+                // Points and anchors should be visible in edit mode only if the tag is not hidden
+                const shouldBeVisible = editEnabled && tagVisibility[type] !== false;
+                el.style.visibility = shouldBeVisible ? 'visible' : 'hidden';
+            } else {
+                // Paths should be visible if the tag is not hidden
+                el.style.visibility = tagVisibility[type] !== false ? 'visible' : 'hidden';
+            }
+        });
+    }
 }
 
 // Ensure tagVisibility is loaded on startup
@@ -4828,7 +5081,13 @@ frontMapFileInput.addEventListener('change', async (e) => {
 
                 img.onload = () => {
                     console.log('Image loaded successfully:', img.width, 'x', img.height);
-                    mapImage.src = img.src;
+
+                    // Load image into OpenLayers map
+                    if (olMapSystem) {
+                        olMapSystem.loadMapImage(img.src);
+                        olMapSystem.clearAnnotations();
+                    }
+
                     pageContainer.style.opacity = '1';
                     document.getElementById('saveElementsBtn').style.display = 'inline-block';
                     document.getElementById('loadElementsBtn').style.display = 'inline-block';
@@ -4836,7 +5095,7 @@ frontMapFileInput.addEventListener('change', async (e) => {
                     // Hide the front load map container
                     frontLoadMapContainer.classList.add('hidden');
 
-                    // Clear all existing data
+                    // Clear all existing DOM data (for backward compatibility)
                     points.forEach(point => {
                         if (point.refPointEl) point.refPointEl.remove();
                         if (point.labelBoxEl) point.labelBoxEl.remove();
@@ -4859,21 +5118,27 @@ frontMapFileInput.addEventListener('change', async (e) => {
                     });
                     lines.length = 0;
 
-                    // Clear SVG layers
-                    while (shapesLayer.firstChild) {
-                        shapesLayer.removeChild(shapesLayer.firstChild);
+                    // Clear SVG layers (for backward compatibility)
+                    if (shapesLayer) {
+                        while (shapesLayer.firstChild) {
+                            shapesLayer.removeChild(shapesLayer.firstChild);
+                        }
                     }
-                    while (leaderLinesSVG.firstChild) {
-                        leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
+                    if (leaderLinesSVG) {
+                        while (leaderLinesSVG.firstChild) {
+                            leaderLinesSVG.removeChild(leaderLinesSVG.firstChild);
+                        }
                     }
 
-                    // Update SVG size to match new image
+                    // Update SVG size to match new image (for backward compatibility)
                     requestAnimationFrame(() => {
                         updateSVGDimensions();
                         // Reset file input to allow selecting the same file again
                         frontMapFileInput.value = '';
                         // Update save button state after clearing data
                         updateSaveButtonState();
+                        // Automatically select the first tag
+                        selectFirstTag();
                         resolve();
                     });
                 };
@@ -5086,71 +5351,97 @@ function updateFinishDrawingButtonState() {
     const finishDrawingBtn = document.getElementById('finishDrawingBtn');
     const cancelDrawingBtn = document.getElementById('cancelDrawingBtn');
 
-    if (hasEnoughPointsForShape()) {
-        finishDrawingBtn.style.display = 'inline-flex';
-        finishDrawingBtn.disabled = false;
-        finishDrawingBtn.removeAttribute('style');
-        finishDrawingBtn.style.display = 'inline-flex';
+    if (olMapSystem) {
+        // Use OpenLayers system
+        olMapSystem.updateFinishDrawingButtonState();
     } else {
-        finishDrawingBtn.style.display = 'inline-flex';
-        finishDrawingBtn.disabled = true;
-        finishDrawingBtn.removeAttribute('style');
-        finishDrawingBtn.style.display = 'inline-flex';
+        // Legacy system
+        if (hasEnoughPointsForShape()) {
+            finishDrawingBtn.style.display = 'inline-flex';
+            finishDrawingBtn.disabled = false;
+            finishDrawingBtn.removeAttribute('style');
+            finishDrawingBtn.style.display = 'inline-flex';
+        } else {
+            finishDrawingBtn.style.display = 'inline-flex';
+            finishDrawingBtn.disabled = true;
+            finishDrawingBtn.removeAttribute('style');
+            finishDrawingBtn.style.display = 'inline-flex';
+        }
+        cancelDrawingBtn.style.display = 'inline-flex';
     }
-    cancelDrawingBtn.style.display = 'inline-flex';
 }
 
 // Add these helper functions at the top of the file (after the variable declarations)
 
 // Helper function to get element count for a tag
 function getElementCountForTag(tag) {
-    return [
-        ...points.filter(l => l.type === tag),
-        ...polygons.filter(p => p.type === tag),
-        ...lines.filter(l => l.type === tag)
-    ].length;
+    if (olMapSystem) {
+        // Use OpenLayers tag system
+        return olMapSystem.getElementCountForTag(tag);
+    } else {
+        // Fallback to DOM-based system
+        return [
+            ...points.filter(l => l.type === tag),
+            ...polygons.filter(p => p.type === tag),
+            ...lines.filter(l => l.type === tag)
+        ].length;
+    }
 }
 
 // Helper function to highlight elements with a specific tag
 function highlightElementsWithTag(tag) {
-    // Highlight elements with this tag using data-type attribute
-    document.querySelectorAll(`[data-type="${tag}"]`).forEach(el => {
-        el.classList.add('tag-hover-highlight');
-    });
+    if (olMapSystem) {
+        // Use OpenLayers tag system
+        olMapSystem.highlightElementsWithTag(tag);
+    } else {
+        // Fallback to DOM-based system
+        // Only highlight if tag is visible
+        if (typeof tagVisibility !== 'undefined' && tagVisibility[tag] === false) return;
+        // Highlight elements with this tag using data-type attribute
+        document.querySelectorAll(`[data-type="${tag}"]`).forEach(el => {
+            el.classList.add('tag-hover-highlight');
+        });
 
-    // Highlight label boxes for this tag
-    points.forEach(point => {
-        if (point.type === tag) {
-            point.labelBoxEl.classList.add('tag-hover-highlight');
-        }
-    });
+        // Highlight label boxes for this tag
+        points.forEach(point => {
+            if (point.type === tag) {
+                point.labelBoxEl.classList.add('tag-hover-highlight');
+            }
+        });
 
-    polygons.forEach(polygon => {
-        if (polygon.type === tag) {
-            polygon.labelBoxEl.classList.add('tag-hover-highlight');
-        }
-    });
+        polygons.forEach(polygon => {
+            if (polygon.type === tag) {
+                polygon.labelBoxEl.classList.add('tag-hover-highlight');
+            }
+        });
 
-    lines.forEach(line => {
-        if (line.type === tag) {
-            line.labelBoxEl.classList.add('tag-hover-highlight');
-        }
-    });
+        lines.forEach(line => {
+            if (line.type === tag) {
+                line.labelBoxEl.classList.add('tag-hover-highlight');
+            }
+        });
 
-    // Highlight reference points for this tag
-    points.forEach(point => {
-        if (point.type === tag && point.refPointEl) {
-            point.refPointEl.classList.add('tag-hover-highlight');
-        }
-    });
+        // Highlight reference points for this tag
+        points.forEach(point => {
+            if (point.type === tag && point.refPointEl) {
+                point.refPointEl.classList.add('tag-hover-highlight');
+            }
+        });
+    }
 }
 
 // Helper function to remove highlighting
 function removeElementHighlighting() {
-    // Remove highlighting from all elements
-    document.querySelectorAll('.tag-hover-highlight').forEach(el => {
-        el.classList.remove('tag-hover-highlight');
-    });
+    if (olMapSystem) {
+        // Use OpenLayers tag system
+        olMapSystem.removeElementHighlighting();
+    } else {
+        // Fallback to DOM-based system
+        // Remove highlighting from all elements
+        document.querySelectorAll('.tag-hover-highlight').forEach(el => {
+            el.classList.remove('tag-hover-highlight');
+        });
+    }
 }
 
 // Helper function to create element count badge
@@ -5328,47 +5619,57 @@ function updateAddButtonHeaderState() {
 
 // Get current state in the same format as saveElements exports
 function getCurrentState() {
-    return {
-        points: points.map(point => ({
-            refX: point.relRefX,
-            refY: point.relRefY,
-            labelX: point.relLabelX,
-            labelY: point.relLabelY,
-            text: point.labelBoxEl.textContent,
-            type: point.type || 'default'
-        })),
-        polygons: polygons.map(polygon => ({
-            points: polygon.points.map(p => ({ x: p.relX, y: p.relY })),
-            anchorX: polygon.relAnchorX,
-            anchorY: polygon.relAnchorY,
-            labelX: polygon.relLabelX,
-            labelY: polygon.relLabelY,
-            text: polygon.labelBoxEl.textContent,
-            type: polygon.type || 'default'
-        })),
-        lines: lines.map(line => ({
-            points: line.points.map(p => ({ x: p.relX, y: p.relY })),
-            anchorX: line.relAnchorX,
-            anchorY: line.relAnchorY,
-            labelX: line.relLabelX,
-            labelY: line.relLabelY,
-            text: line.labelBoxEl.textContent,
-            type: line.type || 'default'
-        }))
-    };
+    if (olMapSystem) {
+        // Use OpenLayers annotations directly (same as save function)
+        const annotations = olMapSystem.getAnnotations();
+        return {
+            points: annotations.points,
+            polygons: annotations.polygons,
+            lines: annotations.lines
+        };
+    } else {
+        // Fallback to DOM data (for backward compatibility)
+        return {
+            points: points.map(point => ({
+                id: point.id || `point-${Date.now()}-${Math.random()}`,
+                coordinates: [point.relRefX, point.relRefY],
+                labelPosition: [point.relLabelX, point.relLabelY],
+                text: point.labelBoxEl.textContent,
+                type: point.type || 'default'
+            })),
+            polygons: polygons.map(polygon => ({
+                id: polygon.id || `polygon-${Date.now()}-${Math.random()}`,
+                coordinates: polygon.points.map(p => [p.relX, p.relY]),
+                labelPosition: [polygon.relLabelX, polygon.relLabelY],
+                anchorPosition: [polygon.relAnchorX, polygon.relAnchorY],
+                text: polygon.labelBoxEl.textContent,
+                type: polygon.type || 'default'
+            })),
+            lines: lines.map(line => ({
+                id: line.id || `line-${Date.now()}-${Math.random()}`,
+                coordinates: line.points.map(p => [p.relX, p.relY]),
+                labelPosition: [line.relLabelX, line.relLabelY],
+                anchorPosition: [line.relAnchorX, line.relAnchorY],
+                text: line.labelBoxEl.textContent,
+                type: line.type || 'default'
+            }))
+        };
+    }
 }
 
 // Compare two states to detect if there are unsaved changes
 function hasUnsavedChanges() {
     if (!baselineData) {
-        // If no baseline data, check if there's any current data
-        return points.length > 0 || polygons.length > 0 || lines.length > 0;
+        // If no baseline data, there are no unsaved changes
+        // (This happens when no data has been loaded yet)
+        return false;
     }
 
     const currentState = getCurrentState();
+    const isEqual = deepEqual(currentState, baselineData);
 
     // Deep comparison of the two states
-    return !deepEqual(currentState, baselineData);
+    return !isEqual;
 }
 
 // Deep equality comparison for objects
@@ -5410,4 +5711,60 @@ function getTabRadioForContent(targetId) {
     if (targetId === 'test-content') return document.getElementById('tab-test');
     if (targetId === 'edit-content') return document.getElementById('tab-edit');
     return null;
+}
+
+// --- Robust mode toggle handler ---
+// --- Robust mode toggle handler and button setup ---
+// List of available modes
+const MODES = ['move', 'point', 'polygon', 'line', 'delete'];
+let uiCurrentMode = 'neutral';
+
+// Main mode toggle handler
+function onModeButtonClick(mode) {
+    if (uiCurrentMode === mode) {
+        setMode('neutral');
+        uiCurrentMode = 'neutral';
+        updateModeButtonUI('neutral');
+    } else {
+        setMode(mode);
+        uiCurrentMode = mode;
+        updateModeButtonUI(mode);
+    }
+}
+
+// Update button UI to reflect active mode
+function updateModeButtonUI(activeMode) {
+    // Update all mode buttons, not just the ones in MODES array
+    const allModeButtons = ['move', 'point', 'polygon', 'line', 'delete', 'editLabelText', 'changeTag'];
+
+    allModeButtons.forEach(mode => {
+        const btn = document.getElementById(mode + 'Btn');
+        if (btn) {
+            const shouldBeActive = activeMode === mode;
+            if (shouldBeActive) {
+                btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
+            } else {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-pressed', 'false');
+            }
+        }
+    });
+}
+
+// Initialize to neutral mode on page load
+window.addEventListener('DOMContentLoaded', () => {
+    // Set up proper button state management
+    setMode('neutral');
+    uiCurrentMode = 'neutral';
+    updateModeButtonUI('neutral');
+});
+
+// Function to automatically select the first tag in the side panel
+function selectFirstTag() {
+    if (tags && tags.length > 0) {
+        currentType = tags[0];
+        saveTags();
+        renderTagPanel();
+    }
 }

@@ -8,7 +8,10 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3Cfilter id='shadow' x='-20%' y='-20%' width='140%' height='140%'%3E%3CfeDropShadow dx='0' dy='2' stdDeviation='2' flood-color='%23000' flood-opacity='0.3'/%3E%3C/filter%3E%3C/defs%3E%3Cpath d='M32 6c-9 0-16 7-16 16 0 10.5 13.5 28.5 15.1 30.6a2 2 0 0 0 3.8 0C34.5 50.5 48 32.5 48 22c0-9-7-16-16-16z' fill='%23ea4335' filter='url(%23shadow)'/%3E%3Ccircle cx='32' cy='22' r='7' fill='white' stroke='%23b71c1c' stroke-width='2'/%3E%3C/svg%3E" />
     <title>Map Testing Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.6.1/ol.css" />
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.6.1/dist/ol.js"></script>
+    <script src="ol-map.js"></script>
 </head>
 
 <body>
@@ -187,12 +190,8 @@
 
         <div class="content-wrapper">
             <div class="map-viewport">
-                <div id="mapContainer" tabindex="0" aria-label="Map with annotated elements" style="outline:none;">
-                    <div class="map-dim-overlay"></div>
-                    <img id="mapImage" alt="Map" />
-                    <svg id="shapesLayer" aria-hidden="true"></svg>
-                    <svg id="leaderLines" aria-hidden="true"></svg>
-                </div>
+                <div id="map" class="ol-map"></div>
+                <div class="map-dim-overlay"></div>
             </div>
         </div>
     </div>
