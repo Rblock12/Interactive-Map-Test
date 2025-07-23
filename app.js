@@ -570,12 +570,13 @@ function updateLeaderLines() {
     // Update SVG size to match container
     updateSVGDimensions();
 
-    // Helper function to get the center coordinates of a label box
+    // Helper function to get the center coordinates of a label box (zoom/pan aware)
     function getLabelBoxCenter(labelBoxEl) {
-        const rect = labelBoxEl.getBoundingClientRect();
-        const containerRect = mapContainer.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2 - containerRect.left;
-        const centerY = rect.top + rect.height / 2 - containerRect.top;
+        // Use style.left/top and offsetWidth/offsetHeight
+        const left = parseFloat(labelBoxEl.style.left) || 0;
+        const top = parseFloat(labelBoxEl.style.top) || 0;
+        const centerX = left + labelBoxEl.offsetWidth / 2;
+        const centerY = top + labelBoxEl.offsetHeight / 2;
         return { x: centerX, y: centerY };
     }
 
@@ -584,8 +585,9 @@ function updateLeaderLines() {
 
     // Draw leader lines for regular labels
     points.forEach(({ refPointEl, labelBoxEl, refX, refY, labelX, labelY, type }) => {
-        const x1 = refX;
-        const y1 = refY;
+        // Use style.left/top for ref point
+        const x1 = parseFloat(refPointEl.style.left) || 0;
+        const y1 = parseFloat(refPointEl.style.top) || 0;
         const center = getLabelBoxCenter(labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
@@ -614,8 +616,8 @@ function updateLeaderLines() {
 
     // Draw leader lines for polygons
     polygons.forEach(polygon => {
-        const x1 = polygon.anchorX;
-        const y1 = polygon.anchorY;
+        const x1 = parseFloat(polygon.anchorPoint.element.style.left) || 0;
+        const y1 = parseFloat(polygon.anchorPoint.element.style.top) || 0;
         const center = getLabelBoxCenter(polygon.labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
@@ -644,8 +646,8 @@ function updateLeaderLines() {
 
     // Draw leader lines for lines
     lines.forEach(lineObj => {
-        const x1 = lineObj.anchorX;
-        const y1 = lineObj.anchorY;
+        const x1 = parseFloat(lineObj.anchorPoint.style.left) || 0;
+        const y1 = parseFloat(lineObj.anchorPoint.style.top) || 0;
         const center = getLabelBoxCenter(lineObj.labelBoxEl);
         const x2 = center.x;
         const y2 = center.y;
@@ -1107,8 +1109,8 @@ function onPointerMove(e) {
     const y = e.clientY - rect.top;
 
     if (draggingRefPoint) {
-        const newX = x - dragOffsetX;
-        const newY = y - dragOffsetY;
+        const newX = (x - dragOffsetX) / mapScale;
+        const newY = (y - dragOffsetY) / mapScale;
         draggingRefPoint.refX = newX;
         draggingRefPoint.refY = newY;
         draggingRefPoint.refPointEl.style.left = newX + 'px';
@@ -1118,8 +1120,8 @@ function onPointerMove(e) {
         draggingRefPoint.relRefY = relCoords.y;
     }
     if (draggingPointLabel) {
-        const newX = x - dragOffsetX;
-        const newY = y - dragOffsetY;
+        const newX = (x - dragOffsetX) / mapScale;
+        const newY = (y - dragOffsetY) / mapScale;
         draggingPointLabel.labelX = newX;
         draggingPointLabel.labelY = newY;
         draggingPointLabel.labelBoxEl.style.left = newX + 'px';
@@ -1132,8 +1134,8 @@ function onPointerMove(e) {
     if (draggingPolygonPoint) {
         const { polygon, pointIndex } = draggingPolygonPoint;
         const point = polygon.points[pointIndex];
-        const newX = x - dragOffsetX;
-        const newY = y - dragOffsetY;
+        const newX = (x - dragOffsetX) / mapScale;
+        const newY = (y - dragOffsetY) / mapScale;
         point.x = newX;
         point.y = newY;
         point.element.style.left = newX + 'px';
@@ -1161,8 +1163,8 @@ function onPointerMove(e) {
     }
 
     if (draggingPolygonLabel) {
-        const newX = x - dragOffsetX;
-        const newY = y - dragOffsetY;
+        const newX = (x - dragOffsetX) / mapScale;
+        const newY = (y - dragOffsetY) / mapScale;
         draggingPolygonLabel.labelBoxEl.style.left = newX + 'px';
         draggingPolygonLabel.labelBoxEl.style.top = newY + 'px';
         const relCoords = toRelativeCoords(newX, newY);
@@ -1173,8 +1175,8 @@ function onPointerMove(e) {
     if (draggingLinePoint) {
         const { line, pointIndex } = draggingLinePoint;
         const point = line.points[pointIndex];
-        const newX = x - dragOffsetX;
-        const newY = y - dragOffsetY;
+        const newX = (x - dragOffsetX) / mapScale;
+        const newY = (y - dragOffsetY) / mapScale;
         point.x = newX;
         point.y = newY;
         point.element.style.left = newX + 'px';
@@ -1232,8 +1234,8 @@ function onPointerMove(e) {
     }
 
     if (draggingLineLabel) {
-        const newX = x - dragOffsetX;
-        const newY = y - dragOffsetY;
+        const newX = (x - dragOffsetX) / mapScale;
+        const newY = (y - dragOffsetY) / mapScale;
         draggingLineLabel.labelBoxEl.style.left = newX + 'px';
         draggingLineLabel.labelBoxEl.style.top = newY + 'px';
         const relCoords = toRelativeCoords(newX, newY);
@@ -1242,8 +1244,8 @@ function onPointerMove(e) {
     }
 
     if (draggingPolygonAnchor) {
-        const newX = x - dragOffsetX;
-        const newY = y - dragOffsetY;
+        const newX = (x - dragOffsetX) / mapScale;
+        const newY = (y - dragOffsetY) / mapScale;
 
         // If point is inside polygon, use it directly
         if (isPointInPolygon(newX, newY, draggingPolygonAnchor.points)) {
@@ -1265,8 +1267,8 @@ function onPointerMove(e) {
     }
 
     if (draggingLineAnchor) {
-        const mouseX = x - dragOffsetX;
-        const mouseY = y - dragOffsetY;
+        const mouseX = (x - dragOffsetX) / mapScale;
+        const mouseY = (y - dragOffsetY) / mapScale;
         const line = draggingLineAnchor;
 
         // Project the point onto the nearest line segment
@@ -2424,14 +2426,19 @@ function updateAllPositions() {
     points.forEach(point => {
         const absPos = toAbsoluteCoords(point.relRefX, point.relRefY);
         const absLabelPos = toAbsoluteCoords(point.relLabelX, point.relLabelY);
-        point.refPointEl.style.left = absPos.x + 'px';
-        point.refPointEl.style.top = absPos.y + 'px';
-        point.labelBoxEl.style.left = absLabelPos.x + 'px';
-        point.labelBoxEl.style.top = absLabelPos.y + 'px';
-        point.refX = absPos.x;
-        point.refY = absPos.y;
-        point.labelX = absLabelPos.x;
-        point.labelY = absLabelPos.y;
+        // Apply current zoom and pan
+        const finalRefX = absPos.x * mapScale + mapPos.x;
+        const finalRefY = absPos.y * mapScale + mapPos.y;
+        const finalLabelX = absLabelPos.x * mapScale + mapPos.x;
+        const finalLabelY = absLabelPos.y * mapScale + mapPos.y;
+        point.refPointEl.style.left = finalRefX + 'px';
+        point.refPointEl.style.top = finalRefY + 'px';
+        point.labelBoxEl.style.left = finalLabelX + 'px';
+        point.labelBoxEl.style.top = finalLabelY + 'px';
+        point.refX = finalRefX;
+        point.refY = finalRefY;
+        point.labelX = finalLabelX;
+        point.labelY = finalLabelY;
     });
 
     // Update polygons
@@ -2439,10 +2446,12 @@ function updateAllPositions() {
         // Update points
         polygon.points.forEach(point => {
             const absPos = toAbsoluteCoords(point.relX, point.relY);
-            point.x = absPos.x;
-            point.y = absPos.y;
-            point.element.style.left = absPos.x + 'px';
-            point.element.style.top = absPos.y + 'px';
+            const finalX = absPos.x * mapScale + mapPos.x;
+            const finalY = absPos.y * mapScale + mapPos.y;
+            point.x = finalX;
+            point.y = finalY;
+            point.element.style.left = finalX + 'px';
+            point.element.style.top = finalY + 'px';
         });
 
         // Update SVG path
@@ -2454,15 +2463,19 @@ function updateAllPositions() {
 
         // Update anchor point
         const anchorPos = toAbsoluteCoords(polygon.relAnchorX, polygon.relAnchorY);
-        polygon.anchorX = anchorPos.x;
-        polygon.anchorY = anchorPos.y;
-        polygon.anchorPoint.element.style.left = anchorPos.x + 'px';
-        polygon.anchorPoint.element.style.top = anchorPos.y + 'px';
+        const finalAnchorX = anchorPos.x * mapScale + mapPos.x;
+        const finalAnchorY = anchorPos.y * mapScale + mapPos.y;
+        polygon.anchorX = finalAnchorX;
+        polygon.anchorY = finalAnchorY;
+        polygon.anchorPoint.element.style.left = finalAnchorX + 'px';
+        polygon.anchorPoint.element.style.top = finalAnchorY + 'px';
 
         // Update label
         const labelPos = toAbsoluteCoords(polygon.relLabelX, polygon.relLabelY);
-        polygon.labelBoxEl.style.left = labelPos.x + 'px';
-        polygon.labelBoxEl.style.top = labelPos.y + 'px';
+        const finalLabelX = labelPos.x * mapScale + mapPos.x;
+        const finalLabelY = labelPos.y * mapScale + mapPos.y;
+        polygon.labelBoxEl.style.left = finalLabelX + 'px';
+        polygon.labelBoxEl.style.top = finalLabelY + 'px';
     });
 
     // Update lines
@@ -2470,30 +2483,36 @@ function updateAllPositions() {
         // Update points
         line.points.forEach(point => {
             const absPos = toAbsoluteCoords(point.relX, point.relY);
-            point.x = absPos.x;
-            point.y = absPos.y;
-            point.element.style.left = absPos.x + 'px';
-            point.element.style.top = absPos.y + 'px';
+            const finalX = absPos.x * mapScale + mapPos.x;
+            const finalY = absPos.y * mapScale + mapPos.y;
+            point.x = finalX;
+            point.y = finalY;
+            point.element.style.left = finalX + 'px';
+            point.element.style.top = finalY + 'px';
         });
 
         // Update polyline
-        const points = line.points.map(p => `${p.x},${p.y}`).join(' ');
-        line.polyline.setAttribute('points', points);
+        const pointsStr = line.points.map(p => `${p.x},${p.y}`).join(' ');
+        line.polyline.setAttribute('points', pointsStr);
         line.polyline.setAttribute('fill', 'none');
         line.polyline.setAttribute('stroke', editEnabled ? 'blue' : 'none');
         line.polyline.setAttribute('stroke-width', '2');
 
         // Update anchor point
         const anchorPos = toAbsoluteCoords(line.relAnchorX, line.relAnchorY);
-        line.anchorX = anchorPos.x;
-        line.anchorY = anchorPos.y;
-        line.anchorPoint.style.left = anchorPos.x + 'px';
-        line.anchorPoint.style.top = anchorPos.y + 'px';
+        const finalAnchorX = anchorPos.x * mapScale + mapPos.x;
+        const finalAnchorY = anchorPos.y * mapScale + mapPos.y;
+        line.anchorX = finalAnchorX;
+        line.anchorY = finalAnchorY;
+        line.anchorPoint.style.left = finalAnchorX + 'px';
+        line.anchorPoint.style.top = finalAnchorY + 'px';
 
         // Update label
         const labelPos = toAbsoluteCoords(line.relLabelX, line.relLabelY);
-        line.labelBoxEl.style.left = labelPos.x + 'px';
-        line.labelBoxEl.style.top = labelPos.y + 'px';
+        const finalLabelX = labelPos.x * mapScale + mapPos.x;
+        const finalLabelY = labelPos.y * mapScale + mapPos.y;
+        line.labelBoxEl.style.left = finalLabelX + 'px';
+        line.labelBoxEl.style.top = finalLabelY + 'px';
     });
 
     updateLeaderLines();
@@ -5425,12 +5444,8 @@ let dragStart = null;
 const mapViewport = document.querySelector('.map-viewport');
 
 function _updateMapTranslate() {
-    // TODO: following contraints commented out until the relation between scaling, the container, and viewport can be worked out.
-    // mapPos = {
-    //     x: Math.max(Math.min(mapPos.x, 0), mapViewport.offsetWidth - (mapContainer.offsetWidth * mapScale)),
-    //     y: Math.max(Math.min(mapPos.y, 0), mapViewport.offsetHeight - (mapContainer.offsetHeight * mapScale))
-    // }
-    mapContainer.style.translate = `${mapPos.x}px ${mapPos.y}px`;
+    mapContainer.style.transformOrigin = '0 0';
+    mapContainer.style.transform = `translate(${mapPos.x}px, ${mapPos.y}px) scale(${mapScale})`;
 }
 
 function moveMapToPoint(x, y) {
@@ -5439,23 +5454,32 @@ function moveMapToPoint(x, y) {
 
 mapViewport.addEventListener('wheel', e => {
     e.preventDefault();
-    const target = {
-        x: (e.clientX - mapPos.x) / mapScale,
-        y: (e.clientY - mapPos.y) / mapScale
-    };
 
+    // Mouse position relative to the map container's current transform
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+
+    // Map position before zoom (in map coordinates)
+    const mapX = (mouseX - mapPos.x) / mapScale;
+    const mapY = (mouseY - mapPos.y) / mapScale;
+
+    // Zoom direction and new scale
     const dir = e.deltaY < 0 ? 1 : -1;
+    const minZoom = Math.min(
+        mapViewport.offsetWidth / mapContainer.offsetWidth,
+        mapViewport.offsetHeight / mapContainer.offsetHeight
+    );
+    const newScale = Math.max(mapScale * (1 + dir * 0.15), minZoom);
 
-    const minZoom = Math.min(mapViewport.offsetWidth / mapContainer.offsetWidth, mapViewport.offsetHeight / mapContainer.offsetHeight);
-    mapScale = Math.max(mapScale * (1 + dir * 0.15), minZoom);
-    mapContainer.style.scale = mapScale;
-
-    // TODO: brokey, but works well enough to _mostly_ keep the map in view when zooming.
-    //  should be replaced with moveMapToPoint() call when that's all working
-    mapPos = {
-        x: -target.x * mapScale + e.clientX,
-        y: -target.y * mapScale + e.clientY
+    // New map position so the map coordinate under the mouse stays under the mouse
+    const newMapPos = {
+        x: mouseX - mapX * newScale,
+        y: mouseY - mapY * newScale
     };
+
+    mapPos = newMapPos;
+    mapScale = newScale;
+    mapContainer.style.scale = mapScale;
     _updateMapTranslate();
 });
 
@@ -5484,4 +5508,9 @@ window.addEventListener('pointerup', e => {
 
     dragStart = null;
     mapContainer.style.cursor = '';
+});
+
+// In DOMContentLoaded or image load event:
+window.addEventListener('resize', () => {
+    updateAllPositions();
 });
