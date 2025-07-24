@@ -1109,8 +1109,8 @@ function onPointerMove(e) {
     const y = e.clientY - rect.top;
 
     if (draggingRefPoint) {
-        const newX = (x - dragOffsetX) / mapScale;
-        const newY = (y - dragOffsetY) / mapScale;
+        const newX = x - dragOffsetX;
+        const newY = y - dragOffsetY;
         draggingRefPoint.refX = newX;
         draggingRefPoint.refY = newY;
         draggingRefPoint.refPointEl.style.left = newX + 'px';
@@ -1120,8 +1120,8 @@ function onPointerMove(e) {
         draggingRefPoint.relRefY = relCoords.y;
     }
     if (draggingPointLabel) {
-        const newX = (x - dragOffsetX) / mapScale;
-        const newY = (y - dragOffsetY) / mapScale;
+        const newX = x - dragOffsetX;
+        const newY = y - dragOffsetY;
         draggingPointLabel.labelX = newX;
         draggingPointLabel.labelY = newY;
         draggingPointLabel.labelBoxEl.style.left = newX + 'px';
@@ -1134,8 +1134,8 @@ function onPointerMove(e) {
     if (draggingPolygonPoint) {
         const { polygon, pointIndex } = draggingPolygonPoint;
         const point = polygon.points[pointIndex];
-        const newX = (x - dragOffsetX) / mapScale;
-        const newY = (y - dragOffsetY) / mapScale;
+        const newX = x - dragOffsetX;
+        const newY = y - dragOffsetY;
         point.x = newX;
         point.y = newY;
         point.element.style.left = newX + 'px';
@@ -1163,8 +1163,8 @@ function onPointerMove(e) {
     }
 
     if (draggingPolygonLabel) {
-        const newX = (x - dragOffsetX) / mapScale;
-        const newY = (y - dragOffsetY) / mapScale;
+        const newX = x - dragOffsetX;
+        const newY = y - dragOffsetY;
         draggingPolygonLabel.labelBoxEl.style.left = newX + 'px';
         draggingPolygonLabel.labelBoxEl.style.top = newY + 'px';
         const relCoords = toRelativeCoords(newX, newY);
@@ -1175,8 +1175,8 @@ function onPointerMove(e) {
     if (draggingLinePoint) {
         const { line, pointIndex } = draggingLinePoint;
         const point = line.points[pointIndex];
-        const newX = (x - dragOffsetX) / mapScale;
-        const newY = (y - dragOffsetY) / mapScale;
+        const newX = x - dragOffsetX;
+        const newY = y - dragOffsetY;
         point.x = newX;
         point.y = newY;
         point.element.style.left = newX + 'px';
@@ -1234,8 +1234,8 @@ function onPointerMove(e) {
     }
 
     if (draggingLineLabel) {
-        const newX = (x - dragOffsetX) / mapScale;
-        const newY = (y - dragOffsetY) / mapScale;
+        const newX = x - dragOffsetX;
+        const newY = y - dragOffsetY;
         draggingLineLabel.labelBoxEl.style.left = newX + 'px';
         draggingLineLabel.labelBoxEl.style.top = newY + 'px';
         const relCoords = toRelativeCoords(newX, newY);
@@ -1244,8 +1244,8 @@ function onPointerMove(e) {
     }
 
     if (draggingPolygonAnchor) {
-        const newX = (x - dragOffsetX) / mapScale;
-        const newY = (y - dragOffsetY) / mapScale;
+        const newX = x - dragOffsetX;
+        const newY = y - dragOffsetY;
 
         // If point is inside polygon, use it directly
         if (isPointInPolygon(newX, newY, draggingPolygonAnchor.points)) {
@@ -1267,8 +1267,8 @@ function onPointerMove(e) {
     }
 
     if (draggingLineAnchor) {
-        const mouseX = (x - dragOffsetX) / mapScale;
-        const mouseY = (y - dragOffsetY) / mapScale;
+        const mouseX = x - dragOffsetX;
+        const mouseY = y - dragOffsetY;
         const line = draggingLineAnchor;
 
         // Project the point onto the nearest line segment
