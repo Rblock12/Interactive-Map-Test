@@ -2397,8 +2397,8 @@ function getMapImageOffset() {
     return {
         left: imageRect.left - containerRect.left,
         top: imageRect.top - containerRect.top,
-        width: imageRect.width,
-        height: imageRect.height
+        width: (imageRect.width / mapScale),
+        height: (imageRect.height / mapScale)
     };
 }
 
@@ -3366,7 +3366,7 @@ function handleFindModeClick(e) {
             const points = getPointsFromPath(path.getAttribute('d'));
 
             // Check if point is inside polygon or near its edges
-            isCorrect = isPointInOrNearPolygon(clickX, clickY, points, buffer);
+            isCorrect = isPointInOrNearPolygon(clickX / mapScale, clickY / mapScale, points, buffer);
         } else if (currentTestItem.type === 'line') {
             // For lines, temporarily make it visible to get coordinates
             const line = currentTestItem.element;
@@ -3385,7 +3385,7 @@ function handleFindModeClick(e) {
             line.setAttribute('stroke', originalStroke);
 
             // Check distance
-            isCorrect = isPointOnLine(clickX, clickY, points, 10);
+            isCorrect = isPointOnLine(clickX / mapScale, clickY / mapScale, points, 10);
         }
     }
 
@@ -5451,13 +5451,12 @@ function _updateMapTranslate() {
 function moveMapToPoint(x, y) {
     // TODO: Not implemented until the relation between scaling, the container, and the mouse clientX/Y can be worked out.
 }
-
 mapViewport.addEventListener('wheel', e => {
     e.preventDefault();
 
     // Mouse position relative to the map container's current transform
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
+    const mouseX = (e.clientX - mapViewport.offsetLeft);
+    const mouseY = (e.clientY - mapViewport.offsetTop);
 
     // Map position before zoom (in map coordinates)
     const mapX = (mouseX - mapPos.x) / mapScale;
@@ -5473,13 +5472,12 @@ mapViewport.addEventListener('wheel', e => {
 
     // New map position so the map coordinate under the mouse stays under the mouse
     const newMapPos = {
-        x: mouseX - mapX * newScale,
-        y: mouseY - mapY * newScale
+        x: mouseX - (mapX * newScale),
+        y: mouseY - (mapY * newScale)
     };
 
     mapPos = newMapPos;
     mapScale = newScale;
-    mapContainer.style.scale = mapScale;
     _updateMapTranslate();
 });
 
