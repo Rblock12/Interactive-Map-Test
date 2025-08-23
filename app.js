@@ -2427,10 +2427,10 @@ function updateAllPositions() {
         const absPos = toAbsoluteCoords(point.relRefX, point.relRefY);
         const absLabelPos = toAbsoluteCoords(point.relLabelX, point.relLabelY);
         // Apply current zoom and pan
-        const finalRefX = absPos.x * mapScale + mapPos.x;
-        const finalRefY = absPos.y * mapScale + mapPos.y;
-        const finalLabelX = absLabelPos.x * mapScale + mapPos.x;
-        const finalLabelY = absLabelPos.y * mapScale + mapPos.y;
+        const finalRefX = absPos.x;
+        const finalRefY = absPos.y;
+        const finalLabelX = absLabelPos.x;
+        const finalLabelY = absLabelPos.y;
         point.refPointEl.style.left = finalRefX + 'px';
         point.refPointEl.style.top = finalRefY + 'px';
         point.labelBoxEl.style.left = finalLabelX + 'px';
@@ -2446,8 +2446,8 @@ function updateAllPositions() {
         // Update points
         polygon.points.forEach(point => {
             const absPos = toAbsoluteCoords(point.relX, point.relY);
-            const finalX = absPos.x * mapScale + mapPos.x;
-            const finalY = absPos.y * mapScale + mapPos.y;
+            const finalX = absPos.x;
+            const finalY = absPos.y;
             point.x = finalX;
             point.y = finalY;
             point.element.style.left = finalX + 'px';
@@ -2463,8 +2463,8 @@ function updateAllPositions() {
 
         // Update anchor point
         const anchorPos = toAbsoluteCoords(polygon.relAnchorX, polygon.relAnchorY);
-        const finalAnchorX = anchorPos.x * mapScale + mapPos.x;
-        const finalAnchorY = anchorPos.y * mapScale + mapPos.y;
+        const finalAnchorX = anchorPos.x;
+        const finalAnchorY = anchorPos.y;
         polygon.anchorX = finalAnchorX;
         polygon.anchorY = finalAnchorY;
         polygon.anchorPoint.element.style.left = finalAnchorX + 'px';
@@ -2472,8 +2472,8 @@ function updateAllPositions() {
 
         // Update label
         const labelPos = toAbsoluteCoords(polygon.relLabelX, polygon.relLabelY);
-        const finalLabelX = labelPos.x * mapScale + mapPos.x;
-        const finalLabelY = labelPos.y * mapScale + mapPos.y;
+        const finalLabelX = labelPos.x;
+        const finalLabelY = labelPos.y;
         polygon.labelBoxEl.style.left = finalLabelX + 'px';
         polygon.labelBoxEl.style.top = finalLabelY + 'px';
     });
@@ -2483,8 +2483,8 @@ function updateAllPositions() {
         // Update points
         line.points.forEach(point => {
             const absPos = toAbsoluteCoords(point.relX, point.relY);
-            const finalX = absPos.x * mapScale + mapPos.x;
-            const finalY = absPos.y * mapScale + mapPos.y;
+            const finalX = absPos.x;
+            const finalY = absPos.y;
             point.x = finalX;
             point.y = finalY;
             point.element.style.left = finalX + 'px';
@@ -2500,8 +2500,8 @@ function updateAllPositions() {
 
         // Update anchor point
         const anchorPos = toAbsoluteCoords(line.relAnchorX, line.relAnchorY);
-        const finalAnchorX = anchorPos.x * mapScale + mapPos.x;
-        const finalAnchorY = anchorPos.y * mapScale + mapPos.y;
+        const finalAnchorX = anchorPos.x;
+        const finalAnchorY = anchorPos.y;
         line.anchorX = finalAnchorX;
         line.anchorY = finalAnchorY;
         line.anchorPoint.style.left = finalAnchorX + 'px';
@@ -2509,8 +2509,8 @@ function updateAllPositions() {
 
         // Update label
         const labelPos = toAbsoluteCoords(line.relLabelX, line.relLabelY);
-        const finalLabelX = labelPos.x * mapScale + mapPos.x;
-        const finalLabelY = labelPos.y * mapScale + mapPos.y;
+        const finalLabelX = labelPos.x;
+        const finalLabelY = labelPos.y;
         line.labelBoxEl.style.left = finalLabelX + 'px';
         line.labelBoxEl.style.top = finalLabelY + 'px';
     });
