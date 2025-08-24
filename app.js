@@ -965,8 +965,181 @@ function isPointInRect(x, y, rect, offsetX, offsetY) {
         y <= rect.bottom - offsetY;
 }
 
+let draggingElement;
+mapContainer.addEventListener('pointerdown', e => {
+    if (!editEnabled || currentMode !== 'move') return;
+    const elm = e.target;
+    if(!elm.matches('.movable')) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+
+    dragOffsetX = (e.clientX - mapPos.x) / mapScale - elm.offsetLeft;
+    dragOffsetY = (e.clientY - mapPos.y) / mapScale - elm.offsetTop;
+    
+    let elms = [...points, ...polygons, ...lines];
+    let polyElms = [...polygons, ...lines];
+
+    let parent, self, point;
+    if(elm.matches('.label-box')) {
+        // find the actual "element" it belongs to
+        for(let testElm of elms) {
+            if(testElm.labelBoxEl == elm) {
+                parent = testElm;
+                return draggingElement = { elm, parent };
+            }
+        }
+        if(!parent) return console.warn('unable to find the element this labelBox belongs to!');
+    } else if(elm.matches('.ref-point')) {
+        for(let testElm of points) {
+            if(testElm.refPointEl == elm) {
+                self = testElm;
+                return draggingElement = { elm, self };
+            }
+        } 
+        if(!self) return console.warn('unable to find the ref element that corresponds to this element!');
+
+    } else if(elm.matches('.polygon-point')) {
+        for(let testElm of polyElms) {
+            for(let testPoint of testElm.points) {
+                if(testPoint.element == elm) {
+                    point = testPoint;
+                    parent = testElm;
+                    return draggingElement = { elm, point, parent };
+                }
+            }
+        }
+        if(!point) return console.warn('unable to find the line/poly this point belongs to!');
+    } else if(elm.matches('.polygon-anchor')) {
+        for(let testElm of polyElms) {
+            if(!testElm.anchorPoint.element) {
+                if(testElm.anchorPoint == elm) {
+                    parent = testElm;
+                    return draggingElement = { elm, anchor: true, parent };
+                }
+            }
+        }
+    }
+});
+window.addEventListener('pointermove', e => {
+    if(!draggingElement) return;
+    let {elm, parent, self, point, anchor} = draggingElement;
+
+    const newLeft = (e.clientX - mapPos.x) / mapScale - dragOffsetX;
+    const newTop = (e.clientY - mapPos.y) / mapScale - dragOffsetY;
+    const relCoords = toRelativeCoords(newLeft, newTop);
+    
+    elm.style.left = newLeft +'px';
+    elm.style.top = newTop + 'px';
+
+    if(parent) {
+        if(point) { // point in line/poly
+            point.x = newLeft;
+            point.y = newTop;
+            point.relX = relCoords.x;
+            point.relY = relCoords.y;
+            // Update polygon path
+            let points, svg;
+            const isLine = parent.points.length == 2;
+            if(isLine) {
+                svg = parent.polyline;
+                // line
+                points = parent.points.map(p => `${p.x},${p.y}`).join(' ');
+                svg.setAttribute('fill', 'none');
+            } else {
+                svg = parent.svgPath;
+                // poly
+                points = `M ${parent.points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
+                svg.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
+            }
+            svg.setAttribute(isLine ? 'points' : 'd', points);
+            svg.setAttribute('stroke', editEnabled ? 'blue' : 'none');
+            svg.setAttribute('stroke-width', '2');
+
+            // Update anchor point position to new centroid
+            anchor = true;
+        } else { // label
+            parent.labelX = newLeft;
+            parent.labelY = newTop;
+            parent.relLabelX = relCoords.x;
+            parent.relLabelY = relCoords.y;
+        }
+    } else if(self) {
+        self.refX = newLeft;
+        self.refY = newTop;
+        self.relRefX = relCoords.x;
+        self.relRefY = relCoords.y;
+    }
+
+     if (anchor) {
+        const isLine = parent.points.length == 2;
+        if(isLine) {
+            const refX = point ? parent.anchorX : newLeft;
+            const refY = point ? parent.anchorY : newTop;
+            if(point) {
+            }
+            // Project the point onto the nearest line segment
+            let minDist = Infinity;
+            let bestProjection = { x: refX, y: refY };
+
+            // Check each line segment
+            for (let i = 0; i < parent.points.length - 1; i++) {
+                const p1 = parent.points[i];
+                const p2 = parent.points[i + 1];
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+
+                if (length === 0) continue;
+
+                const t = Math.max(0, Math.min(1,
+                    ((refX - p1.x) * dx + (refY - p1.y) * dy) / (length * length)
+                ));
+
+                const projX = p1.x + t * dx;
+                const projY = p1.y + t * dy;
+                const dist = Math.sqrt(
+                    (projX - refX) * (projX - refX) +
+                    (projY - refY) * (projY - refY)
+                );
+
+                if (dist < minDist) {
+                    minDist = dist;
+                    bestProjection = { x: projX, y: projY };
+                }
+            }
+
+            // Update anchor position to the best projection
+            parent.anchorX = bestProjection.x;
+            parent.anchorY = bestProjection.y;
+            parent.anchorPoint.style.left = parent.anchorX + 'px';
+            parent.anchorPoint.style.top = parent.anchorY + 'px';
+            const relAnchor = toRelativeCoords(parent.anchorX, parent.anchorY);
+            parent.relAnchorX = relAnchor.x;
+            parent.relAnchorY = relAnchor.y;
+        } else {
+            const centroid = getPolygonCentroid(parent.points);
+            parent.anchorX = centroid.x;
+            parent.anchorY = centroid.y;
+            parent.anchorPoint.element.style.left = centroid.x + 'px';
+            parent.anchorPoint.element.style.top = centroid.y + 'px';
+            const relAnchor = toRelativeCoords(centroid.x, centroid.y);
+            parent.relAnchorX = relAnchor.x;
+            parent.relAnchorY = relAnchor.y;
+        }
+    }
+    updateLeaderLines();
+});
+
+window.addEventListener('pointerup', e => {
+    if(!draggingElement) return;
+
+    draggingElement = null;
+});
+
 // Move label or ref point logic
 function onPointerDown(e) {
+    return;
     if (!editEnabled || currentMode !== 'move') return;
 
     const rect = mapContainer.getBoundingClientRect();
@@ -1628,9 +1801,9 @@ mapContainer.addEventListener('click', (e) => {
 });
 
 // Dragging events
-mapContainer.addEventListener('pointerdown', onPointerDown);
-window.addEventListener('pointermove', onPointerMove);
-window.addEventListener('pointerup', onPointerUp);
+// mapContainer.addEventListener('pointerdown', onPointerDown);
+// window.addEventListener('pointermove', onPointerMove);
+// window.addEventListener('pointerup', onPointerUp);
 
 // Initial disable buttons
 toggleEditMode();
@@ -5509,6 +5682,6 @@ window.addEventListener('pointerup', e => {
 });
 
 // In DOMContentLoaded or image load event:
-window.addEventListener('resize', () => {
-    updateAllPositions();
-});
+// window.addEventListener('resize', () => {
+//     updateAllPositions();
+// });
