@@ -1065,7 +1065,8 @@ window.addEventListener('pointermove', e => {
             svg.setAttribute(isLine ? 'points' : 'd', points);
             svg.setAttribute('stroke', editEnabled ? 'blue' : 'none');
             svg.setAttribute('stroke-width', '2');
-        } else { // label
+        } else if(!anchor) { // label
+            console.log(elm, parent, anchor);
             parent.labelX = newLeft;
             parent.labelY = newTop;
             parent.relLabelX = relCoords.x;
@@ -1137,10 +1138,11 @@ window.addEventListener('pointermove', e => {
 
                 parent.anchorPoint.element.style.left = closestPoint.x +'px';
                 parent.anchorPoint.element.style.top = closestPoint.y + 'px';
-                const relAnchor = toRelativeCoords(closestPoint.x, closestPoint.y);
-                parent.relAnchorX = relAnchor.x;
-                parent.relAnchorY = relAnchor.y;
             }
+
+            const relAnchor = toRelativeCoords(parent.anchorX, parent.anchorY);
+            parent.relAnchorX = relAnchor.x;
+            parent.relAnchorY = relAnchor.y;
         }
     }
     updateLeaderLines();
