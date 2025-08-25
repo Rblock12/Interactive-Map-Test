@@ -1012,11 +1012,9 @@ mapContainer.addEventListener('pointerdown', e => {
         if(!point) return console.warn('unable to find the line/poly this point belongs to!');
     } else if(elm.matches('.polygon-anchor')) {
         for(let testElm of polyElms) {
-            if(!testElm.anchorPoint.element) {
-                if(testElm.anchorPoint == elm) {
-                    parent = testElm;
-                    return draggingElement = { elm, anchor: true, parent };
-                }
+            if(testElm.anchorPoint == elm || testElm.anchorPoint.element == elm) {
+                parent = testElm;
+                return draggingElement = { elm, anchor: true, parent };
             }
         }
     }
@@ -1040,24 +1038,33 @@ window.addEventListener('pointermove', e => {
             point.relY = relCoords.y;
             // Update polygon path
             let points, svg;
-            const isLine = parent.points.length == 2;
+            const isLine = !!parent.polyline;
             if(isLine) {
                 svg = parent.polyline;
                 // line
                 points = parent.points.map(p => `${p.x},${p.y}`).join(' ');
                 svg.setAttribute('fill', 'none');
+
+                // Update anchor point position to new centroid
+                anchor = true;
             } else {
                 svg = parent.svgPath;
                 // poly
                 points = `M ${parent.points.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
                 svg.setAttribute('fill', editEnabled ? 'rgba(0, 0, 255, 0.2)' : 'none');
+
+                const centroid = getPolygonCentroid(parent.points);
+                parent.anchorX = centroid.x;
+                parent.anchorY = centroid.y;
+                parent.anchorPoint.element.style.left = centroid.x + 'px';
+                parent.anchorPoint.element.style.top = centroid.y + 'px';
+                const relAnchor = toRelativeCoords(centroid.x, centroid.y);
+                parent.relAnchorX = relAnchor.x;
+                parent.relAnchorY = relAnchor.y;
             }
             svg.setAttribute(isLine ? 'points' : 'd', points);
             svg.setAttribute('stroke', editEnabled ? 'blue' : 'none');
             svg.setAttribute('stroke-width', '2');
-
-            // Update anchor point position to new centroid
-            anchor = true;
         } else { // label
             parent.labelX = newLeft;
             parent.labelY = newTop;
@@ -1072,7 +1079,7 @@ window.addEventListener('pointermove', e => {
     }
 
      if (anchor) {
-        const isLine = parent.points.length == 2;
+        const isLine = !!parent.polyline;
         if(isLine) {
             const refX = point ? parent.anchorX : newLeft;
             const refY = point ? parent.anchorY : newTop;
@@ -1118,14 +1125,22 @@ window.addEventListener('pointermove', e => {
             parent.relAnchorX = relAnchor.x;
             parent.relAnchorY = relAnchor.y;
         } else {
-            const centroid = getPolygonCentroid(parent.points);
-            parent.anchorX = centroid.x;
-            parent.anchorY = centroid.y;
-            parent.anchorPoint.element.style.left = centroid.x + 'px';
-            parent.anchorPoint.element.style.top = centroid.y + 'px';
-            const relAnchor = toRelativeCoords(centroid.x, centroid.y);
-            parent.relAnchorX = relAnchor.x;
-            parent.relAnchorY = relAnchor.y;
+            // If point is inside polygon, use it directly
+            if (isPointInPolygon(newLeft, newTop, parent.points)) {
+                parent.anchorX = newLeft;
+                parent.anchorY = newTop;
+            } else {
+                // If point is outside, find closest point on polygon perimeter
+                const closestPoint = getClosestPointOnPolygon(newLeft, newTop, parent.points);
+                parent.anchorX = closestPoint.x;
+                parent.anchorY = closestPoint.y;
+
+                parent.anchorPoint.element.style.left = closestPoint.x +'px';
+                parent.anchorPoint.element.style.top = closestPoint.y + 'px';
+                const relAnchor = toRelativeCoords(closestPoint.x, closestPoint.y);
+                parent.relAnchorX = relAnchor.x;
+                parent.relAnchorY = relAnchor.y;
+            }
         }
     }
     updateLeaderLines();
