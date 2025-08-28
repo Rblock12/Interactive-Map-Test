@@ -1342,64 +1342,28 @@ mapContainer.addEventListener('click', (e) => {
     if (!editEnabled) return;
 
     const rect = mapContainer.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) / mapScale;
+    const y = (e.clientY - rect.top) / mapScale;
 
     if (currentMode === 'point') {
         addLabel(x, y);
     } else if (currentMode === 'delete') {
         removeLabelAtPoint(x, y);
     } else if (currentMode === 'editLabelText') {
-        // Check regular labels
-        for (const point of points) {
-            const labelRect = point.labelBoxEl.getBoundingClientRect();
-            if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
-                point.labelBoxEl.contentEditable = 'true';
-                // Add keyboard event listener if not already added
-                if (!point.labelBoxEl.hasAttribute('data-keydown-added')) {
-                    point.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
-                    point.labelBoxEl.setAttribute('data-keydown-added', 'true');
-                }
-                point.labelBoxEl.focus();
-                return;
+        if(e.target.matches('.label-box')) {
+            e.target.contentEditable = 'true';
+            // Add keyboard event listener if not already added
+            if (!e.target.hasAttribute('data-keydown-added')) {
+                e.target.addEventListener('keydown', handleLabelKeydown);
+                e.target.setAttribute('data-keydown-added', 'true');
             }
-        }
-
-        // Check polygon labels
-        for (const polygon of polygons) {
-            const labelRect = polygon.labelBoxEl.getBoundingClientRect();
-            if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
-                polygon.labelBoxEl.contentEditable = 'true';
-                // Add keyboard event listener if not already added
-                if (!polygon.labelBoxEl.hasAttribute('data-keydown-added')) {
-                    polygon.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
-                    polygon.labelBoxEl.setAttribute('data-keydown-added', 'true');
-                }
-                polygon.labelBoxEl.focus();
-                return;
-            }
-        }
-
-        // Check line labels
-        for (const line of lines) {
-            const labelRect = line.labelBoxEl.getBoundingClientRect();
-            if (isPointInRect(x, y, labelRect, rect.left, rect.top)) {
-                line.labelBoxEl.contentEditable = 'true';
-                // Add keyboard event listener if not already added
-                if (!line.labelBoxEl.hasAttribute('data-keydown-added')) {
-                    line.labelBoxEl.addEventListener('keydown', handleLabelKeydown);
-                    line.labelBoxEl.setAttribute('data-keydown-added', 'true');
-                }
-                line.labelBoxEl.focus();
-                return;
-            }
+            e.target.focus();
         }
     } else if (currentMode === 'polygon' || currentMode === 'line') {
         // Check if user clicked on the first point of the current shape (only for polygons)
         if (currentMode === 'polygon' && currentShapePoints.length > 0 && hasEnoughPointsForShape()) {
             const firstPoint = currentShapePoints[0];
-            const firstPointRect = firstPoint.element.getBoundingClientRect();
-            if (isPointInRect(x, y, firstPointRect, rect.left, rect.top)) {
+            if (e.target == firstPoint.element) {
                 // User clicked on the first point, finish the shape
                 finishCurrentShape();
                 document.getElementById('finishDrawingInterface').style.display = 'none';
