@@ -1340,6 +1340,11 @@ function getPolygonCentroid(points) {
 // Update click handler
 mapContainer.addEventListener('click', (e) => {
     if (!editEnabled) return;
+    
+    // If user was panning, don't execute edit mode functions
+    if (wasPanning) {
+        return;
+    }
 
     const rect = mapContainer.getBoundingClientRect();
     const x = (e.clientX - rect.left) / mapScale;
@@ -4277,6 +4282,12 @@ toggleEditMode = function () {
 // Change tag on click in changeTag mode
 mapContainer.addEventListener('click', function (e) {
     if (!editEnabled || currentMode !== 'changeTag') return;
+    
+    // If user was panning, don't execute changeTag functions
+    if (wasPanning) {
+        return;
+    }
+    
     const rect = mapContainer.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -5232,6 +5243,10 @@ function getTabRadioForContent(targetId) {
 let mapScale = 1;
 let mapPos = { x:0, y:0 };
 let dragStart = null;
+let wasPanning = false; // Track if user was panning to prevent edit mode functions
+let panThreshold = 5; // Minimum distance in pixels to consider as panning
+let panStartPos = null; // Store initial pan position
+let panStartTime = null; // Store when panning started
 const mapViewport = document.querySelector('.map-viewport');
 
 function _updateMapTranslate() {
@@ -5280,11 +5295,33 @@ mapViewport.addEventListener('pointerdown', e => {
         x: e.clientX - mapPos.x,
         y: e.clientY - mapPos.y
     };
+    
+    // Initialize pan tracking
+    wasPanning = false;
+    panStartPos = {
+        x: e.clientX,
+        y: e.clientY
+    };
+    panStartTime = Date.now();
 })
 window.addEventListener('pointermove', e => {
     if(!dragStart) return;
 
     e.preventDefault();
+
+    // Check if user has moved enough to be considered panning
+    if (panStartPos && !wasPanning) {
+        const distance = Math.sqrt(
+            Math.pow(e.clientX - panStartPos.x, 2) + 
+            Math.pow(e.clientY - panStartPos.y, 2)
+        );
+        const timeElapsed = Date.now() - panStartTime;
+        
+        // Consider it panning if user moved more than threshold OR if they've been dragging for more than 100ms
+        if (distance > panThreshold || timeElapsed > 100) {
+            wasPanning = true;
+        }
+    }
 
     mapPos = {
         x: e.clientX - dragStart.x,
@@ -5297,6 +5334,13 @@ window.addEventListener('pointerup', e => {
 
     dragStart = null;
     mapContainer.style.cursor = '';
+    
+    // Reset pan tracking after a short delay to allow click event to check wasPanning
+    setTimeout(() => {
+        wasPanning = false;
+        panStartPos = null;
+        panStartTime = null;
+    }, 10);
 });
 
 // In DOMContentLoaded or image load event:
