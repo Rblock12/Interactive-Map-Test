@@ -866,8 +866,12 @@ function removeLabelAtPoint(x, y) {
         const offsetX = containerRect.left;
         const offsetY = containerRect.top;
 
-        if (isPointInRect(x, y, rectRef, offsetX, offsetY) ||
-            isPointInRect(x, y, rectLabel, offsetX, offsetY)) {
+        // Scale the coordinates to match the scaled click coordinates
+        const scaledX = x * mapScale;
+        const scaledY = y * mapScale;
+
+        if (isPointInRect(scaledX, scaledY, rectRef, offsetX, offsetY) ||
+            isPointInRect(scaledX, scaledY, rectLabel, offsetX, offsetY)) {
             // Add removing class to trigger animation
             refPointEl.classList.add('removing');
             labelBoxEl.classList.add('removing');
@@ -897,10 +901,14 @@ function removeLabelAtPoint(x, y) {
         const labelRect = polygon.labelBoxEl.getBoundingClientRect();
         const anchorRect = polygon.anchorPoint.element.getBoundingClientRect();
 
+        // Scale the coordinates to match the scaled click coordinates
+        const scaledX = x * mapScale;
+        const scaledY = y * mapScale;
+
         // Check points
         for (const point of polygon.points) {
             const rect = point.element.getBoundingClientRect();
-            if (isPointInRect(x, y, rect, offsetX, offsetY)) {
+            if (isPointInRect(scaledX, scaledY, rect, offsetX, offsetY)) {
                 deletePolygon(polygon, i);
                 updateSaveButtonState();
                 return true;
@@ -908,8 +916,8 @@ function removeLabelAtPoint(x, y) {
         }
 
         // Check label or anchor
-        if (isPointInRect(x, y, labelRect, offsetX, offsetY) ||
-            isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
+        if (isPointInRect(scaledX, scaledY, labelRect, offsetX, offsetY) ||
+            isPointInRect(scaledX, scaledY, anchorRect, offsetX, offsetY)) {
             deletePolygon(polygon, i);
             updateSaveButtonState();
             return true;
@@ -927,10 +935,14 @@ function removeLabelAtPoint(x, y) {
         const labelRect = line.labelBoxEl.getBoundingClientRect();
         const anchorRect = line.anchorPoint.getBoundingClientRect();
 
+        // Scale the coordinates to match the scaled click coordinates
+        const scaledX = x * mapScale;
+        const scaledY = y * mapScale;
+
         // Check points
         for (const point of line.points) {
             const rect = point.element.getBoundingClientRect();
-            if (isPointInRect(x, y, rect, offsetX, offsetY)) {
+            if (isPointInRect(scaledX, scaledY, rect, offsetX, offsetY)) {
                 deleteLine(line, i);
                 updateSaveButtonState();
                 return true;
@@ -938,8 +950,8 @@ function removeLabelAtPoint(x, y) {
         }
 
         // Check label, anchor, or line
-        if (isPointInRect(x, y, labelRect, offsetX, offsetY) ||
-            isPointInRect(x, y, anchorRect, offsetX, offsetY)) {
+        if (isPointInRect(scaledX, scaledY, labelRect, offsetX, offsetY) ||
+            isPointInRect(scaledX, scaledY, anchorRect, offsetX, offsetY)) {
             deleteLine(line, i);
             updateSaveButtonState();
             return true;
