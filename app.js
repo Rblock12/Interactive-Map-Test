@@ -5326,13 +5326,6 @@ window.addEventListener('pointerup', e => {
 
     dragStart = null;
     mapContainer.style.cursor = '';
-    
-    // Reset pan tracking after a short delay to allow click event to check wasPanning
-    setTimeout(() => {
-        wasPanning = false;
-        panStartPos = null;
-        panStartTime = null;
-    }, 10);
 });
 
 // In DOMContentLoaded or image load event:
