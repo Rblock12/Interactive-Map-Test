@@ -3306,25 +3306,42 @@ function selectNextTestItem() {
         const targetLabel = document.querySelector('#targetLabel span');
         targetLabel.textContent = currentTestItem.label.dataset.correctAnswer;
     } else if (currentTestMode === 'ident') {
-        // Only scroll in identify mode
-        // Use the element's bounding rect to determine its position
-        const elementRect = currentTestItem.element.getBoundingClientRect();
-        const labelRect = currentTestItem.label.getBoundingClientRect();
-
-        // Get the map viewport element
-        const mapViewport = document.querySelector('.map-viewport');
-        const viewportRect = mapViewport.getBoundingClientRect();
-
-        // Calculate the midpoint between the element and its label (relative to the viewport)
-        const midpointY = ((elementRect.top + labelRect.top) / 2) - viewportRect.top;
-        // Center the midpoint in the viewport
-        const idealScrollTop = mapViewport.scrollTop + midpointY - (mapViewport.clientHeight / 2);
-
-        // Scroll the map viewport smoothly to the calculated position
-        mapViewport.scrollTo({
-            top: idealScrollTop,
-            behavior: 'smooth'
-        });
+        // Center the element in the viewport in identify mode
+        // Calculate the center point of the element in map coordinates
+        let elementCenterX, elementCenterY;
+        
+        if (currentTestItem.type === 'point') {
+            // For points, use the point's position
+            const pointRect = currentTestItem.element.getBoundingClientRect();
+            const mapViewport = document.querySelector('.map-viewport');
+            const viewportRect = mapViewport.getBoundingClientRect();
+            
+            // Convert from viewport coordinates to map coordinates
+            // First get the center in viewport coordinates
+            const viewportCenterX = (pointRect.left + pointRect.right) / 2 - viewportRect.left;
+            const viewportCenterY = (pointRect.top + pointRect.bottom) / 2 - viewportRect.top;
+            
+            // Convert to map coordinates using the inverse of the transform
+            elementCenterX = (viewportCenterX - mapPos.x) / mapScale;
+            elementCenterY = (viewportCenterY - mapPos.y) / mapScale;
+        } else if (currentTestItem.type === 'polygon') {
+            // For polygons, calculate the center of the SVG path
+            const pathElement = currentTestItem.element;
+            const bbox = pathElement.getBBox();
+            elementCenterX = bbox.x + bbox.width / 2;
+            elementCenterY = bbox.y + bbox.height / 2;
+        } else if (currentTestItem.type === 'line') {
+            // For lines, calculate the center of the polyline
+            const lineElement = currentTestItem.element;
+            const bbox = lineElement.getBBox();
+            elementCenterX = bbox.x + bbox.width / 2;
+            elementCenterY = bbox.y + bbox.height / 2;
+        }
+        
+        // Move the map to center the element
+        if (elementCenterX !== undefined && elementCenterY !== undefined) {
+            moveMapToPoint(elementCenterX, elementCenterY);
+        }
     }
 }
 
@@ -5264,8 +5281,56 @@ function _updateMapTranslate() {
     mapContainer.style.transform = `translate(${mapPos.x}px, ${mapPos.y}px) scale(${mapScale})`;
 }
 
-function moveMapToPoint(x, y) {
-    // TODO: Not implemented until the relation between scaling, the container, and the mouse clientX/Y can be worked out.
+function moveMapToPoint(x, y, animate = true) {
+    // Get the map viewport dimensions
+    const mapViewport = document.querySelector('.map-viewport');
+    const viewportWidth = mapViewport.offsetWidth;
+    const viewportHeight = mapViewport.offsetHeight;
+    
+    // Calculate the center of the viewport
+    const viewportCenterX = viewportWidth / 2;
+    const viewportCenterY = viewportHeight / 2;
+    
+    // Calculate the offset needed to center the point (x, y) in the viewport
+    // The point (x, y) is in map coordinates (original map content coordinates)
+    const targetOffsetX = viewportCenterX - (x * mapScale);
+    const targetOffsetY = viewportCenterY - (y * mapScale);
+    
+    if (animate) {
+        // Animate the transition
+        const startPos = { x: mapPos.x, y: mapPos.y };
+        const endPos = { x: targetOffsetX, y: targetOffsetY };
+        const duration = 800; // Animation duration in milliseconds
+        const startTime = performance.now();
+        
+        function animateStep(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Use ease-out cubic function for smooth deceleration
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+            
+            // Interpolate between start and end positions
+            mapPos.x = startPos.x + (endPos.x - startPos.x) * easeProgress;
+            mapPos.y = startPos.y + (endPos.y - startPos.y) * easeProgress;
+            
+            // Apply the transform
+            _updateMapTranslate();
+            
+            // Continue animation if not complete
+            if (progress < 1) {
+                requestAnimationFrame(animateStep);
+            }
+        }
+        
+        // Start the animation
+        requestAnimationFrame(animateStep);
+    } else {
+        // Instant movement (no animation)
+        mapPos.x = targetOffsetX;
+        mapPos.y = targetOffsetY;
+        _updateMapTranslate();
+    }
 }
 mapViewport.addEventListener('wheel', e => {
     e.preventDefault();
