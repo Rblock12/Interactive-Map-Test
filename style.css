@@ -1310,12 +1310,13 @@ button#addBtn[aria-pressed="true"] {
 /* Essential Map and Element Styles */
 .map-viewport {
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 #mapContainer {
     position: relative;
     user-select: none;
+    cursor: grab;
 }
 
 #mapContainer.point-mode {
@@ -1367,15 +1368,16 @@ button#addBtn[aria-pressed="true"] {
 }
 
 
-.ref-point.movable {
+.movable {
     cursor: move;
+    user-select: none;
 }
 
-.ref-point.deletable {
+.deletable {
     cursor: no-drop;
 }
 
-.ref-point.editable {
+.editable {
     cursor: text;
 }
 
@@ -1407,19 +1409,6 @@ button#addBtn[aria-pressed="true"] {
 }
 
 
-
-.polygon-point.movable {
-    cursor: move;
-}
-
-.polygon-point.deletable {
-    cursor: no-drop;
-}
-
-.polygon-point.editable {
-    cursor: text;
-}
-
 .polygon-anchor {
     position: absolute;
     width: 8px;
@@ -1446,19 +1435,6 @@ button#addBtn[aria-pressed="true"] {
     opacity: 0;
 }
 
-
-
-.polygon-anchor.movable {
-    cursor: move;
-}
-
-.polygon-anchor.deletable {
-    cursor: no-drop;
-}
-
-.polygon-anchor.editable {
-    cursor: text;
-}
 
 .polygon-region {
     position: absolute;
@@ -1513,18 +1489,6 @@ button#addBtn[aria-pressed="true"] {
 .label-box:focus {
     box-shadow: 0 3px 8px rgba(33, 150, 243, 0.3);
     border-color: #2196F3;
-}
-
-.label-box.movable {
-    cursor: move;
-}
-
-.label-box.deletable {
-    cursor: no-drop;
-}
-
-.label-box.editable {
-    cursor: text;
 }
 
 .label-box.correct {
