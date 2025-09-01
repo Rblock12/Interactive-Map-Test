@@ -5244,9 +5244,7 @@ let mapScale = 1;
 let mapPos = { x:0, y:0 };
 let dragStart = null;
 let wasPanning = false; // Track if user was panning to prevent edit mode functions
-let panThreshold = 5; // Minimum distance in pixels to consider as panning
-let panStartPos = null; // Store initial pan position
-let panStartTime = null; // Store when panning started
+let panThresholdSquared = 25; // Minimum distance squared (5px) to consider as panning
 const mapViewport = document.querySelector('.map-viewport');
 
 function _updateMapTranslate() {
@@ -5298,35 +5296,29 @@ mapViewport.addEventListener('pointerdown', e => {
     
     // Initialize pan tracking
     wasPanning = false;
-    panStartPos = {
-        x: e.clientX,
-        y: e.clientY
-    };
-    panStartTime = Date.now();
 })
 window.addEventListener('pointermove', e => {
     if(!dragStart) return;
 
     e.preventDefault();
 
-    // Check if user has moved enough to be considered panning
-    if (panStartPos && !wasPanning) {
-        const distance = Math.sqrt(
-            Math.pow(e.clientX - panStartPos.x, 2) + 
-            Math.pow(e.clientY - panStartPos.y, 2)
-        );
-        const timeElapsed = Date.now() - panStartTime;
-        
-        // Consider it panning if user moved more than threshold OR if they've been dragging for more than 100ms
-        if (distance > panThreshold || timeElapsed > 100) {
-            wasPanning = true;
-        }
-    }
+    // Store previous position for distance calculation
+    const prevMapPos = { x: mapPos.x, y: mapPos.y };
 
     mapPos = {
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y
     };
+
+    // Check if user has moved enough to be considered panning
+    if (!wasPanning) {
+        const distanceSquared = Math.pow(mapPos.x - prevMapPos.x, 2) + Math.pow(mapPos.y - prevMapPos.y, 2);
+        
+        if (distanceSquared > panThresholdSquared) {
+            wasPanning = true;
+        }
+    }
+
     _updateMapTranslate();
 });
 window.addEventListener('pointerup', e => {
