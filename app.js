@@ -2326,145 +2326,6 @@ function updateAllPositions() {
     updateLeaderLines();
 }
 
-// Testing mode functions
-function startIdentifyTest() {
-    // Hide all movable points except the current test item
-    document.querySelectorAll('.ref-point, .polygon-point, .polygon-anchor').forEach(point => {
-        point.style.visibility = 'hidden';
-    });
-
-    // Hide all label text and ensure reference points are visible for testing
-    document.querySelectorAll('.label-box').forEach(label => {
-        label.dataset.correctAnswer = label.textContent;
-        label.textContent = '???';
-    });
-
-    // Prepare test items
-    testItems = [
-        ...points.map(point => ({ type: 'point', element: point.refPointEl, label: point.labelBoxEl })),
-        ...polygons.map(polygon => ({ type: 'polygon', element: polygon.svgPath, label: polygon.labelBoxEl })),
-        ...lines.map(line => ({ type: 'line', element: line.polyline, label: line.labelBoxEl }))
-    ].filter(item => item.element && item.label);
-
-    remainingTestItems = [...testItems];
-    selectNextTestItem();
-
-    // Show test interface
-    const testInterface = document.getElementById('testInterface');
-    testInterface.style.display = 'block';
-    const testInput = document.getElementById('testInput');
-    testInput.value = '';
-    testInput.focus();
-    return true;
-}
-
-function selectNextTestItem() {
-    // Check if test is still active before proceeding
-    if (!testingMode) {
-        return;
-    }
-
-    // Remove highlight from previous item and its label if exists
-    if (currentTestItem) {
-        currentTestItem.element.classList.remove('highlight-test');
-        currentTestItem.label.classList.remove('highlight-test');
-
-        // Remove highlight from leader line if it exists
-        const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
-        if (leaderLine) {
-            leaderLine.classList.remove('highlight-test');
-        }
-
-        // Hide the previous test item's point if it's a label type
-        if (currentTestItem.type === 'point') {
-            currentTestItem.element.style.visibility = 'hidden';
-        }
-
-        // Remove map dim overlay if present
-        const mapDimOverlay = document.querySelector('.map-dim-overlay');
-        if (mapDimOverlay) {
-            mapDimOverlay.classList.remove('active');
-        }
-    }
-
-    // Log remaining items for debugging
-    console.log(`Remaining items: ${remainingTestItems.length}`);
-
-    if (remainingTestItems.length === 0) {
-        // Double-check that test is still active before showing congratulations
-        if (testingMode) {
-            endTest(true); // true indicates this is a natural completion
-        }
-        return;
-    }
-
-    // Take the next item from the front of the array (they're already shuffled)
-    currentTestItem = remainingTestItems[0];
-    console.log(`Selected item at index 0. Current length: ${remainingTestItems.length}`);
-
-    if (currentTestMode === 'ident') {
-        // Show and highlight both the item and its label in identify mode
-        currentTestItem.element.classList.add('highlight-test');
-        currentTestItem.label.classList.add('highlight-test');
-
-        // Highlight the leader line
-        const leaderLine = document.querySelector(`line[data-for="${currentTestItem.label.id}"]`);
-        if (leaderLine) {
-            leaderLine.classList.add('highlight-test');
-        }
-
-        // If it's a label type, make sure its point is visible
-        if (currentTestItem.type === 'point') {
-            currentTestItem.element.style.visibility = 'visible';
-        }
-
-        // Activate map dim overlay
-        const mapDimOverlay = document.querySelector('.map-dim-overlay');
-        if (mapDimOverlay) {
-            mapDimOverlay.classList.add('active');
-        }
-    } else {
-        // In find mode, only make shapes visible, not reference points
-        if (currentTestItem.type === 'polygon') {
-            currentTestItem.element.style.visibility = 'visible';
-        } else if (currentTestItem.type === 'line') {
-            currentTestItem.element.style.visibility = 'visible';
-        }
-        // Reference points (label type) stay hidden in find mode
-        // Remove map dim overlay if present
-        const mapDimOverlay = document.querySelector('.map-dim-overlay');
-        if (mapDimOverlay) {
-            mapDimOverlay.classList.remove('active');
-        }
-    }
-
-    // Update the target label in find mode
-    if (currentTestMode === 'find') {
-        const targetLabel = document.querySelector('#targetLabel span');
-        targetLabel.textContent = currentTestItem.label.dataset.correctAnswer;
-    } else if (currentTestMode === 'ident') {
-        // Only scroll in identify mode
-        // Use the element's bounding rect to determine its position
-        const elementRect = currentTestItem.element.getBoundingClientRect();
-        const labelRect = currentTestItem.label.getBoundingClientRect();
-
-        // Get the map viewport element
-        const mapViewport = document.querySelector('.map-viewport');
-        const viewportRect = mapViewport.getBoundingClientRect();
-
-        // Calculate the midpoint between the element and its label (relative to the viewport)
-        const midpointY = ((elementRect.top + labelRect.top) / 2) - viewportRect.top;
-        // Center the midpoint in the viewport
-        const idealScrollTop = mapViewport.scrollTop + midpointY - (mapViewport.clientHeight / 2);
-
-        // Scroll the map viewport smoothly to the calculated position
-        mapViewport.scrollTo({
-            top: idealScrollTop,
-            behavior: 'smooth'
-        });
-    }
-}
-
 function checkAnswer(answer) {
     const correctAnswer = currentTestItem.label.dataset.correctAnswer.trim().toLowerCase();
     const userAnswer = answer.toLowerCase();
@@ -3055,14 +2916,6 @@ function _toggleTestModeInternal(mode, selectedTags) {
         tagPanel.style.transform = 'translateX(100%)';
         setTimeout(() => { tagPanel.style.display = 'none'; }, 300);
     }
-
-    // In Identify Elements mode, temporarily show/hide only the elements being tested
-    if (mode === 'ident') {
-        setIdentifyTestVisibility(testItems);
-        if (currentTestItem.type === 'point') {
-            currentTestItem.element.style.visibility = 'visible';
-        }
-    }
 }
 
 let currentTestMode = null;
@@ -3266,6 +3119,10 @@ function selectNextTestItem() {
     console.log(`Selected item at index 0. Current length: ${remainingTestItems.length}`);
 
     if (currentTestMode === 'ident') {
+        document.querySelectorAll('.label-box').forEach(label => label.style.visibility = 'hidden');
+        [...shapesLayer.children].forEach(shape => shape.style.visibility = 'hidden');
+        [...leaderLinesSVG.children].forEach(line => line.style.visibility = 'hidden');
+
         // Show and highlight both the item and its label in identify mode
         currentTestItem.element.classList.add('highlight-test');
         currentTestItem.label.classList.add('highlight-test');
