@@ -12,7 +12,7 @@ let currentMode = null;
 let currentShape = null;
 let currentShapePoints = [];
 
-// Testing mode variables
+// Testing mode variables   
 let testItems = [];
 let currentTestItem = null;
 let remainingTestItems = [];
@@ -3163,9 +3163,10 @@ function selectNextTestItem() {
         const targetLabel = document.querySelector('#targetLabel span');
         targetLabel.textContent = currentTestItem.label.dataset.correctAnswer;
     } else if (currentTestMode === 'ident') {
-        // Center the element in the viewport in identify mode
+        // Only center the element if it's off screen in identify mode
         // Calculate the center point of the element in map coordinates
         let elementCenterX, elementCenterY;
+        let shouldCenter = false;
         
         if (currentTestItem.type === 'point') {
             // For points, use the point's position
@@ -3181,22 +3182,60 @@ function selectNextTestItem() {
             // Convert to map coordinates using the inverse of the transform
             elementCenterX = (viewportCenterX - mapPos.x) / mapScale;
             elementCenterY = (viewportCenterY - mapPos.y) / mapScale;
+            
+            // Check if the point is off screen (with some margin)
+            const margin = 50; // pixels of margin
+            const pointX = pointRect.left - viewportRect.left;
+            const pointY = pointRect.top - viewportRect.top;
+            
+            shouldCenter = pointX < -margin || 
+                          pointX > viewportRect.width + margin || 
+                          pointY < -margin || 
+                          pointY > viewportRect.height + margin;
         } else if (currentTestItem.type === 'polygon') {
             // For polygons, calculate the center of the SVG path
             const pathElement = currentTestItem.element;
             const bbox = pathElement.getBBox();
             elementCenterX = bbox.x + bbox.width / 2;
             elementCenterY = bbox.y + bbox.height / 2;
+            
+            // Check if the polygon is off screen
+            const mapViewport = document.querySelector('.map-viewport');
+            const viewportRect = mapViewport.getBoundingClientRect();
+            
+            // Convert polygon center to viewport coordinates
+            const polygonCenterX = (elementCenterX * mapScale) + mapPos.x;
+            const polygonCenterY = (elementCenterY * mapScale) + mapPos.y;
+            
+            const margin = 50; // pixels of margin
+            shouldCenter = polygonCenterX < -margin || 
+                          polygonCenterX > viewportRect.width + margin || 
+                          polygonCenterY < -margin || 
+                          polygonCenterY > viewportRect.height + margin;
         } else if (currentTestItem.type === 'line') {
             // For lines, calculate the center of the polyline
             const lineElement = currentTestItem.element;
             const bbox = lineElement.getBBox();
             elementCenterX = bbox.x + bbox.width / 2;
             elementCenterY = bbox.y + bbox.height / 2;
+            
+            // Check if the line is off screen
+            const mapViewport = document.querySelector('.map-viewport');
+            const viewportRect = mapViewport.getBoundingClientRect();
+            
+            // Convert line center to viewport coordinates
+            const lineCenterX = (elementCenterX * mapScale) + mapPos.x;
+            const lineCenterY = (elementCenterY * mapScale) + mapPos.y;
+            
+            const margin = 50; // pixels of margin
+            shouldCenter = lineCenterX < -margin || 
+                          lineCenterX > viewportRect.width + margin || 
+                          lineCenterY < -margin || 
+                          lineCenterY > viewportRect.height + margin;
         }
         
-        // Move the map to center the element
-        if (elementCenterX !== undefined && elementCenterY !== undefined) {
+        // Only move the map to center the element if it's off screen
+        if (shouldCenter && elementCenterX !== undefined && elementCenterY !== undefined) {
             moveMapToPoint(elementCenterX, elementCenterY);
         }
     }
