@@ -5307,3 +5307,19 @@ window.addEventListener('pointerup', e => {
 // window.addEventListener('resize', () => {
 //     updateAllPositions();
 // });
+
+const pinch2Zoom = new PinchZoom();
+window.addEventListener('zoomin', (e) => {
+    const og = e.detail.originalEvent;
+    mapViewport.dispatchEvent(new WheelEvent('wheel', {
+        clientX: Math.abs(og.touches[0].clientX - og.touches[1].clientX),
+        clientY: Math.abs(og.touches[0].clientY - og.touches[1].clientY)
+    }));
+});
+window.addEventListener('zoomout', (e) => {
+    const og = e.detail.originalEvent;
+    mapViewport.dispatchEvent(new WheelEvent('wheel', {
+        clientX: Math.abs(og.touches[0].clientX - og.touches[1].clientX),
+        clientY: Math.abs(og.touches[0].clientY - og.touches[1].clientY)
+    }));
+});
