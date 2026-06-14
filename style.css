@@ -383,6 +383,53 @@ button#addBtn[aria-pressed="true"] {
     }
 }
 
+.test-footer {
+    flex: 1;
+    min-width: 0;
+    display: none;
+}
+
+.test-footer.active {
+    display: block;
+    animation: slideUp 0.3s ease-in-out;
+}
+
+.skip-test-btn,
+.stop-test-btn {
+    padding: 8px 12px;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.skip-test-btn {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2);
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.stop-test-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.2);
+}
+
+.skip-test-btn:active,
+.stop-test-btn:active {
+    transform: translateY(0);
+}
+
 .test-input-group {
     padding: 12px;
     position: relative;
@@ -558,7 +605,7 @@ button#addBtn[aria-pressed="true"] {
     background: #e0e0e0;
     border-radius: 3px;
     overflow: hidden;
-    margin-top: 12px;
+    margin-top: 8px;
     position: relative;
 }
 
@@ -578,11 +625,18 @@ button#addBtn[aria-pressed="true"] {
     font-size: 14px;
     font-weight: 600;
     color: #333;
-    text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
+}
+
+.progress-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .progress-container .progress-text .progress-numbers {
@@ -636,16 +690,6 @@ button#addBtn[aria-pressed="true"] {
     }
 }
 
-.test-footer {
-    border-top: 1px solid #e0e0e0;
-    display: none;
-}
-
-.test-footer.active {
-    display: block;
-    animation: slideUp 0.3s ease-in-out;
-}
-
 @keyframes slideUp {
     from {
         opacity: 0;
@@ -656,29 +700,6 @@ button#addBtn[aria-pressed="true"] {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.stop-test-btn {
-    width: 100%;
-    padding: 8px 16px;
-    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.2);
-    display: block;
-}
-
-.stop-test-btn:active {
-    transform: translateY(0);
 }
 
 #leaderLines {
@@ -2999,6 +3020,12 @@ button#addBtn[aria-pressed="true"] {
         color: #1976D2;
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+    }
+
+    .skip-test-btn:hover {
+        background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 152, 0, 0.3);
     }
 
     .stop-test-btn:hover {

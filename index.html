@@ -95,7 +95,12 @@
                         <div id="progressContainer" class="progress-container" style="display: none;">
                             <div class="progress-text">
                                 <span class="progress-label">Progress</span>
-                                <span class="progress-numbers">0/0</span>
+                                <div class="progress-actions">
+                                    <span class="progress-numbers">0/0</span>
+                                    <button id="skipTestBtn" type="button" class="skip-test-btn" onclick="skipTestItem()" title="Skip this element">
+                                        <i class="fas fa-forward"></i> Skip
+                                    </button>
+                                </div>
                             </div>
                             <div class="progress"></div>
                         </div>

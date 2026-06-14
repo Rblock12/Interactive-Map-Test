@@ -2326,6 +2326,29 @@ function updateAllPositions() {
     updateLeaderLines();
 }
 
+function skipTestItem() {
+    if (!testingMode || !currentTestItem) return;
+
+    if (currentTestMode === 'ident') {
+        const testInput = document.getElementById('testInput');
+        testInput.value = currentTestItem.label.dataset.correctAnswer;
+        checkAnswer(testInput.value);
+    } else if (currentTestMode === 'find') {
+        const targetLabel = document.getElementById('targetLabel');
+        targetLabel.classList.add('correct');
+        remainingTestItems.shift();
+        updateTestProgress();
+        mapContainer.removeEventListener('click', handleFindModeClick);
+        setTimeout(() => {
+            targetLabel.classList.remove('correct', 'incorrect');
+            if (remainingTestItems.length > 0) {
+                mapContainer.addEventListener('click', handleFindModeClick);
+            }
+            selectNextTestItem();
+        }, 1500);
+    }
+}
+
 function checkAnswer(answer) {
     const correctAnswer = currentTestItem.label.dataset.correctAnswer.trim().toLowerCase();
     const userAnswer = answer.toLowerCase();
