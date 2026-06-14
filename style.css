@@ -1334,6 +1334,7 @@ button#addBtn[aria-pressed="true"] {
 /* Essential Map and Element Styles */
 .map-viewport {
     height: 100%;
+    width: 100%;
     overflow: hidden;
 }
 
