@@ -5273,7 +5273,7 @@ mapViewport.addEventListener('pointerdown', e => {
     wasPanning = false;
 })
 window.addEventListener('pointermove', e => {
-    if(!dragStart) return;
+    if(!dragStart || pinchStartDist) return;
 
     e.preventDefault();
 
@@ -5303,23 +5303,71 @@ window.addEventListener('pointerup', e => {
     mapContainer.style.cursor = '';
 });
 
-// In DOMContentLoaded or image load event:
-// window.addEventListener('resize', () => {
-//     updateAllPositions();
-// });
 
-const pinch2Zoom = new PinchZoom();
-window.addEventListener('zoomin', (e) => {
-    const og = e.detail.originalEvent;
-    mapViewport.dispatchEvent(new WheelEvent('wheel', {
-        clientX: Math.abs(og.touches[0].clientX - og.touches[1].clientX),
-        clientY: Math.abs(og.touches[0].clientY - og.touches[1].clientY)
-    }));
+/*
+ * Pinch to Zoom functionality
+ */
+var pinchStartDist = null;
+function handleTouchZoom(e, scaleFactor) {
+    e.preventDefault(); // Prevent scrolling/zooming of the whole page
+    e.stopImmediatePropagation();
+
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    const centerX = (touch1.clientX + touch2.clientX) / 2;
+    const centerY = (touch1.clientY + touch2.clientY) / 2;
+    console.log(`pinch center, x: ${centerX}px y: ${centerY}px`);
+
+    const mouseX = (centerX - mapViewport.offsetLeft);
+    const mouseY = (centerY - mapViewport.offsetTop);
+    console.log(`rel pinch center, x: ${mouseX}px y: ${mouseY}px`);
+
+    const minZoom = Math.min(
+        mapViewport.offsetWidth / mapContainer.offsetWidth,
+        mapViewport.offsetHeight / mapContainer.offsetHeight
+    );
+    const newScale = Math.max(mapScale * scaleFactor, minZoom);
+
+    const mapX = (mouseX - mapPos.x) / mapScale;
+    const mapY = (mouseY - mapPos.y) / mapScale;
+
+    const newMapPos = {
+        x: mouseX - (mapX * newScale),
+        y: mouseY - (mapY * newScale)
+    };
+    console.log(`new map pos, x: ${newMapPos.x} y: ${newMapPos.y}`);
+
+    mapPos = newMapPos;
+    mapScale = newScale;
+
+    _updateMapTranslate();
+}
+function _getTouchDistance(touches) {
+    return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+    );
+}
+mapViewport.addEventListener('touchstart', e => {
+    if(e.touches.length != 2) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    pinchStartDist = _getTouchDistance(event.touches);
 });
-window.addEventListener('zoomout', (e) => {
-    const og = e.detail.originalEvent;
-    mapViewport.dispatchEvent(new WheelEvent('wheel', {
-        clientX: Math.abs(og.touches[0].clientX - og.touches[1].clientX),
-        clientY: Math.abs(og.touches[0].clientY - og.touches[1].clientY)
-    }));
+window.addEventListener('touchmove', e => {
+    if (event.touches.length != 2 || pinchStartDist === null) return;
+
+    const currentDistance = _getTouchDistance(event.touches);
+    // Calculate how much the scale should actually change based on finger movement
+    const scaleFactor = currentDistance / pinchStartDist;
+
+    // Only trigger if there's a meaningful difference to avoid jittering
+    if (Math.abs(1 - scaleFactor) > 0.005) {
+         handleTouchZoom(e, scaleFactor);
+        // Crucial: we update our previous distance so calculations remain relative to last frame
+        pinchStartDist = currentDistance;
+    }
 });
+window.addEventListener('touchend', e => pinchStartDist = null);
