@@ -5273,7 +5273,7 @@ mapViewport.addEventListener('pointerdown', e => {
     wasPanning = false;
 })
 window.addEventListener('pointermove', e => {
-    if(!dragStart || pinchStartDist) return;
+    if(!dragStart || pinchStart) return;
 
     e.preventDefault();
 
@@ -5308,18 +5308,15 @@ window.addEventListener('pointerup', e => {
  * Pinch to Zoom functionality
  */
 var pinchStartDist = null;
-function handleTouchZoom(e, scaleFactor) {
+var pinchStart = null;
+function handleTouchZoom(e, scaleFactor, pinchStart) {
     e.preventDefault(); // Prevent scrolling/zooming of the whole page
     e.stopImmediatePropagation();
 
-    const touch1 = e.touches[0];
-    const touch2 = e.touches[1];
-    const centerX = (touch1.clientX + touch2.clientX) / 2;
-    const centerY = (touch1.clientY + touch2.clientY) / 2;
-    console.log(`pinch center, x: ${centerX}px y: ${centerY}px`);
+    const center = _getTouchCenter(e.touches);
 
-    const mouseX = (centerX - mapViewport.offsetLeft);
-    const mouseY = (centerY - mapViewport.offsetTop);
+    const mouseX = (center.x - mapViewport.offsetLeft);
+    const mouseY = (center.y - mapViewport.offsetTop);
     console.log(`rel pinch center, x: ${mouseX}px y: ${mouseY}px`);
 
     const minZoom = Math.min(
@@ -5328,8 +5325,8 @@ function handleTouchZoom(e, scaleFactor) {
     );
     const newScale = Math.max(mapScale * scaleFactor, minZoom);
 
-    const mapX = (mouseX - mapPos.x) / mapScale;
-    const mapY = (mouseY - mapPos.y) / mapScale;
+    const mapX = (mouseX - (center.x - pinchStart.x)) / mapScale;
+    const mapY = (mouseY - (center.y - pinchStart.y)) / mapScale;
 
     const newMapPos = {
         x: mouseX - (mapX * newScale),
@@ -5348,13 +5345,24 @@ function _getTouchDistance(touches) {
         touches[0].clientY - touches[1].clientY
     );
 }
+function _getTouchCenter(touches) {
+    return {
+        x: (touches[0].clientX + touches[1].clientX) / 2,
+        y: (touches[0].clientY + touches[1].clientY) / 2,
+    };
+}
 mapViewport.addEventListener('touchstart', e => {
     if(e.touches.length != 2) return;
 
     e.preventDefault();
     e.stopImmediatePropagation();
 
-    pinchStartDist = _getTouchDistance(event.touches);
+    pinchStartDist = _getTouchDistance(e.touches);
+    const globalStart = _getTouchCenter(e.touches);
+    pinchStart = {
+        x: globalStart.x - mapPos.x,
+        y: globalStart.y - mapPos.y
+    };
 });
 window.addEventListener('touchmove', e => {
     if (event.touches.length != 2 || pinchStartDist === null) return;
@@ -5364,10 +5372,8 @@ window.addEventListener('touchmove', e => {
     const scaleFactor = currentDistance / pinchStartDist;
 
     // Only trigger if there's a meaningful difference to avoid jittering
-    if (Math.abs(1 - scaleFactor) > 0.005) {
-         handleTouchZoom(e, scaleFactor);
-        // Crucial: we update our previous distance so calculations remain relative to last frame
-        pinchStartDist = currentDistance;
-    }
+    handleTouchZoom(e, Math.abs(1 - scaleFactor) > 0.005 ? scaleFactor : 1, pinchStart);
+    // Crucial: we update our previous distance so calculations remain relative to last frame
+    pinchStartDist = currentDistance;
 });
-window.addEventListener('touchend', e => pinchStartDist = null);
+window.addEventListener('touchend', e => pinchStartDist = pinchStart = null);
