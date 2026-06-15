@@ -1748,6 +1748,7 @@ mapFileInput.addEventListener('change', async (e) => {
             console.error('Failed to load new map:', error);
         }
     }
+    moveMapToPoint(mapImage.width / 2, mapImage.height / 2, false);
 });
 
 // Add image error handler
@@ -3184,7 +3185,7 @@ function selectNextTestItem() {
             elementCenterY = (viewportCenterY - mapPos.y) / mapScale;
             
             // Check if the point is off screen (with some margin)
-            const margin = 50; // pixels of margin
+            const margin = mapViewport.offsetWidth/-10; // pixels of margin
             const pointX = pointRect.left - viewportRect.left;
             const pointY = pointRect.top - viewportRect.top;
             
@@ -4740,6 +4741,7 @@ frontMapFileInput.addEventListener('change', async (e) => {
             console.error('Failed to load new map:', error);
         }
     }
+    moveMapToPoint(mapImage.width / 2, mapImage.height / 2, false);
 });
 
 // Helper to enable/disable the Start Test button
