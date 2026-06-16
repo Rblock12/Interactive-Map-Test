@@ -5325,8 +5325,8 @@ function handleTouchZoom(e, scaleFactor, pinchStart) {
     );
     const newScale = Math.max(mapScale * scaleFactor, minZoom);
 
-    const mapX = (mouseX - (center.x - pinchStart.x)) / mapScale;
-    const mapY = (mouseY - (center.y - pinchStart.y)) / mapScale;
+    const mapX = (mouseX - mapPos.x) / mapScale;
+    const mapY = (mouseY - mapPos.y) / mapScale;
 
     const newMapPos = {
         x: mouseX - (mapX * newScale),
@@ -5340,32 +5340,38 @@ function handleTouchZoom(e, scaleFactor, pinchStart) {
     _updateMapTranslate();
 }
 function _getTouchDistance(touches) {
-    return Math.hypot(
+    return touches.length == 1 ? 1 : Math.hypot(
         touches[0].clientX - touches[1].clientX,
         touches[0].clientY - touches[1].clientY
     );
 }
 function _getTouchCenter(touches) {
-    return {
+    return touches.length == 1 ? {
+        x: touches[0].clientX,
+        y: touches[0].clientY
+    } : {
         x: (touches[0].clientX + touches[1].clientX) / 2,
         y: (touches[0].clientY + touches[1].clientY) / 2,
     };
 }
 mapViewport.addEventListener('touchstart', e => {
-    if(e.touches.length != 2) return;
+    if(e.touches.length > 2) return;
 
     e.preventDefault();
     e.stopImmediatePropagation();
 
     pinchStartDist = _getTouchDistance(e.touches);
-    const globalStart = _getTouchCenter(e.touches);
-    pinchStart = {
-        x: globalStart.x - mapPos.x,
-        y: globalStart.y - mapPos.y
-    };
+    pinchStart = _getTouchCenter(e.touches);
 });
 window.addEventListener('touchmove', e => {
-    if (event.touches.length != 2 || pinchStartDist === null) return;
+    if (e.touches.length > 2 || pinchStart == null) return;
+
+    const center = _getTouchCenter(e.touches);
+    mapPos.x += center.x - pinchStart.x;
+    mapPos.y += center.y - pinchStart.y;
+    pinchStart = center;
+
+    if(e.touches.length != 2 || pinchStartDist == null) return _updateMapTranslate(); // still gotta update the translation since we might've panned
 
     const currentDistance = _getTouchDistance(event.touches);
     // Calculate how much the scale should actually change based on finger movement
