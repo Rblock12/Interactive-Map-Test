@@ -5357,8 +5357,12 @@ function _getTouchCenter(touches) {
 mapViewport.addEventListener('touchstart', e => {
     if(e.touches.length > 2) return;
 
-    e.preventDefault();
-    e.stopImmediatePropagation();
+    // Only prevent default for 2-finger gestures (pinch zoom).
+    // Allow 1-finger taps to generate click events for find mode.
+    if (e.touches.length === 2) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+    }
 
     pinchStartDist = _getTouchDistance(e.touches);
     pinchStart = _getTouchCenter(e.touches);
