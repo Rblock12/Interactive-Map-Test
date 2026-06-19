@@ -279,6 +279,281 @@ for (const assoc of currentTestItem.associatedElements) {
 
 - Update to include the `labels` registry in the state comparison.
 
+---
+
+### Phase 5.5: Backwards Compatibility & Data Migration
+
+This phase ensures that existing JSON files saved with the old single-label schema can be loaded, migrated to the new multi-label schema, and optionally saved back — with full user transparency and control.
+
+#### 5.5.1 Schema Versioning
+
+**File**: `app.js`
+
+Add a schema version field to the exported JSON so the app can always detect whether a file uses the old or new format:
+
+```json
+{
+    "schemaVersion": 2,
+    "labels": [ ... ],
+    "points": [ ... ],
+    "polygons": [ ... ],
+    "lines": [ ... ]
+}
+```
+
+- **Version 1** (old): No `schemaVersion` field, or `schemaVersion: 1`. Uses the flat per-element `labelBoxEl`/`text`/`labelX`/`labelY` structure.
+- **Version 2** (new): `schemaVersion: 2`. Uses the `labels` registry with bidirectional associations.
+
+#### 5.5.2 Detecting Old Format on Load
+
+**File**: `app.js`
+**Function**: `loadElements()` (line ~2270)
+
+At the start of `loadElements()`, detect the schema version:
+
+```js
+function loadElements() {
+    const input = document.getElementById('elementsFileInput');
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const data = JSON.parse(e.target.result);
+        const isOldFormat = !data.schemaVersion || data.schemaVersion < 2;
+
+        if (isOldFormat) {
+            // Show migration dialog (see 5.5.3)
+            showMigrationDialog(data);
+        } else {
+            // New format — proceed normally
+            migrateAndLoad(data);
+        }
+    };
+    reader.readAsText(file);
+}
+```
+
+#### 5.5.3 Migration Dialog UI
+
+**File**: `index.html` + `style.css`
+
+When an old-format file is detected, show a modal dialog **before** loading the data:
+
+```html
+<div id="migrationModalBackdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000;">
+</div>
+<div id="migrationModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:3001; padding:24px 20px; max-width:500px;">
+    <h3 style="margin-top:0; color:#FF9800;"><i class="fas fa-exchange-alt"></i> Data Migration Required</h3>
+    <p>The file you loaded uses an older format that supported only one label per element. This version of the application now supports multiple labels per element and labels shared across multiple elements.</p>
+    <p><strong>The file will be automatically upgraded to the new format in memory.</strong> Your data will be preserved — each element's existing label will be migrated as a single-label entry in the new system.</p>
+    <p style="margin-top:16px;">What would you like to do?</p>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button id="migrationDownloadBtn" style="padding:7px 16px; background:#4CAF50; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">
+            <i class="fas fa-download"></i> Download Migrated File
+        </button>
+        <button id="migrationLoadBtn" style="padding:7px 16px; background:#2196F3; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">
+            <i class="fas fa-upload"></i> Load & Migrate
+        </button>
+        <button id="migrationCancelBtn" style="padding:7px 16px; background:#9e9e9e; color:white; border:none; border-radius:6px; font-size:15px; cursor:pointer;">
+            <i class="fas fa-times"></i> Cancel
+        </button>
+    </div>
+</div>
+```
+
+**Dialog behavior:**
+
+| Button | Action |
+|--------|--------|
+| **Download Migrated File** | Runs the migration in memory, triggers a download of the new-format JSON, **does not** load the data into the app. User can then manually load the downloaded file. |
+| **Load & Migrate** | Runs the migration in memory, loads the migrated data into the app, and updates `baselineData` to the new format. |
+| **Cancel** | Closes the dialog, does not load the file. The file input is reset so the user can try again. |
+
+#### 5.5.4 Migration Logic
+
+**File**: `app.js`
+**New function**: `migrateOldFormatToNew(data)`
+
+This function takes old-format data and returns new-format data **without modifying the original**:
+
+```js
+function migrateOldFormatToNew(oldData) {
+    const newLabels = [];
+    const newPoints = [];
+    const newPolygons = [];
+    const newLines = [];
+    let nextLabelId = 0;
+
+    // Helper: get or create a label for a given text+type combination
+    // This enables the "one label → multiple lines" feature during migration
+    function getOrCreateLabel(text, type) {
+        // First, check if an identical label (same text + type) already exists
+        const existing = newLabels.find(l => l.text === text && l.type === type);
+        if (existing) return existing;
+
+        // Create a new label entry
+        const label = {
+            id: nextLabelId++,
+            text: text,
+            type: type,
+            associatedPoints: [],
+            associatedPolygons: [],
+            associatedLines: []
+        };
+        newLabels.push(label);
+        return label;
+    }
+
+    // Migrate points
+    (oldData.points || []).forEach((point, idx) => {
+        const label = getOrCreateLabel(point.text, point.type);
+        newPoints.push({
+            refX: point.refX,
+            refY: point.refY,
+            labelPositions: [{ labelX: point.labelX, labelY: point.labelY }],
+            labelIds: [label.id],
+            type: point.type || 'default'
+        });
+        label.associatedPoints.push(idx);
+    });
+
+    // Migrate polygons
+    (oldData.polygons || []).forEach((polygon, idx) => {
+        const label = getOrCreateLabel(polygon.text, polygon.type);
+        newPolygons.push({
+            points: polygon.points.map(p => ({ x: p.x, y: p.y })),
+            anchorX: polygon.anchorX,
+            anchorY: polygon.anchorY,
+            labelPositions: [{ labelX: polygon.labelX, labelY: polygon.labelY }],
+            labelIds: [label.id],
+            type: polygon.type || 'default'
+        });
+        label.associatedPolygons.push(idx);
+    });
+
+    // Migrate lines
+    (oldData.lines || []).forEach((line, idx) => {
+        const label = getOrCreateLabel(line.text, line.type);
+        newLines.push({
+            points: line.points.map(p => ({ x: p.x, y: p.y })),
+            anchorX: line.anchorX,
+            anchorY: line.anchorY,
+            labelPositions: [{ labelX: line.labelX, labelY: line.labelY }],
+            labelIds: [label.id],
+            type: line.type || 'default'
+        });
+        label.associatedLines.push(idx);
+    });
+
+    return {
+        schemaVersion: 2,
+        labels: newLabels,
+        points: newPoints,
+        polygons: newPolygons,
+        lines: newLines
+    };
+}
+```
+
+**Migration notes:**
+- **Text+type deduplication**: If two old-format elements have the same `text` and `type`, they will share the same label in the new format. This is a **beneficial side effect** — it automatically enables the "one label → multiple lines" feature for users who already named their routes consistently.
+- **Position preservation**: All `labelX`/`labelY` coordinates are preserved exactly as-is.
+- **No data loss**: Every field from the old format is represented in the new format.
+
+#### 5.5.5 Migration Dialog Button Handlers
+
+**File**: `app.js`
+
+```js
+let pendingMigratedData = null; // Holds migrated data for download
+
+function showMigrationDialog(oldData) {
+    pendingMigratedData = null;
+
+    const backdrop = document.getElementById('migrationModalBackdrop');
+    const modal = document.getElementById('migrationModal');
+
+    // Run migration in memory (for both download and load paths)
+    const newData = migrateOldFormatToNew(oldData);
+    pendingMigratedData = newData;
+
+    // Download button
+    document.getElementById('migrationDownloadBtn').onclick = () => {
+        const blob = new Blob([JSON.stringify(newData, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'map_labels_migrated.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        closeMigrationDialog();
+        // Data is NOT loaded into the app — user must manually load the downloaded file
+    };
+
+    // Load & Migrate button
+    document.getElementById('migrationLoadBtn').onclick = () => {
+        closeMigrationDialog();
+        // Proceed with loading the migrated data
+        processMigratedData(newData);
+    };
+
+    // Cancel button
+    document.getElementById('migrationCancelBtn').onclick = () => {
+        closeMigrationDialog();
+        // Reset file input
+        document.getElementById('elementsFileInput').value = '';
+    };
+
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+}
+
+function closeMigrationDialog() {
+    document.getElementById('migrationModalBackdrop').style.display = 'none';
+    document.getElementById('migrationModal').style.display = 'none';
+    pendingMigratedData = null;
+}
+
+function processMigratedData(newData) {
+    // Same logic as the existing loadElements body, but using newData
+    // Rebuild tags, tagVisibility, labels registry, points, polygons, lines
+    // Set baselineData = JSON.parse(JSON.stringify(newData))
+    // Call updateLeaderLines(), renderTagPanel(), updateSaveButtonState()
+}
+```
+
+#### 5.5.6 Auto-Migration on Map Load (Optional)
+
+**File**: `app.js`
+**Function**: `loadMapButton` / `frontMapFileInput` change handler
+
+If the user has previously saved a migrated file (version 2), no migration is needed. But if they load an old-format file via the "Load Map Image" flow (which triggers `loadElements`), the same migration dialog applies.
+
+No additional changes needed — the migration dialog is triggered inside `loadElements()`, which is called by both the regular and front-load map buttons.
+
+#### 5.5.7 Baseline Data After Migration
+
+**File**: `app.js`
+
+After migration and loading, set `baselineData` to the **new-format** data:
+
+```js
+baselineData = JSON.parse(JSON.stringify(newData));
+```
+
+This ensures that `hasUnsavedChanges()` compares against the new format, and the unsaved-changes indicator works correctly.
+
+#### 5.5.8 In-App Notification After Migration
+
+**File**: `app.js` + `index.html`
+
+After a successful "Load & Migrate", show a brief non-blocking notification:
+
+```
+<i class="fas fa-info-circle"></i> Data was automatically upgraded to support multiple labels per element.
+```
+
+This informs the user that migration occurred and that they can now use the new multi-label features.
+
+---
+
 ### Phase 6: Edit Operations
 
 #### 6.1 Delete (`removeLabelAtPoint`)
@@ -393,9 +668,10 @@ function highlightElementsWithTag(tag) {
 2. **Phase 2** — UI for creating/assigning multi-labels
 3. **Phase 3** — Rendering updates (leader lines, positions)
 4. **Phase 5** — Save/Load (so changes persist)
-5. **Phase 4** — Testing mode (builds on rendering)
-6. **Phase 6** — Edit operations (delete, rename, tag, move)
-7. **Phase 7-9** — Tag panel, visibility, and test visibility helpers
+5. **Phase 5.5** — Backwards compatibility & data migration (works alongside Phase 5)
+6. **Phase 4** — Testing mode (builds on rendering)
+7. **Phase 6** — Edit operations (delete, rename, tag, move)
+8. **Phase 7-9** — Tag panel, visibility, and test visibility helpers
 
 ---
 
